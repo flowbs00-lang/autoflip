@@ -128,5 +128,131 @@ function completeSale(price){const c=state.car;if(!c)return garage();const profi
 const garageBase=garage;
 garage=function(){const c=state.car;if(!c)return garageBase();const current=c.repaired?Math.round(c.market*1.02):c.market;const potential=Math.round(saleValue(c)-c.buy-(c.repairSpent||0));render(`<div class="app">${head('Гараж')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><div class="note"><small>ТВОЙ АВТОМОБИЛЬ</small><h3>${c.name}</h3><p class="muted">${c.city} · ${c.year} · ${c.km.toLocaleString('ru-RU')} км</p></div><div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>ПРИБЫЛЬ<b class="profit">${money(potential)}</b></span></div><div class="warning">${c.repaired?'✅ Автомобиль подготовлен к продаже.':'⚠ Перед продажей желательно проверить и отремонтировать автомобиль.'}</div><button class="action" onclick="garageDetails()">🔎 Подробнее</button><button class="action orange" onclick="service()">🛠️ СТО</button><button class="action green" onclick="sellCar()">🏷️ Выставить на продажу</button></div>`);};
 </script>
+
+<script>
+// V7.9 — скрытые дефекты и риск дешёвых автомобилей.
+(function(){
+  const hiddenCatalog=[
+    ['Течь масла','двигатель'],['Генератор','электрика'],['Сцепление','коробка'],
+    ['Ступичный подшипник','ходовая'],['Радиатор','охлаждение'],['Стартер','электрика'],
+    ['Тормозные суппорты','тормоза'],['Коррозия днища','кузов'],['Помпа','двигатель']
+  ];
+  function hiddenCost(car,index){
+    const buy=Math.max(10000,Number(car.buy||car.price||50000));
+    const factor=.08+(((car.id||0)*13+index*17)%10)/100;
+    return Math.round(Math.max(4000,Math.min(60000,buy*factor))/1000)*1000;
+  }
+  function prepareHidden(car){
+    if(!car||Array.isArray(car.hiddenDefects))return;
+    const buy=Number(car.buy||car.price||0);
+    let chance=.25,max=1;
+    if(buy<100000){chance=.78;max=3}
+    else if(buy<300000){chance=.60;max=2}
+    else if(buy<700000){chance=.42;max=2}
+    else if(buy<1500000){chance=.30;max=1}
+    let count=0;
+    if(Math.random()<chance){
+      count=1;
+      if(max>=2&&Math.random()<.38)count++;
+      if(max>=3&&Math.random()<.18)count++;
+    }
+    const used=[];
+    car.hiddenDefects=[];
+    for(let i=0;i<count;i++){
+      let pick=((car.id||0)*7+i*3+Math.floor(Math.random()*hiddenCatalog.length))%hiddenCatalog.length;
+      while(used.includes(pick))pick=(pick+1)%hiddenCatalog.length;
+      used.push(pick);
+      car.hiddenDefects.push({name:hiddenCatalog[pick][0],group:hiddenCatalog[pick][1],cost:hiddenCost(car,i),revealed:false,repaired:false});
+    }
+    car.hiddenSaleChecks=0;
+    car.hiddenScanCount=0;
+  }
+  function addRevealedToDiagnostics(car){
+    if(!car||!car.diagnosed||!Array.isArray(car.diagnostics))return;
+    (car.hiddenDefects||[]).filter(x=>x.revealed&&!x.repaired).forEach(function(h){
+      if(car.diagnostics.some(d=>d.hiddenDefectName===h.name))return;
+      car.diagnostics.push({name:'Скрытый дефект · '+h.name,status:'critical',wear:25,cost:h.cost,hidden:true,hiddenDefectName:h.name});
+    });
+    car.totalRepair=car.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+Number(x.cost||0),0);
+  }
+  function revealHidden(car,source){
+    prepareHidden(car);
+    const h=(car.hiddenDefects||[]).find(x=>!x.revealed&&!x.repaired);
+    if(!h)return null;
+    h.revealed=true;
+    car.repaired=false;
+    car.condition=Math.min(Number(car.condition||100),70);
+    addRevealedToDiagnostics(car);
+    if(typeof log==='function')log('⚠ '+source+': у '+car.name+' обнаружен скрытый дефект — '+h.name+' ('+money(h.cost)+').');
+    if(typeof save==='function')save();
+    return h;
+  }
+
+  const oldBuy=window.buy;
+  if(typeof oldBuy==='function'&&!oldBuy.__hiddenDefects){
+    const wrapped=function(id,price){
+      const before=state.car;
+      const result=oldBuy.apply(this,arguments);
+      const car=state.car;
+      if(car&&car!==before){
+        prepareHidden(car);
+        if(typeof save==='function')save();
+      }
+      return result;
+    };
+    wrapped.__hiddenDefects=true;
+    window.buy=wrapped;
+  }
+
+  const oldDiagnose=window.diagnose;
+  if(typeof oldDiagnose==='function'&&!oldDiagnose.__hiddenDefects){
+    window.diagnose=function(){
+      const car=state.car;
+      if(!car)return oldDiagnose.apply(this,arguments);
+      prepareHidden(car);
+      const result=oldDiagnose.apply(this,arguments);
+      car.hiddenScanCount=Number(car.hiddenScanCount||0)+1;
+      let found=null;
+      const pending=(car.hiddenDefects||[]).some(x=>!x.revealed&&!x.repaired);
+      if(pending&&(Math.random()<.35||car.hiddenScanCount>=2))found=revealHidden(car,'Диагностика');
+      addRevealedToDiagnostics(car);
+      if(found){
+        objectiveSub.textContent='Диагностика нашла скрытую проблему: '+found.name+'.';
+        alert('⚠ Обнаружен скрытый дефект: '+found.name+'. Дополнительный ремонт: '+money(found.cost)+'.');
+      }else if(pending){
+        objectiveSub.textContent='Найдены видимые проблемы. Но диагностика не даёт 100% гарантии.';
+      }
+      if(typeof save==='function')save();
+      garageDetails();
+      return result;
+    };
+    window.diagnose.__hiddenDefects=true;
+  }
+
+  const oldSellCar=window.sellCar;
+  if(typeof oldSellCar==='function'&&!oldSellCar.__hiddenDefects){
+    window.sellCar=function(){
+      const car=state.car;
+      if(!car)return oldSellCar.apply(this,arguments);
+      prepareHidden(car);
+      car.hiddenSaleChecks=Number(car.hiddenSaleChecks||0)+1;
+      const pending=(car.hiddenDefects||[]).some(x=>!x.revealed&&!x.repaired);
+      if(pending&&(Math.random()<.60||car.hiddenSaleChecks>=2)){
+        const found=revealHidden(car,'Проверка перед продажей');
+        if(found){
+          alert('⚠ Перед продажей всплыл скрытый дефект: '+found.name+'. Ориентир ремонта: '+money(found.cost)+'. Машину можно оставить как есть или поехать на СТО.');
+          if(car.diagnosed)addRevealedToDiagnostics(car);
+          garageDetails();
+          return;
+        }
+      }
+      if(typeof save==='function')save();
+      return oldSellCar.apply(this,arguments);
+    };
+    window.sellCar.__hiddenDefects=true;
+  }
+})();
+</script>
+
 </body>
 </html>
