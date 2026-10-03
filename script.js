@@ -1,59 +1,104 @@
-// AutoFlip V7.7 compatibility layer
-// Load the existing V7 core first. The split closing tag avoids HTML parser issues.
+// AutoFlip V7.8 compatibility layer
+// Keeps the V7 core intact and adds a 3-car fleet on top of it.
 document.write('<script src="script_base.js"></'+'script>');
 
 (function(){
   function install(){
     if(typeof state==='undefined' || typeof KEY==='undefined' || typeof render!=='function' || typeof head!=='function' || typeof money!=='function'){
-      setTimeout(install,50);
-      return;
+      setTimeout(install,50); return;
     }
 
-    if(!state.businessHistory) state.businessHistory=[];
+    // Migrate the old single-car save into the new fleet without losing progress.
+    if(!Array.isArray(state.cars)) state.cars=[];
+    if(state.car && !state.cars.some(function(x){return x===state.car || x._garageId===state.car._garageId;})) state.cars.push(state.car);
+    state.cars=state.cars.filter(Boolean).slice(0,3);
+    if(!state.car && state.cars.length) state.car=state.cars[0];
+    var seq=Date.now();
+    state.cars.forEach(function(c){ if(!c._garageId) c._garageId='car-'+(++seq); });
 
     function persist(){
       localStorage.setItem(KEY,JSON.stringify(state));
       if(typeof renderStats==='function') renderStats();
+      if(typeof save==='function' && window.save!==persist) { try{ save(); }catch(e){} }
     }
 
-    // Keep the current profile/history layer available even when the original
-    // sale implementation is defined later by the inline V7 modules.
-    function drawProfile(){
-      const h=Array.isArray(state.businessHistory)?state.businessHistory:[];
-      const current=state.car;
-      const sold=h.length;
-      const bought=sold+(current?1:0);
-      const totalBuy=h.reduce((a,x)=>a+Number(x.buy||0),0)+(current?Number(current.buy||0):0);
-      const totalRepair=h.reduce((a,x)=>a+Number(x.repair||0),0)+(current?Number(current.repairSpent||0):0);
-      const revenue=h.reduce((a,x)=>a+Number(x.sale||0),0);
-      const profit=h.reduce((a,x)=>a+Number(x.profit||0),0);
-      const best=h.length?Math.max.apply(null,h.map(x=>Number(x.profit||0))):0;
-      const avg=sold?Math.round(profit/sold):0;
-      const rank=Number(state.rep||0)<30?'Начинающий перекуп':Number(state.rep||0)<80?'Опытный перекуп':'Автодилер';
-      const history=h.length
-        ? '<div class="note"><b>Последние сделки</b>'+h.slice(0,6).map(function(x){
-            const p=Number(x.profit||0);
-            return '<div class="row"><span>🚗 '+(x.car||'Автомобиль')+'<small>'+(x.year||'')+' · '+(x.city||'')+'</small></span><b class="'+(p>=0?'profit':'')+'">'+(p>=0?'+':'')+money(p)+'</b></div><div class="muted" style="padding:0 0 8px">Покупка '+money(Number(x.buy||0))+' · ремонт '+money(Number(x.repair||0))+' · продажа '+money(Number(x.sale||0))+'</div>';
-          }).join('')+'</div>'
-        : '<div class="note"><b>История пока пуста</b><p class="muted">Продай первый автомобиль, и здесь появится результат сделки.</p></div>';
-
-      render('<div class="app">'+head('Профиль')+
-        '<div class="profile-card"><div class="avatar">A</div><h3>'+rank+'</h3><p class="muted">'+(state.city||'Москва')+' · день '+(state.day||1)+'</p></div>'+
-        '<div class="statsbox"><div class="stat"><b>'+money(state.money)+'</b><small>капитал</small></div><div class="stat"><b>'+Number(state.rep||0)+'</b><small>репутация</small></div><div class="stat"><b>'+sold+'</b><small>продано</small></div></div>'+
-        '<div class="note"><b>📊 Статистика бизнеса</b>'+
-        '<div class="row"><span>🚗 Куплено</span><b>'+bought+'</b></div>'+ 
-        '<div class="row"><span>🏷️ Продано</span><b>'+sold+'</b></div>'+ 
-        '<div class="row"><span>💸 Покупки</span><b>'+money(totalBuy)+'</b></div>'+ 
-        '<div class="row"><span>🔧 Ремонт</span><b>'+money(totalRepair)+'</b></div>'+ 
-        '<div class="row"><span>💰 Выручка</span><b>'+money(revenue)+'</b></div>'+ 
-        '<div class="row"><span>📈 Общая прибыль</span><b class="'+(profit>=0?'profit':'')+'">'+(profit>=0?'+':'')+money(profit)+'</b></div>'+ 
-        '<div class="row"><span>📊 Средняя прибыль</span><b>'+money(avg)+'</b></div>'+ 
-        '<div class="row"><span>🏆 Лучшая сделка</span><b>'+money(best)+'</b></div></div>'+ 
-        (current?'<div class="note"><b>🚘 Текущая машина</b><div class="row"><span>'+current.name+'</span><b>'+money(Number(current.buy||0))+'</b></div><p class="muted">Она ещё не попала в историю — сделка появится после продажи.</p></div>':'')+
-        history+'</div>');
+    // Add a purchased car to the fleet while retaining the original V7 purchase logic.
+    var originalBuy=window.buy;
+    if(typeof originalBuy==='function' && !originalBuy.__v78){
+      var wrappedBuy=function(id,price){
+        if(state.cars.length>=3){ alert('Гараж заполнен. Максимум 3 автомобиля. Сначала продай одну машину.'); return; }
+        var before=state.car;
+        originalBuy(id,price);
+        var added=state.car;
+        if(added && added!==before){
+          if(!added._garageId) added._garageId='car-'+(++seq);
+          if(!state.cars.some(function(x){return x._garageId===added._garageId;})) state.cars.push(added);
+          state.car=added;
+          persist();
+        }
+      };
+      wrappedBuy.__v78=true;
+      window.buy=wrappedBuy;
     }
 
-    window.profile=drawProfile;
+    // When the existing V7 sale flow completes, remove only the selected car from the fleet.
+    var originalCompleteSale=window.completeSale;
+    if(typeof originalCompleteSale==='function' && !originalCompleteSale.__v78){
+      var wrappedCompleteSale=function(){
+        var sold=state.car;
+        var result=originalCompleteSale.apply(this,arguments);
+        if(sold && Array.isArray(state.cars)){
+          state.cars=state.cars.filter(function(x){return x!==sold && x._garageId!==sold._garageId;});
+        }
+        state.car=state.cars[0]||null;
+        persist();
+        return result;
+      };
+      wrappedCompleteSale.__v78=true;
+      window.completeSale=wrappedCompleteSale;
+    }
+
+    window.selectGarageCar=function(index){
+      var c=state.cars[index];
+      if(!c) return;
+      state.car=c;
+      persist();
+      garage();
+    };
+
+    // Fleet-aware garage. Existing V7 service/repair/sale screens continue to work
+    // because selecting a card makes that car the active state.car.
+    window.garage=function(){
+      var cars=Array.isArray(state.cars)?state.cars:[];
+      if(!cars.length){
+        render('<div class="app">'+head('Гараж')+'<div class="note"><b>Гараж пуст</b><p class="muted">Первая машина ждёт тебя на рынке.</p></div><button class="action green" onclick="market()">🚗 Открыть рынок</button></div>');
+        return;
+      }
+      var cards=cars.map(function(c,i){
+        var repair=Number(c.repairSpent||0), buy=Number(c.buy||0), market=Number(c.market||c.sale||0), risk=c.repaired?'🟢 Готова к продаже':'🟠 Требует подготовки';
+        return '<div class="note" style="margin-bottom:10px;cursor:pointer" onclick="selectGarageCar('+i+')">'+
+          '<div class="row"><span><b>🚗 '+c.name+'</b><small>'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</small></span><b>'+money(buy)+'</b></div>'+
+          '<div class="muted">'+risk+' · ремонт '+money(repair)+'</div>'+ 
+          '<div class="row"><span>Рынок</span><b>'+money(market)+'</b></div>'+ 
+          '</div>';
+      }).join('');
+      render('<div class="app">'+head('Гараж')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/3</b><small>места заняты</small></div><div class="stat"><b>'+money(state.money)+'</b><small>капитал</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.buy||0);},0))+'</b><small>вложено</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button><p class="muted" style="text-align:center">Нажми на автомобиль, чтобы открыть его диагностику, СТО и продажу.</p></div>');
+    };
+
+    // Keep the V7.7 business profile, now counting the whole fleet as active inventory.
+    if(!state.businessHistory) state.businessHistory=[];
+    window.profile=function(){
+      var h=Array.isArray(state.businessHistory)?state.businessHistory:[], cars=Array.isArray(state.cars)?state.cars:[];
+      var sold=h.length, bought=sold+cars.length;
+      var totalBuy=h.reduce(function(a,x){return a+Number(x.buy||0);},0)+cars.reduce(function(a,x){return a+Number(x.buy||0);},0);
+      var totalRepair=h.reduce(function(a,x){return a+Number(x.repair||0);},0)+cars.reduce(function(a,x){return a+Number(x.repairSpent||0);},0);
+      var revenue=h.reduce(function(a,x){return a+Number(x.sale||0);},0), profit=h.reduce(function(a,x){return a+Number(x.profit||0);},0);
+      var best=sold?Math.max.apply(null,h.map(function(x){return Number(x.profit||0);})):0, avg=sold?Math.round(profit/sold):0;
+      var rank=Number(state.rep||0)<30?'Начинающий перекуп':Number(state.rep||0)<80?'Опытный перекуп':'Автодилер';
+      var history=h.length?'<div class="note"><b>Последние сделки</b>'+h.slice(0,6).map(function(x){var p=Number(x.profit||0);return '<div class="row"><span>🚗 '+(x.car||'Автомобиль')+'<small>'+(x.year||'')+' · '+(x.city||'')+'</small></span><b class="'+(p>=0?'profit':'')+'">'+(p>=0?'+':'')+money(p)+'</b></div><div class="muted" style="padding:0 0 8px">Покупка '+money(x.buy)+' · ремонт '+money(x.repair)+' · продажа '+money(x.sale)+'</div>';}).join('')+'</div>':'<div class="note"><b>История пока пуста</b><p class="muted">Продай первый автомобиль, и здесь появится результат сделки.</p></div>';
+      render('<div class="app">'+head('Профиль')+'<div class="profile-card"><div class="avatar">A</div><h3>'+rank+'</h3><p class="muted">'+(state.city||'Москва')+' · день '+(state.day||1)+'</p></div><div class="statsbox"><div class="stat"><b>'+money(state.money)+'</b><small>капитал</small></div><div class="stat"><b>'+Number(state.rep||0)+'</b><small>репутация</small></div><div class="stat"><b>'+sold+'</b><small>продано</small></div></div><div class="note"><b>📊 Статистика бизнеса</b><div class="row"><span>🚗 Куплено</span><b>'+bought+'</b></div><div class="row"><span>🏷️ Продано</span><b>'+sold+'</b></div><div class="row"><span>🚘 В гараже</span><b>'+cars.length+'</b></div><div class="row"><span>💸 Покупки</span><b>'+money(totalBuy)+'</b></div><div class="row"><span>🔧 Ремонт</span><b>'+money(totalRepair)+'</b></div><div class="row"><span>💰 Выручка</span><b>'+money(revenue)+'</b></div><div class="row"><span>📈 Общая прибыль</span><b class="'+(profit>=0?'profit':'')+'">'+(profit>=0?'+':'')+money(profit)+'</b></div><div class="row"><span>📊 Средняя прибыль</span><b>'+money(avg)+'</b></div><div class="row"><span>🏆 Лучшая сделка</span><b>'+money(best)+'</b></div></div>'+ (cars.length?'<div class="note"><b>🚘 Автопарк</b>'+cars.map(function(c){return '<div class="row"><span>'+c.name+'<small>'+c.year+'</small></span><b>'+money(c.buy)+'</b></div>';}).join('')+'</div>':'')+history+'</div>');
+    };
+
     persist();
   }
   install();
