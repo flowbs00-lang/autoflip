@@ -380,29 +380,22 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     ];
     return variants[Math.floor(Math.random()*variants.length)];
   }
-  function scheduleNext(l,car){l.nextBuyerAt=gt()+nextDelay(car,l.ask);}
-  function isBuyerTime(total){const m=((Math.round(total)%1440)+1440)%1440;return m>=540&&m<1320;}
-  function deferToMorning(l,total){
-    const m=((Math.round(total)%1440)+1440)%1440;
-    if(m>=1320)l.nextBuyerAt=total+(1440-m)+540;
-    else if(m<540)l.nextBuyerAt=total+(540-m);
+  function scheduleNext(l,car,fromTotal){l.nextBuyerAt=(fromTotal===undefined?gt():Number(fromTotal))+nextDelay(car,l.ask);}
+  function activeBuyerCount(l){
+    return (state.buyerInbox||[]).filter(x=>x.listingId===l.id&&x.status!=='declined'&&x.status!=='sold').length;
   }
-  function checkBuyerEvents(){
-    const l=state.activeListing;if(!l||l.status!=='active')return;
-    const car=listingCar();if(!car){state.activeListing=null;saveLife();return;}
-    const now=gt();
-    if(now<Number(l.nextBuyerAt||0))return;
-    if(!isBuyerTime(now)){deferToMorning(l,now);saveLife();return;}
+  function enqueueBuyerAt(total,showHomeNotification){
+    const l=state.activeListing;if(!l||l.status!=='active')return false;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return false;}
     if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
-    const active=state.buyerInbox.filter(x=>x.listingId===l.id&&x.status!=='declined'&&x.status!=='sold').length;
-    if(active>=6){l.nextBuyerAt=now+240;saveLife();return;}
+    if(activeBuyerCount(l)>=6){l.nextBuyerAt=Number(total)+240;saveLife();return false;}
     const p=buyerProfiles[Math.floor(Math.random()*buyerProfiles.length)],prices=buyerOffer(car,l,p);
-    const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:p.icon,kind:p.kind,text:buyerMessage(p,prices.offer),offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(now)};
+    const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:p.icon,kind:p.kind,text:buyerMessage(p,prices.offer),offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(total)};
     state.buyerInbox.unshift(msg);
     state.notifications=Number(state.notifications||0)+1;
-    scheduleNext(l,car);
+    scheduleNext(l,car,total);
     saveLife();
-    if(document.querySelector('.home')){
+    if(showHomeNotification&&document.querySelector('.home')){
       const wall=document.querySelector('.home-wall');
       if(wall){
         const n=document.createElement('div');n.className='notification';n.onclick=function(){messages();};
@@ -410,7 +403,33 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
         const apps=wall.querySelector('.apps');if(apps)wall.insertBefore(n,apps);
       }
     }
+    return true;
   }
+  function checkBuyerEvents(){
+    const l=state.activeListing;if(!l||l.status!=='active')return;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return;}
+    const now=gt();
+    if(now<Number(l.nextBuyerAt||0))return;
+    enqueueBuyerAt(now,true);
+  }
+  window.processBuyerSleep=function(startTotal,endTotal,maxMessages){
+    const l=state.activeListing;if(!l||l.status!=='active')return 0;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return 0;}
+    const limit=Math.max(0,Math.min(2,Number(maxMessages)||2));
+    let count=0,next=Number(l.nextBuyerAt||0),guard=0;
+    if(!next)next=Number(startTotal)+nextDelay(car,l.ask);
+    while(count<limit&&next<=Number(endTotal)&&guard<6){
+      if(enqueueBuyerAt(next,false))count++;
+      next=Number(state.activeListing&&state.activeListing.nextBuyerAt||0);
+      guard++;
+      if(!next)break;
+    }
+    if(state.activeListing&&Number(state.activeListing.nextBuyerAt||0)<=Number(endTotal)){
+      state.activeListing.nextBuyerAt=Number(endTotal)+nextDelay(car,state.activeListing.ask);
+      saveLife();
+    }
+    return count;
+  };
   setInterval(checkBuyerEvents,1000);
 
   function buyerThreads(){
