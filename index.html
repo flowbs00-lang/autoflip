@@ -41,7 +41,7 @@ const sellerTypes=[
  {type:'Упрямый',icon:'😤',min:.965,flex:.22,patience:2,open:'«Цена указана не просто так. Машина хорошая, сильно уступать не собираюсь.»',reject:'«Нет. Я уже и так поставил адекватную цену.»'},
  {type:'Срочно нужны деньги',icon:'🔥',min:.86,flex:.72,patience:4,open:'«Если заберёте быстро, можем нормально поговорить. Деньги нужны в ближайшее время.»',reject:'«Меньше уже не получится. Мне нужно закрыть вопрос сегодня.»'},
  {type:'Уверенный',icon:'😎',min:.94,flex:.4,patience:3,open:'«Я знаю рынок и цену своей машины. Торг возможен, но аргументы должны быть вескими.»',reject:'«За такую цену я просто оставлю объявление висеть.»'},
- {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.»'}
+ {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.'}
 ];
 function deal(id){
   const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'];
@@ -81,6 +81,39 @@ function makeOffer(){
   if(gap>=.90){const step=(n.asking-offer)*p.flex,counter=Math.round(Math.max(n.minimum,offer+step)/1000)*1000;n.counter=counter;log(`Переговоры: ${n.seller} сделал встречное предложение ${money(counter)}.`);renderNegotiation('counter',counter);return;}
   if(n.round>=2){log(`Переговоры: ${n.seller} раздражён слишком низкой ценой.`);renderNegotiation('angry');return;}
   log(`Переговоры: ${n.seller} отклонил предложение ${money(offer)}.`);renderNegotiation('reject');
+}
+</script>
+<script>
+// V7.3 — подробный гараж. Мы не меняем существующую покупку, только расширяем просмотр купленной машины.
+function garage(){
+  const c=state.car;
+  if(!c){
+    render(`<div class="app">${head('Гараж')}<div class="note"><b>Гараж пока пуст</b><p class="muted">Купи первый автомобиль на рынке — он появится здесь.</p></div><button class="action green" onclick="market()">🚗 Открыть рынок</button></div>`);
+    return;
+  }
+  const current= c.repaired ? Math.round(c.market*1.02) : c.market;
+  const potential=Math.round(current-c.buy-(c.repaired?0:c.repair));
+  render(`<div class="app">${head('Гараж')}
+    <div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div>
+    <div class="note"><small>ТВОЙ АВТОМОБИЛЬ</small><h3>${c.name}</h3><p class="muted">${c.city} · ${c.year} · ${c.km.toLocaleString('ru-RU')} км</p></div>
+    <div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>РАЗНИЦА<b class="profit">${money(potential)}</b></span></div>
+    <div class="warning">${c.repaired?'✅ Автомобиль подготовлен к продаже.':'⚠ Найден риск: '+c.risk+'. Перед продажей желательно провести ремонт.'}</div>
+    <button class="action" onclick="garageDetails()">🔎 Подробнее</button>
+    <button class="action orange" onclick="service()">🛠️ Отправить на СТО</button>
+    <button class="action green" onclick="market()">🚗 Вернуться на рынок</button>
+  </div>`);
+}
+function garageDetails(){
+  const c=state.car;
+  if(!c)return garage();
+  render(`<div class="app">${head('Автомобиль')}
+    <div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div>
+    <h3>${c.name}</h3>
+    <div class="note"><div class="hero-line"><span>Год</span><strong>${c.year}</strong></div><div class="hero-line"><span>Пробег</span><strong>${c.km.toLocaleString('ru-RU')} км</strong></div><div class="hero-line"><span>Город</span><strong>${c.city}</strong></div><div class="hero-line"><span>Цена покупки</span><strong>${money(c.buy)}</strong></div><div class="hero-line"><span>Рыночная цена</span><strong>${money(c.market)}</strong></div></div>
+    <div class="warning">${c.repaired?'✅ Основной дефект устранён.':'⚠ Диагностика: возможная проблема — '+c.risk+'. Ориентир ремонта: '+money(c.repair)+'.'}</div>
+    <button class="action orange" onclick="service()">🛠️ Перейти на СТО</button>
+    <button class="action" onclick="garage()">‹ В гараж</button>
+  </div>`);
 }
 </script>
 </body>
