@@ -11,7 +11,12 @@ const exactPhotos={
 'ВАЗ 2109':'https://commons.wikimedia.org/wiki/Special:Redirect/file/VAZ-2109%20%22Devyatka%22%20%284714544714%29.jpg?width=900',
 'ВАЗ 2110':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20110-VAZ-2110%20%284713570255%29.jpg?width=900',
 'Lada Priora':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20priora.jpg?width=900',
-'Lada Kalina':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20Kalina%201.jpg?width=900'
+'Lada Kalina':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20Kalina%201.jpg?width=900',
+'Daewoo Nexia':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Daewoo%20Nexia%20180202.jpg?width=900',
+'Renault Logan':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Renault%20Logan%20.jpg?width=900',
+'Ford Focus II':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Ford%20Focus%202.jpg?width=900',
+'Hyundai Solaris':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2014%20Hyundai%20Accent%20%28RB2%20MY14%29%20Active%20sedan%20%282015-08-07%29%2001.jpg?width=900',
+'Kia Rio':'https://commons.wikimedia.org/wiki/Special:Redirect/file/%2716%20Kia%20Rio%20Sedan%20%28MIAS%20%2716%29.jpg?width=900'
 }
 function photo(c){return exactPhotos[c.name]||`https://images.unsplash.com/${photos[c.id%photos.length]}?auto=format&fit=crop&w=700&q=75`}
 const initial={money:50000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 50 000 ₽. Поднимись с самого низа.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
