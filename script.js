@@ -127,7 +127,11 @@ function advanceGameMinutes(mins){
   updateGameClockUI();
 }
 window.sleepGame=function(mode){
-  var total=gameTotal(),minute=((total%1440)+1440)%1440,mins=0,label='';
+  var total=gameTotal(),minute=((total%1440)+1440)%1440,canSleep=minute>=1260||minute<480,mins=0,label='';
+  if(!canSleep){
+    alert('Спать можно только с 21:00 до 08:00. Сейчас '+gameTimeText()+'. До вечера лучше заниматься рынком, ремонтом, поездками и сделками.');
+    return realty();
+  }
   if(mode==='morning'){mins=minute<480?480-minute:(1440-minute)+480;label='до 08:00';}
   else {var h=Math.max(1,Math.min(12,Number(mode)||8));mins=h*60;label=h+' ч.';}
   advanceGameMinutes(mins);
@@ -140,8 +144,11 @@ window.sleepGame=function(mode){
   render('<div class="app">'+head('Утро')+'<div class="note"><small>СОН · '+label+'</small><h3>☀️ '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">Пока ты спал, игровой мир продолжил жить.</p></div><div class="notification"><b>🚗 AutoMarket</b><span>Рынок обновился. Появились новые объявления и изменились цены.</span></div><div class="notification"><b>🔔 Телефон</b><span>Есть новое уведомление.</span></div><button class="action green" onclick="home()">📱 Взять телефон</button></div>');
 };
 window.realty=function(){
-  var total=gameTotal(),minute=((total%1440)+1440)%1440,h=Math.floor(minute/60),night=h>=23||h<6;
-  render('<div class="app">'+head('Дом')+'<div class="note"><small>СЕЙЧАС</small><h3>🏠 '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">'+(night?'Уже поздно. Можно лечь спать и пропустить ночь.':'Здесь можно отдохнуть и перемотать время, как в обычной жизни.')+'</p></div><button class="action" onclick="sleepGame(6)">😴 Спать 6 часов</button><button class="action green" onclick="sleepGame(8)">🛏️ Спать 8 часов</button><button class="action" onclick="sleepGame(\'morning\')">⏰ Спать до 08:00</button><div class="note" style="margin-top:10px"><b>⏱ Игровое время</b><p class="muted">1 реальная минута = 1 игровой час. Пока игра открыта, время идёт постоянно.</p></div></div>');
+  var total=gameTotal(),minute=((total%1440)+1440)%1440,canSleep=minute>=1260||minute<480;
+  var sleepButtons=canSleep
+    ?'<button class="action" onclick="sleepGame(6)">😴 Спать 6 часов</button><button class="action green" onclick="sleepGame(8)">🛏️ Спать 8 часов</button><button class="action" onclick="sleepGame(\'morning\')">⏰ Спать до 08:00</button>'
+    :'<div class="note" style="margin-top:10px"><b>🔒 Спать пока рано</b><p class="muted">Сон доступен только с 21:00 до 08:00. Днём занимайся объявлениями, ремонтом, поездками и сделками.</p></div><button class="action" disabled>😴 Сон откроется в 21:00</button>';
+  render('<div class="app">'+head('Дом')+'<div class="note"><small>СЕЙЧАС</small><h3>🏠 '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">'+(canSleep?'Можно закончить день и лечь спать.':'Сейчас дневное время — спать нельзя.')+'</p></div>'+sleepButtons+'<div class="note" style="margin-top:10px"><b>⏱ Игровое время</b><p class="muted">1 реальная минута = 1 игровой час. Сон доступен только с 21:00 до 08:00.</p></div></div>');
 };
 var oldHome=window.home;if(typeof oldHome==='function'&&!oldHome.__v79live){window.home=function(){oldHome.apply(this,arguments);setTimeout(function(){var appBtn=[].slice.call(document.querySelectorAll('.apps button')).find(function(b){return b.textContent.indexOf('Авто')>=0;});if(appBtn&&!document.getElementById('v79RefreshHint')){var h=document.createElement('small');h.id='v79RefreshHint';h.textContent=' LIVE';h.style.opacity='.65';appBtn.appendChild(h);}},120);};window.home.__v79live=true;}
 persist();}install();})();
