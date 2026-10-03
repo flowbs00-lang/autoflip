@@ -254,5 +254,274 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 })();
 </script>
 
+
+<script>
+// V7.9 — входящие покупатели: объявление живёт само, люди пишут в течение игрового дня.
+(function(){
+  const buyerProfiles=[
+    {name:'Артём',icon:'👤',kind:'Обычный покупатель',offer:.93,max:.99,patience:3,text:'Здравствуйте. Машина ещё в продаже?'},
+    {name:'Максим',icon:'⚡',kind:'Заберу сегодня',offer:.96,max:1.01,patience:2,text:'Добрый день. Если договоримся по цене, могу приехать сегодня.'},
+    {name:'Сергей',icon:'🤝',kind:'Любит торговаться',offer:.89,max:.97,patience:4,text:'Посмотрел объявление. Готов обсудить цену.'},
+    {name:'Иван',icon:'🚗',kind:'Ищет для себя',offer:.94,max:1.00,patience:3,text:'Здравствуйте. Автомобиль интересен, хотел бы посмотреть.'},
+    {name:'Денис',icon:'💬',kind:'Сравнивает варианты',offer:.91,max:.985,patience:3,text:'Добрый день. Смотрю несколько машин, ваша тоже заинтересовала.'}
+  ];
+  function gt(){return typeof window.getGameTotal==='function'?window.getGameTotal():Number((state.gameClock&&state.gameClock.total)||0);}
+  function listingCar(){
+    const l=state.activeListing;if(!l)return null;
+    if(Array.isArray(state.cars)&&l.carKey){
+      const found=state.cars.find(c=>(c._garageId||('car-'+c.id+'-'+c.buy))===l.carKey);
+      if(found)return found;
+    }
+    return state.car||null;
+  }
+  function carKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
+  function clockText(total){
+    const m=((Math.round(total)%1440)+1440)%1440,h=Math.floor(m/60),mm=m%60;
+    return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  function saveLife(){if(typeof save==='function')save();else localStorage.setItem(KEY,JSON.stringify(state));}
+  function round1000(n){return Math.max(10000,Math.round(Number(n||0)/1000)*1000);}
+  function nextDelay(car,ask){
+    const fair=(car.repaired?Number(car.market||ask)*1.02:Number(car.market||ask)*.94);
+    const ratio=ask/Math.max(1,fair);
+    if(ratio<=.98)return 60+Math.floor(Math.random()*121);
+    if(ratio<=1.08)return 120+Math.floor(Math.random()*241);
+    return 240+Math.floor(Math.random()*481);
+  }
+  function addDiagForHidden(car,h){
+    if(!car.diagnosed)return;
+    if(!Array.isArray(car.diagnostics))car.diagnostics=[];
+    if(!car.diagnostics.some(d=>d.hiddenDefectName===h.name)){
+      car.diagnostics.push({name:'Скрытый дефект · '+h.name,status:'critical',wear:25,cost:h.cost,hidden:true,hiddenDefectName:h.name});
+    }
+    car.totalRepair=car.diagnostics.filter(x=>x.status!=='good').reduce((s,x)=>s+Number(x.cost||0),0);
+  }
+  function maybeRevealBeforeListing(car){
+    if(!car)return false;
+    car.hiddenSaleChecks=Number(car.hiddenSaleChecks||0)+1;
+    const h=(car.hiddenDefects||[]).find(x=>!x.revealed&&!x.repaired);
+    if(!h)return false;
+    if(Math.random()<.45||car.hiddenSaleChecks>=2){
+      h.revealed=true;car.repaired=false;addDiagForHidden(car,h);
+      log('⚠ Проверка перед объявлением: у '+car.name+' всплыл скрытый дефект — '+h.name+' ('+money(h.cost)+').');
+      saveLife();
+      alert('⚠ Перед публикацией всплыл скрытый дефект: '+h.name+'. Ориентир ремонта: '+money(h.cost)+'.');
+      garageDetails();
+      return true;
+    }
+    return false;
+  }
+
+  window.sellCar=function(){
+    const c=state.car;if(!c)return garage();
+    if(state.activeListing&&listingCar()===c){
+      const l=state.activeListing,threads=(state.buyerInbox||[]).filter(x=>x.listingId===l.id&&x.status!=='declined').length;
+      render('<div class="app">'+head('Моё объявление')+
+        '<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div>'+
+        '<div class="note"><small>ОБЪЯВЛЕНИЕ АКТИВНО</small><h3>'+c.name+'</h3><div class="hero-line"><span>Цена</span><strong>'+money(l.ask)+'</strong></div><div class="hero-line"><span>Опубликовано</span><strong>'+clockText(l.postedAt)+'</strong></div><div class="hero-line"><span>Сообщений</span><strong>'+threads+'</strong></div></div>'+
+        '<p class="muted">Покупатели сами увидят машину и напишут в «Сообщения». Чем адекватнее цена, тем быстрее появляется интерес.</p>'+
+        '<button class="action green" onclick="messages()">💬 Открыть сообщения</button>'+
+        '<button class="action" onclick="cancelCarListing()">🗑️ Снять объявление</button>'+
+        '<button class="action" onclick="garage()">‹ В гараж</button></div>');
+      return;
+    }
+    if(maybeRevealBeforeListing(c))return;
+    const suggested=typeof saleValue==='function'?saleValue(c):round1000((c.market||c.buy)*1.02);
+    render('<div class="app">'+head('Продажа')+
+      '<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div>'+
+      '<div class="note"><small>СОЗДАТЬ ОБЪЯВЛЕНИЕ</small><h3>'+c.name+'</h3><p class="muted">'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км · '+c.city+'</p>'+
+      '<div class="hero-line"><span>Покупка</span><strong>'+money(c.buy)+'</strong></div>'+
+      '<div class="hero-line"><span>Рынок</span><strong>'+money(c.market)+'</strong></div></div>'+
+      '<div class="note"><b>Цена объявления</b><input id="listingPrice" type="number" min="10000" step="1000" value="'+suggested+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div>'+
+      '<p class="muted">После публикации ты не выбираешь покупателя. Люди сами будут писать в течение игрового дня.</p>'+
+      '<button class="action green" onclick="publishCarListing()">📤 Опубликовать объявление</button>'+
+      '<button class="action" onclick="garage()">‹ Назад</button></div>');
+  };
+
+  window.publishCarListing=function(){
+    const c=state.car,input=document.getElementById('listingPrice'),ask=round1000(input&&input.value);
+    if(!c||ask<10000)return alert('Укажи корректную цену.');
+    const now=gt();
+    if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
+    state.activeListing={id:'listing-'+Date.now(),carKey:carKey(c),ask:ask,postedAt:now,nextBuyerAt:now+nextDelay(c,ask),status:'active'};
+    c.listed=true;
+    saveLife();
+    render('<div class="app">'+head('Объявление опубликовано')+
+      '<div class="note"><h3>✅ '+c.name+' выставлен на продажу</h3><div class="hero-line"><span>Цена</span><strong>'+money(ask)+'</strong></div><div class="hero-line"><span>Время</span><strong>'+clockText(now)+'</strong></div></div>'+
+      '<p class="muted">Теперь занимайся другими делами. Если кто-то заинтересуется машиной, на телефон придёт сообщение.</p>'+
+      '<button class="action green" onclick="home()">📱 На главный экран</button>'+
+      '<button class="action" onclick="sellCar()">🏷️ Моё объявление</button></div>');
+  };
+
+  window.cancelCarListing=function(){
+    const c=listingCar();
+    if(c)c.listed=false;
+    state.activeListing=null;
+    saveLife();
+    garage();
+  };
+
+  function buyerOffer(car,l,p){
+    const fair=car.repaired?Number(car.market||l.ask)*1.02:Number(car.market||l.ask)*.92;
+    let offer=Math.min(l.ask*p.offer,fair*(.96+Math.random()*.06));
+    if(l.ask<=fair*.96)offer=Math.min(l.ask,l.ask*(.96+Math.random()*.035));
+    offer=round1000(offer);
+    let max=Math.min(l.ask,Math.max(offer+3000,fair*p.max));
+    max=round1000(max);
+    if(max<offer)max=offer;
+    return {offer,max};
+  }
+  function buyerMessage(p,offer){
+    const variants=[
+      p.text+' '+money(offer)+' устроит?',
+      p.text+' Если '+money(offer)+', готов обсуждать встречу.',
+      p.text+' Мой бюджет около '+money(offer)+'.',
+      p.text+' За '+money(offer)+' смог бы забрать.'
+    ];
+    return variants[Math.floor(Math.random()*variants.length)];
+  }
+  function scheduleNext(l,car){l.nextBuyerAt=gt()+nextDelay(car,l.ask);}
+  function isBuyerTime(total){const m=((Math.round(total)%1440)+1440)%1440;return m>=540&&m<1320;}
+  function deferToMorning(l,total){
+    const m=((Math.round(total)%1440)+1440)%1440;
+    if(m>=1320)l.nextBuyerAt=total+(1440-m)+540;
+    else if(m<540)l.nextBuyerAt=total+(540-m);
+  }
+  function checkBuyerEvents(){
+    const l=state.activeListing;if(!l||l.status!=='active')return;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return;}
+    const now=gt();
+    if(now<Number(l.nextBuyerAt||0))return;
+    if(!isBuyerTime(now)){deferToMorning(l,now);saveLife();return;}
+    if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
+    const active=state.buyerInbox.filter(x=>x.listingId===l.id&&x.status!=='declined'&&x.status!=='sold').length;
+    if(active>=6){l.nextBuyerAt=now+240;saveLife();return;}
+    const p=buyerProfiles[Math.floor(Math.random()*buyerProfiles.length)],prices=buyerOffer(car,l,p);
+    const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:p.icon,kind:p.kind,text:buyerMessage(p,prices.offer),offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(now)};
+    state.buyerInbox.unshift(msg);
+    state.notifications=Number(state.notifications||0)+1;
+    scheduleNext(l,car);
+    saveLife();
+    if(document.querySelector('.home')){
+      const wall=document.querySelector('.home-wall');
+      if(wall){
+        const n=document.createElement('div');n.className='notification';n.onclick=function(){messages();};
+        n.innerHTML='<b>💬 '+p.name+' · '+car.name+'</b><span>'+msg.text+'</span>';
+        const apps=wall.querySelector('.apps');if(apps)wall.insertBefore(n,apps);
+      }
+    }
+  }
+  setInterval(checkBuyerEvents,1000);
+
+  function buyerThreads(){
+    const l=state.activeListing;
+    return (state.buyerInbox||[]).filter(x=>!l||x.listingId===l.id||x.status==='sold');
+  }
+  window.messages=function(){
+    const items=buyerThreads(),unread=items.filter(x=>!x.read&&x.status!=='declined').length;
+    let html='<div class="app">'+head('Сообщения');
+    if(items.length){
+      html+=items.map(function(x){
+        const muted=x.status==='declined'?' · разговор завершён':x.status==='accepted'?' · договорились':x.status==='sold'?' · продано':'';
+        return '<div class="contact" onclick="openBuyerChat(\''+x.id+'\')"><div class="mini">'+x.icon+'</div><div><b>'+x.name+' · '+x.kind+'</b><small>'+x.text+muted+'</small></div>'+(x.read?'':'<span class="unread">1</span>')+'</div>';
+      }).join('');
+    }else{
+      html+='<div class="note"><b>Пока тишина</b><p class="muted">'+(state.activeListing?'Объявление опубликовано. Покупатели напишут сами, когда заинтересуются машиной.':'Сначала выставь автомобиль на продажу.')+'</p></div>';
+    }
+    html+='<div class="note" style="margin-top:10px"><b>💬 Диалоги с продавцами</b><p class="muted">Переговоры о покупке по-прежнему открываются из карточки автомобиля на рынке.</p></div>';
+    if(state.activeListing)html+='<button class="action" onclick="sellCar()">🏷️ Моё объявление</button>';
+    html+='</div>';
+    render(html);
+  };
+
+  window.openBuyerChat=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!x)return messages();
+    if(!x.read){x.read=true;state.notifications=Math.max(0,Number(state.notifications||0)-1);saveLife();}
+    const c=listingCar(),sold=x.status==='sold';
+    let controls='';
+    if(sold)controls='<div class="note"><b>✅ Сделка завершена</b></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
+    else if(x.status==='declined')controls='<div class="note"><b>Разговор завершён</b><p class="muted">Этот покупатель отказался от сделки.</p></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
+    else if(x.status==='accepted')controls='<div class="note"><b>🤝 Цена согласована: '+money(x.offer)+'</b></div><button class="action green" onclick="completeBuyerSale(\''+x.id+'\','+x.offer+')">🚗 Продать автомобиль</button><button class="action" onclick="messages()">Пока не продавать</button>';
+    else controls='<div class="note"><b>Твоя встречная цена</b><input id="buyerCounterPrice" type="number" min="10000" step="1000" value="'+round1000(Math.min((state.activeListing&&state.activeListing.ask)||x.max,x.offer*1.05))+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><button class="action green" onclick="acceptBuyerOffer(\''+x.id+'\')">🤝 Принять '+money(x.offer)+'</button><button class="action" onclick="counterBuyer(\''+x.id+'\')">💬 Предложить свою цену</button><button class="action" onclick="declineBuyer(\''+x.id+'\')">Отказать</button>';
+    render('<div class="app">'+head(x.name)+'<div class="note"><small>'+x.kind+'</small><h3>'+x.icon+' '+x.name+(c?' · '+c.name:'')+'</h3><span class="muted">'+x.time+'</span></div><div class="bubble seller">'+x.name+': «'+x.text+'»</div><div class="bubble seller">Предложение: '+money(x.offer)+'</div>'+controls+'</div>');
+  };
+
+  window.acceptBuyerOffer=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!x)return;
+    x.status='accepted';saveLife();openBuyerChat(id);
+  };
+  window.counterBuyer=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id),input=document.getElementById('buyerCounterPrice');
+    if(!x)return;
+    const ask=round1000(input&&input.value);if(ask<10000)return alert('Введи корректную цену.');
+    x.round=Number(x.round||0)+1;
+    if(ask<=x.max){
+      x.offer=ask;x.status='accepted';x.text='Хорошо, '+money(ask)+' меня устраивает. Договорились.';
+      saveLife();openBuyerChat(id);return;
+    }
+    if(x.round>=x.patience){
+      x.status='declined';x.text='Нет, выше уже не готов. Тогда продолжу искать другую машину.';
+      saveLife();openBuyerChat(id);return;
+    }
+    const step=Math.max(1000,Math.round((x.max-x.offer)*.6/1000)*1000);
+    x.offer=Math.min(x.max,x.offer+step);
+    x.text='Могу немного подняться. '+money(x.offer)+' — мой вариант.';
+    saveLife();openBuyerChat(id);
+  };
+  window.declineBuyer=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!x)return;
+    x.status='declined';x.text='Понял. Тогда продолжу искать другой вариант.';saveLife();openBuyerChat(id);
+  };
+
+  window.completeBuyerSale=function(id,price){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id),c=listingCar();
+    if(!x||!c)return messages();
+    const finalPrice=round1000(price),repairSpent=Number(c.repairSpent||0),profit=finalPrice-Number(c.buy||0)-repairSpent;
+    const beforeRep=Number(state.rep||0),invested=Math.max(1,Number(c.buy||0)+repairSpent),margin=profit/invested;
+    let delta=0,streakBonus=0;
+    if(profit<0){delta=-6;state.profitStreak=0;}
+    else{
+      state.profitStreak=Number(state.profitStreak||0)+1;
+      if(margin<.05)delta=4;else if(margin<.12)delta=7;else if(margin<.20)delta=10;else delta=14;
+      if(state.profitStreak>=3)streakBonus=Math.min(6,Math.floor(state.profitStreak/3)*2);
+      delta+=streakBonus;
+    }
+    state.money=Number(state.money||0)+finalPrice;
+    state.rep=Math.max(0,beforeRep+delta);
+    state.deals=Number(state.deals||0)+1;
+    if(!Array.isArray(state.repHistory))state.repHistory=[];
+    state.repHistory.unshift({delta:delta,reason:(profit<0?'Убыточная продажа ':'Прибыль '+money(profit)+' на ')+c.name+(streakBonus?' · серия +'+streakBonus:''),day:state.day});
+    state.repHistory=state.repHistory.slice(0,20);
+    if(!Array.isArray(state.businessHistory))state.businessHistory=[];
+    state.businessHistory.unshift({car:c.name,buy:Number(c.buy||0),repair:repairSpent,sale:finalPrice,profit:profit,rep:delta,day:state.day,city:c.city,year:c.year});
+    state.businessHistory=state.businessHistory.slice(0,30);
+    x.status='sold';x.offer=finalPrice;
+    (state.buyerInbox||[]).forEach(v=>{if(v.listingId===x.listingId&&v.id!==x.id&&v.status!=='sold')v.status='declined';});
+    c.listed=false;
+    if(Array.isArray(state.cars))state.cars=state.cars.filter(v=>v!==c&&v._garageId!==c._garageId);
+    if(state.car===c)state.car=(state.cars&&state.cars[0])||null;
+    state.activeListing=null;
+    log('Продан '+c.name+' за '+money(finalPrice)+'. Прибыль '+money(profit)+'.');
+    saveLife();
+    render('<div class="app">'+head('Сделка завершена')+'<div class="note"><h3>🎉 '+c.name+' продан</h3><div class="hero-line"><span>Цена продажи</span><strong>'+money(finalPrice)+'</strong></div><div class="hero-line"><span>Покупка + ремонт</span><strong>'+money(Number(c.buy||0)+repairSpent)+'</strong></div><div class="hero-line"><span>Результат</span><strong class="profit">'+(profit>=0?'+':'')+money(profit)+'</strong></div><div class="hero-line"><span>Репутация</span><strong>'+(delta>=0?'+':'')+delta+'</strong></div></div><button class="action green" onclick="market()">🚗 Искать следующий автомобиль</button><button class="action" onclick="home()">📱 На главный экран</button></div>');
+  };
+
+  const priorHome=window.home;
+  if(typeof priorHome==='function'&&!priorHome.__buyerInbox){
+    window.home=function(){
+      priorHome.apply(this,arguments);
+      setTimeout(function(){
+        const unread=(state.buyerInbox||[]).filter(x=>!x.read&&x.status!=='declined').length;
+        if(unread){
+          const note=document.querySelector('.home .notification span');
+          if(note)note.textContent=unread+' новых сообщений от покупателей';
+        }
+      },130);
+    };
+    window.home.__buyerInbox=true;
+  }
+})();
+</script>
+
 </body>
 </html>
