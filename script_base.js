@@ -11,8 +11,32 @@ const exactPhotos={
 'ВАЗ 2109':'https://commons.wikimedia.org/wiki/Special:Redirect/file/VAZ-2109%20%22Devyatka%22%20%284714544714%29.jpg?width=900',
 'ВАЗ 2110':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20110-VAZ-2110%20%284713570255%29.jpg?width=900',
 'Lada Priora':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20priora.jpg?width=900',
-'Lada Kalina':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20Kalina%201.jpg?width=900'
-};
+'Lada Kalina':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20Kalina%201.jpg?width=900',
+'Daewoo Nexia':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Daewoo%20Nexia%20%281%29.jpg?width=900',
+'Renault Logan':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Renault%20Logan.jpg?width=900',
+'Ford Focus II':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Ford%20Focus%20II.jpg?width=900',
+'Hyundai Solaris':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Hyundai%20Solaris%202014.jpg?width=900',
+'Kia Rio':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Kia%20Rio%20UB%20sedan.jpg?width=900',
+'Lada Vesta':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lada%20Vesta%20%28cropped%29.jpg?width=900',
+'Skoda Rapid':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Skoda%20Rapid%20%28NH%29%20%E2%80%93%20Frontansicht%2C%2015.%20Juni%202014%2C%20D%C3%BCsseldorf.jpg?width=900',
+'Volkswagen Polo':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Volkswagen%20Polo%20Sedan%202010.jpg?width=900',
+'Toyota Corolla':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2014%20Toyota%20Corolla%20%28ZRE172R%29%20Ascent%20sedan%20%282015-07-09%29%2001.jpg?width=900',
+'BMW 320i':'https://commons.wikimedia.org/wiki/Special:Redirect/file/BMW%20320i%20F30.jpg?width=900',
+'Toyota Camry 70':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2018%20Toyota%20Camry%20%28ASV70R%29%20Ascent%20sedan%20%282018-11-02%29%2001.jpg?width=900',
+'Kia K5':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2021%20Kia%20K5%20GT-Line%20front%20view.jpg?width=900',
+'BMW X5':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2016%20BMW%20X5%20xDrive40d%20M%20Sport%20Automatic%203.0.jpg?width=900',
+'Mercedes C180':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercedes-Benz%20C%20180%20Avantgarde%20%28W%20205%29%20%E2%80%93%20Frontansicht.jpg?width=900',
+'Audi A4':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Audi%20A4%20B9%20Limousine%203.0%20TDI%20quattro.JPG?width=900',
+'Volkswagen Tiguan':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2018%20Volkswagen%20Tiguan%20SE%20TDi%20BMT%204Motion%202.0.jpg?width=900',
+'Toyota RAV4':'https://commons.wikimedia.org/wiki/Special:Redirect/file/2019%20Toyota%20RAV4%20Design%20HEV%202.5%20Front.jpg?width=900',
+'Geely Monjaro':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Geely%20Xingyue%20L%20001.jpg?width=900',
+'Haval F7':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Haval%20F7%20001.jpg?width=900',
+'Mercedes E200':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercedes-Benz%20E%20200%20Avantgarde%20%28W%20213%29.jpg?width=900',
+'Audi Q5':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Audi%20Q5%20FY%20IMG%200391.jpg?width=900',
+'BMW X5 G05':'https://commons.wikimedia.org/wiki/Special:Redirect/file/BMW%20G05%20IMG%200344.jpg?width=900',
+'Mercedes GLE 300d':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercedes-Benz%20GLE%20300%20d%204MATIC%20%28V%20167%29.jpg?width=900',
+'Porsche Macan':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Porsche%20Macan%20%2895B%29%20%E2%80%93%20Frontansicht%2C%2011.%20Juli%202014%2C%20D%C3%BCsseldorf.jpg?width=900'
+}
 function photo(c){return exactPhotos[c.name]||`https://images.unsplash.com/${photos[c.id%photos.length]}?auto=format&fit=crop&w=700&q=75`}
 const initial={money:50000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 50 000 ₽. Поднимись с самого низа.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
 let state=JSON.parse(localStorage.getItem(KEY)||'null')||structuredClone(initial);
