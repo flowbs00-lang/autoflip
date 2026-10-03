@@ -112,6 +112,7 @@ window.refreshLiveMarket=function(){
 };
 window.now=gameTimeText;
 window.dateText=gameDateText;
+window.getGameTotal=gameTotal;
 function updateGameClockUI(){
   var time=gameTimeText(),date=gameDateText();
   document.querySelectorAll('.status').forEach(function(s){var first=s.querySelector('span');if(first)first.textContent=time;});
