@@ -1,5 +1,5 @@
 // AutoFlip V7.7 loader: preserves the existing core and runs the new profile/history layer after the inline V7 updates.
-document.write('<script src="script_base.js"><\\/script>');
+document.write('<script src="script_base.js"><\/script>');
 setTimeout(function(){
   if(typeof state==='undefined'||typeof KEY==='undefined') return;
   if(!state.businessHistory) state.businessHistory=[];
