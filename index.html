@@ -116,6 +116,7 @@ function garageDetails(){
   </div>`);
 }
 </script>
+
 <script>
 /* V7.4 — полноценная диагностика автомобиля. */
 const diagnosticParts=[
@@ -137,8 +138,8 @@ const diagnosticLabels={
 function buildDiagnostics(c){
   const key=diagnosticLabels[c.risk]||c.risk;
   const seed=c.id*17+c.year;
-  return diagnosticParts.map((part,i)=>{
-    const severity=(seed+i*13)%100;
+  const result=diagnosticParts.map((part,i)=>{
+    const severity=((seed+i*13)%100);
     let status='good',wear=92-(severity%28),cost=part[2];
     if(part[0]===key||key.includes(part[0])){
       status=severity%2?'critical':'warning'; wear=28+(severity%22); cost=c.repair;
@@ -147,6 +148,7 @@ function buildDiagnostics(c){
     }
     return {name:part[0],status,wear,cost};
   });
+  return result;
 }
 function statusIcon(x){return x==='good'?'🟢':x==='warning'?'🟠':'🔴'}
 function diagnose(){
@@ -176,6 +178,42 @@ function service(){
   }
   garageDetails();
 }
+function repairPart(index){
+  const c=state.car;
+  if(!c||!c.diagnosed||!c.diagnostics)return garageDetails();
+  const d=c.diagnostics[index];
+  if(!d||d.status==='good')return garageDetails();
+  if(d.repaired){return alert('Этот узел уже отремонтирован.');}
+  if(state.money<d.cost)return alert(`Не хватает ${money(d.cost-state.money)} на этот ремонт.`);
+  state.money-=d.cost;
+  d.repaired=true;
+  d.status='good';
+  d.wear=Math.max(d.wear,88);
+  c.repairSpent=(c.repairSpent||0)+d.cost;
+  c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);
+  if(c.diagnostics.every(x=>x.status==='good')){
+    c.repaired=true;
+    c.condition=100;
+  }
+  log(`СТО: ${c.name} — отремонтировано: ${d.name}. Стоимость ${money(d.cost)}.`);
+  garageDetails();
+}
+function repairAll(){
+  const c=state.car;
+  if(!c||!c.diagnosed)return garageDetails();
+  const pending=c.diagnostics.filter(x=>x.status!=='good'&&!x.repaired);
+  const total=pending.reduce((sum,x)=>sum+x.cost,0);
+  if(!pending.length)return alert('Все обнаруженные проблемы уже устранены.');
+  if(state.money<total)return alert(`На полный ремонт не хватает ${money(total-state.money)}.`);
+  state.money-=total;
+  pending.forEach(d=>{d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88)});
+  c.repairSpent=(c.repairSpent||0)+total;
+  c.totalRepair=0;
+  c.repaired=true;
+  c.condition=100;
+  log(`СТО: ${c.name} полностью отремонтирован. Потрачено ${money(total)}.`);
+  garageDetails();
+}
 function garageDetails(){
   const c=state.car;
   if(!c)return garage();
@@ -183,18 +221,20 @@ function garageDetails(){
   const profit=Math.round(current-c.buy-(c.repaired?0:(c.totalRepair||c.repair)));
   const diagnostics=c.diagnostics||[];
   const diagHtml=c.diagnosed
-    ? `<div class="note"><small>РЕЗУЛЬТАТ ДИАГНОСТИКИ</small><div class="hero-line"><span>Диагностика</span><strong>${money(c.diagnosticCost||5000)}</strong></div><div class="hero-line"><span>Ремонт ориентировочно</span><strong>${money(c.totalRepair||0)}</strong></div>${diagnostics.map(d=>`<div class="hero-line"><span>${statusIcon(d.status)} ${d.name} <small>${d.wear}%</small></span><strong>${d.status==='good'?'Норма':money(d.cost)}</strong></div>`).join('')}</div>`
+    ? `<div class="note"><small>РЕЗУЛЬТАТ ДИАГНОСТИКИ</small><div class="hero-line"><span>Диагностика</span><strong>${money(c.diagnosticCost||5000)}</strong></div><div class="hero-line"><span>Ремонт ориентировочно</span><strong>${money(c.totalRepair||0)}</strong></div>${diagnostics.map((d,i)=>`<div class="hero-line"><span>${statusIcon(d.status)} ${d.name} <small>${d.wear}%</small></span><strong>${d.status==='good'?'Норма':money(d.cost)}</strong></div>${d.status!=='good'?`<button class="action" onclick="repairPart(${i})">🔧 Отремонтировать за ${money(d.cost)}</button>`:''}`).join('')}</div>`
     : `<div class="warning">⚠ Диагностика ещё не проведена. Часть проблем скрыта.</div>`;
   render(`<div class="app">${head('Автомобиль')}
     <div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div>
     <h3>${c.name}</h3>
     <div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>РАЗНИЦА<b class="profit">${money(profit)}</b></span></div>
     ${diagHtml}
-    ${c.repaired?'<div class="warning">✅ Автомобиль подготовлен к продаже.</div>':''}
-    <button class="action orange" onclick="service()">${c.diagnosed?'🔍 Повторить диагностику':'🛠️ Перейти на СТО'}</button>
+    ${c.repaired?'<div class="warning">✅ Все обнаруженные проблемы устранены. Автомобиль готов к продаже.</div>':''}
+    ${c.diagnosed && !c.repaired && (c.totalRepair||0)>0?`<button class="action orange" onclick="repairAll()">🛠️ Отремонтировать всё за ${money(c.totalRepair)}</button>`:''}
+    <button class="action orange" onclick="service()">${c.diagnosed?'🔍 Провести повторную диагностику':'🛠️ Перейти на СТО'}</button>
     <button class="action" onclick="garage()">‹ В гараж</button>
   </div>`);
 }
 </script>
+
 </body>
 </html>
