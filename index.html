@@ -525,6 +525,12 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     render('<div class="app">'+head('Сделка завершена')+'<div class="note"><h3>🎉 '+c.name+' продан</h3><div class="hero-line"><span>Цена продажи</span><strong>'+money(finalPrice)+'</strong></div><div class="hero-line"><span>Покупка + ремонт</span><strong>'+money(Number(c.buy||0)+repairSpent)+'</strong></div><div class="hero-line"><span>Результат</span><strong class="profit">'+(profit>=0?'+':'')+money(profit)+'</strong></div><div class="hero-line"><span>Репутация</span><strong>'+(delta>=0?'+':'')+delta+'</strong></div></div><button class="action green" onclick="market()">🚗 Искать следующий автомобиль</button><button class="action" onclick="home()">📱 На главный экран</button></div>');
   };
 
+  // Disable old instant-sale flow from earlier V7 screens.
+  window.sell=function(){return window.sellCar();};
+  window.showBuyers=function(){return state.activeListing?window.messages():window.sellCar();};
+  window.startSale=function(){return state.activeListing?window.messages():window.sellCar();};
+  window.renderSale=function(){return state.activeListing?window.messages():window.sellCar();};
+
   const priorHome=window.home;
   if(typeof priorHome==='function'&&!priorHome.__buyerInbox){
     window.home=function(){
