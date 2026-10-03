@@ -321,12 +321,13 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   window.sellCar=function(){
     const c=state.car;if(!c)return garage();
     if(state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===carKey(c)){
-      const l=state.activeListing,threads=(state.buyerInbox||[]).filter(x=>x.listingId===l.id&&x.status!=='declined').length;
+      const l=state.activeListing,threads=(state.buyerInbox||[]).filter(x=>x.listingId===l.id&&x.status!=='declined').length,views=Number(l.views||0),favorites=Number(l.favorites||0);
       render('<div class="app">'+head('Моё объявление')+
         '<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div>'+
-        '<div class="note"><small>ОБЪЯВЛЕНИЕ АКТИВНО</small><h3>'+c.name+'</h3><div class="hero-line"><span>Цена</span><strong>'+money(l.ask)+'</strong></div><div class="hero-line"><span>Опубликовано</span><strong>'+clockText(l.postedAt)+'</strong></div><div class="hero-line"><span>Сообщений</span><strong>'+threads+'</strong></div></div>'+
+        '<div class="note"><small>ОБЪЯВЛЕНИЕ АКТИВНО</small><h3>'+c.name+'</h3><div class="hero-line"><span>Цена</span><strong>'+money(l.ask)+'</strong></div><div class="hero-line"><span>Опубликовано</span><strong>'+clockText(l.postedAt)+'</strong></div><div class="hero-line"><span>Просмотры</span><strong>'+views+'</strong></div><div class="hero-line"><span>В избранном</span><strong>'+favorites+'</strong></div><div class="hero-line"><span>Сообщений</span><strong>'+threads+'</strong></div></div>'+
         '<p class="muted">Покупатели сами увидят машину и напишут в «Сообщения». Чем адекватнее цена, тем быстрее появляется интерес.</p>'+
         '<button class="action green" onclick="messages()">💬 Открыть сообщения</button>'+
+        '<button class="action" onclick="editListingPrice()">✏️ Изменить цену</button>'+
         '<button class="action" onclick="cancelCarListing()">🗑️ Снять объявление</button>'+
         '<button class="action" onclick="garage()">‹ В гараж</button></div>');
       return;
@@ -357,6 +358,37 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       '<p class="muted">Теперь занимайся другими делами. Если кто-то заинтересуется машиной, на телефон придёт сообщение.</p>'+
       '<button class="action green" onclick="home()">📱 На главный экран</button>'+
       '<button class="action" onclick="sellCar()">🏷️ Моё объявление</button></div>');
+  };
+
+  window.editListingPrice=function(){
+    const l=state.activeListing,c=listingCar();
+    if(!l||l.status!=='active'||!c)return sellCar();
+    render('<div class="app">'+head('Изменить цену')+
+      '<div class="note"><small>АКТИВНОЕ ОБЪЯВЛЕНИЕ</small><h3>'+c.name+'</h3><div class="hero-line"><span>Текущая цена</span><strong>'+money(l.ask)+'</strong></div><div class="hero-line"><span>Рыночная цена</span><strong>'+money(c.market)+'</strong></div></div>'+
+      '<div class="note"><b>Новая цена</b><input id="listingEditPrice" type="number" min="10000" step="1000" value="'+l.ask+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div>'+
+      '<p class="muted">Снижение цены обычно ускоряет интерес. Уже написавшие покупатели сохранят свои старые предложения.</p>'+
+      '<button class="action green" onclick="saveListingPrice()">💾 Сохранить цену</button>'+
+      '<button class="action" onclick="sellCar()">‹ Назад к объявлению</button></div>');
+  };
+
+  window.saveListingPrice=function(){
+    const l=state.activeListing,c=listingCar(),input=document.getElementById('listingEditPrice');
+    if(!l||l.status!=='active'||!c)return sellCar();
+    const next=round1000(input&&input.value),old=Number(l.ask||0);
+    if(next<10000)return alert('Укажи корректную цену.');
+    if(next===old)return sellCar();
+    l.ask=next;
+    l.priceChangedAt=gt();
+    l.nextBuyerAt=gt()+nextDelay(c,next,true);
+    if(!Array.isArray(l.priceHistory))l.priceHistory=[];
+    l.priceHistory.unshift({from:old,to:next,time:gt()});
+    l.priceHistory=l.priceHistory.slice(0,10);
+    log('Объявление '+c.name+': цена изменена с '+money(old)+' на '+money(next)+'.');
+    saveLife();
+    render('<div class="app">'+head('Цена изменена')+
+      '<div class="note"><h3>'+(next<old?'🔻 Цена снижена':'🔺 Цена повышена')+'</h3><p>'+c.name+'</p><div class="hero-line"><span>Было</span><strong>'+money(old)+'</strong></div><div class="hero-line"><span>Стало</span><strong>'+money(next)+'</strong></div></div>'+
+      '<p class="muted">Следующие покупатели будут ориентироваться уже на новую цену.</p>'+
+      '<button class="action green" onclick="sellCar()">🏷️ Вернуться к объявлению</button></div>');
   };
 
   window.cancelCarListing=function(){
