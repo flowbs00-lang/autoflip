@@ -41,7 +41,7 @@ const sellerTypes=[
  {type:'Упрямый',icon:'😤',min:.965,flex:.22,patience:2,open:'«Цена указана не просто так. Машина хорошая, сильно уступать не собираюсь.»',reject:'«Нет. Я уже и так поставил адекватную цену.»'},
  {type:'Срочно нужны деньги',icon:'🔥',min:.86,flex:.72,patience:4,open:'«Если заберёте быстро, можем нормально поговорить. Деньги нужны в ближайшее время.»',reject:'«Меньше уже не получится. Мне нужно закрыть вопрос сегодня.»'},
  {type:'Уверенный',icon:'😎',min:.94,flex:.4,patience:3,open:'«Я знаю рынок и цену своей машины. Торг возможен, но аргументы должны быть вескими.»',reject:'«За такую цену я просто оставлю объявление висеть.»'},
- {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.'}
+ {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.»'}
 ];
 function deal(id){
   const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'];
@@ -59,7 +59,7 @@ function renderNegotiation(mode,counter=0){
   if(mode==='angry')sellerText=`«Я же сказал, что слишком низко. Если хотите купить — давайте серьёзнее.»`;
   let extra='';
   if(mode==='start')extra=`<p class="muted">${p.icon} ${p.type}. У каждого продавца свой предел и терпение. Можно торговаться несколько раундов.</p>`;
-  if(mode==='reject')extra='<p class="muted">Предложение отвергнуто. Попробуй поднять цену или закончь разговор.</p>';
+  if(mode==='reject')extra='<p class="muted">Предложение отвергнуто. Попробуй поднять цену или закончить разговор.</p>';
   if(mode==='counter')extra='<p class="muted">Продавец сделал встречное предложение. Теперь можно принять его или попробовать улучшить цену.</p>';
   if(mode==='angry')extra='<p class="muted">Продавец начинает раздражаться. Следующее слишком низкое предложение может закончить разговор.</p>';
   if(mode==='accept')extra='<p class="muted">Цена согласована. Покупать необязательно — ты можешь уйти.</p>';
@@ -112,6 +112,86 @@ function garageDetails(){
     <div class="note"><div class="hero-line"><span>Год</span><strong>${c.year}</strong></div><div class="hero-line"><span>Пробег</span><strong>${c.km.toLocaleString('ru-RU')} км</strong></div><div class="hero-line"><span>Город</span><strong>${c.city}</strong></div><div class="hero-line"><span>Цена покупки</span><strong>${money(c.buy)}</strong></div><div class="hero-line"><span>Рыночная цена</span><strong>${money(c.market)}</strong></div></div>
     <div class="warning">${c.repaired?'✅ Основной дефект устранён.':'⚠ Диагностика: возможная проблема — '+c.risk+'. Ориентир ремонта: '+money(c.repair)+'.'}</div>
     <button class="action orange" onclick="service()">🛠️ Перейти на СТО</button>
+    <button class="action" onclick="garage()">‹ В гараж</button>
+  </div>`);
+}
+</script>
+<script>
+/* V7.4 — полноценная диагностика автомобиля. */
+const diagnosticParts=[
+  ['Двигатель','engine',85000],
+  ['Коробка','gearbox',95000],
+  ['Подвеска','suspension',65000],
+  ['Тормоза','brakes',38000],
+  ['Электрика','electric',30000],
+  ['Кузов','body',55000],
+  ['Жидкости и обслуживание','fluids',18000]
+];
+const diagnosticLabels={
+  'двигатель':'Двигатель','турбина':'Двигатель / турбина','коробка':'Коробка',
+  'подвеска':'Подвеска','ходовая':'Подвеска','вариатор':'Коробка / вариатор',
+  'электрика':'Электрика','кузов':'Кузов','документы':'Документы',
+  'кондиционер':'Кондиционер','сцепление':'Коробка / сцепление',
+  'пневма':'Подвеска / пневма','мультимедиа':'Электрика / мультимедиа','тормоза':'Тормоза'
+};
+function buildDiagnostics(c){
+  const key=diagnosticLabels[c.risk]||c.risk;
+  const seed=c.id*17+c.year;
+  return diagnosticParts.map((part,i)=>{
+    const severity=(seed+i*13)%100;
+    let status='good',wear=92-(severity%28),cost=part[2];
+    if(part[0]===key||key.includes(part[0])){
+      status=severity%2?'critical':'warning'; wear=28+(severity%22); cost=c.repair;
+    } else if(severity<34){
+      status='warning'; wear=48+(severity%20); cost=Math.round(cost*(.85+(severity%20)/100));
+    }
+    return {name:part[0],status,wear,cost};
+  });
+}
+function statusIcon(x){return x==='good'?'🟢':x==='warning'?'🟠':'🔴'}
+function diagnose(){
+  const c=state.car;
+  if(!c)return garage();
+  if(state.money<5000)return alert('Для полной диагностики нужно 5 000 ₽.');
+  state.money-=5000;
+  c.diagnosed=true;
+  c.diagnosticCost=5000;
+  c.diagnostics=buildDiagnostics(c);
+  c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);
+  const bad=c.diagnostics.filter(x=>x.status!=='good').length;
+  objective.textContent='Диагностика завершена';
+  objectiveSub.textContent=bad?`Найдено проблем: ${bad}. Решай, во что вкладываться.`:'Автомобиль в хорошем состоянии.';
+  log(`Полная диагностика ${c.name}: найдено проблем — ${bad}. Стоимость диагностики 5 000 ₽.`);
+  garageDetails();
+}
+function service(){
+  const c=state.car;
+  if(!c){
+    render(`<div class="app">${head('СТО')}<div class="note"><b>Нет автомобиля</b><p class="muted">Сначала купи машину, затем приезжай на СТО.</p></div><button class="action green" onclick="market()">🚗 Найти автомобиль</button></div>`);
+    return;
+  }
+  if(!c.diagnosed){
+    render(`<div class="app">${head('СТО')}<div class="note"><small>ПОЛНАЯ ДИАГНОСТИКА</small><h3>${c.name}</h3><p class="muted">Проверим двигатель, коробку, подвеску, тормоза, электрику, кузов и жидкости.</p><div class="hero-line"><span>Стоимость</span><strong>5 000 ₽</strong></div></div><button class="action orange" onclick="diagnose()">🔍 Провести диагностику</button><button class="action" onclick="garage()">‹ В гараж</button></div>`);
+    return;
+  }
+  garageDetails();
+}
+function garageDetails(){
+  const c=state.car;
+  if(!c)return garage();
+  const current=c.repaired?Math.round(c.market*1.02):c.market;
+  const profit=Math.round(current-c.buy-(c.repaired?0:(c.totalRepair||c.repair)));
+  const diagnostics=c.diagnostics||[];
+  const diagHtml=c.diagnosed
+    ? `<div class="note"><small>РЕЗУЛЬТАТ ДИАГНОСТИКИ</small><div class="hero-line"><span>Диагностика</span><strong>${money(c.diagnosticCost||5000)}</strong></div><div class="hero-line"><span>Ремонт ориентировочно</span><strong>${money(c.totalRepair||0)}</strong></div>${diagnostics.map(d=>`<div class="hero-line"><span>${statusIcon(d.status)} ${d.name} <small>${d.wear}%</small></span><strong>${d.status==='good'?'Норма':money(d.cost)}</strong></div>`).join('')}</div>`
+    : `<div class="warning">⚠ Диагностика ещё не проведена. Часть проблем скрыта.</div>`;
+  render(`<div class="app">${head('Автомобиль')}
+    <div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div>
+    <h3>${c.name}</h3>
+    <div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>РАЗНИЦА<b class="profit">${money(profit)}</b></span></div>
+    ${diagHtml}
+    ${c.repaired?'<div class="warning">✅ Автомобиль подготовлен к продаже.</div>':''}
+    <button class="action orange" onclick="service()">${c.diagnosed?'🔍 Повторить диагностику':'🛠️ Перейти на СТО'}</button>
     <button class="action" onclick="garage()">‹ В гараж</button>
   </div>`);
 }
