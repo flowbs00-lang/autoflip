@@ -33,5 +33,73 @@
 </main>
 <footer>AutoFlip · браузерный игровой прототип · V7 · 2026</footer>
 <script src="script.js"></script>
+<script>
+// V7.1 — переговоры стали отдельным этапом сделки.
+let negotiation={id:null, asking:0, minimum:0, seller:'', round:0, lastOffer:0};
+
+function deal(id){
+  const c=makes[id];
+  const sellers=['Алексей','Дмитрий','Илья','Максим','Роман'];
+  negotiation={
+    id,
+    asking:c.price,
+    minimum:Math.round(c.price*(0.88+((id%5)*0.012))),
+    seller:sellers[id%sellers.length],
+    round:0,
+    lastOffer:0
+  };
+  objective.textContent='Переговоры с продавцом';
+  objectiveSub.textContent='Добейся цены, при которой сделка имеет смысл.';
+  renderNegotiation('start');
+}
+
+function renderNegotiation(mode, counter=0){
+  const n=negotiation;
+  const c=makes[n.id];
+  let sellerText=`«Здравствуйте. ${c.name} ещё в продаже. Хочу ${money(n.asking)}. Сильно уступать не планировал.»`;
+  let extra='';
+  if(mode==='counter') sellerText=`«${money(n.lastOffer)} мало. Могу пойти навстречу и отдать за ${money(counter)}.»`;
+  if(mode==='reject') sellerText=`«Нет, ${money(n.lastOffer)} слишком мало. Если хотите торговаться — давайте без крайностей.»`;
+  if(mode==='accept') sellerText=`«Хорошо, ${money(n.lastOffer)} меня устраивает. Договорились.»`;
+  if(mode==='start') extra='<p class="muted">Сначала назови свою цену. Продавец может согласиться, сделать встречное предложение или отказаться.</p>';
+  if(mode==='reject') extra='<p class="muted">Попробуй более реалистичную цену или закончи разговор.</p>';
+  if(mode==='counter') extra='<p class="muted">Продавец сделал встречное предложение. Решение за тобой.</p>';
+  if(mode==='accept') extra='<p class="muted">Цена согласована. Покупать необязательно — ты можешь уйти.</p>';
+
+  let controls='';
+  if(mode!=='accept'){
+    const suggested=mode==='counter'?counter:Math.round(n.asking*0.90);
+    controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="100000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div>
+    <button class="action green" onclick="makeOffer()">💬 Предложить цену</button>
+    <button class="action" onclick="market()">Закончить переговоры</button>`;
+  }else{
+    controls=`<button class="action green" onclick="buy(${n.id},${n.lastOffer})">🤝 Купить за ${money(n.lastOffer)}</button><button class="action" onclick="market()">Отказаться от сделки</button>`;
+  }
+  render(`<div class="app">${head('Переговоры')}<div class="note"><small>Продавец</small><h3>${n.seller} · ${c.name}</h3><span class="muted">Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
+}
+
+function makeOffer(){
+  const input=document.getElementById('offerPrice');
+  const offer=Math.round(Number(input&&input.value));
+  const n=negotiation;
+  if(!n||n.id===null||!offer||offer<100000)return alert('Введи корректную цену.');
+  n.lastOffer=offer;
+  n.round++;
+  const gap=offer/n.minimum;
+  if(offer>=n.minimum){
+    log(`Переговоры: ${n.seller} согласился на ${money(offer)} за ${makes[n.id].name}.`);
+    renderNegotiation('accept');
+    return;
+  }
+  if(gap>=0.96){
+    const counter=Math.round(Math.max(n.minimum,offer+(n.asking-offer)*0.35)/1000)*1000;
+    log(`Переговоры: ${n.seller} сделал встречное предложение ${money(counter)}.`);
+    renderNegotiation('counter',counter);
+    return;
+  }
+  log(`Переговоры: ${n.seller} отклонил предложение ${money(offer)}.`);
+  renderNegotiation('reject');
+}
+</script>
 </body>
 </html>
