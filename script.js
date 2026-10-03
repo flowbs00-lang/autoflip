@@ -135,14 +135,17 @@ window.sleepGame=function(){
   }
   var mins=minute<480?480-minute:(1440-minute)+480;
   if(mins<=0)return realty();
+  var sleepStart=gameTotal();
   advanceGameMinutes(mins);
+  var sleepEnd=gameTotal(),sleepBuyerCount=0;
+  if(typeof window.processBuyerSleep==='function')sleepBuyerCount=window.processBuyerSleep(sleepStart,sleepEnd,2);
   state.notifications=Number(state.notifications||0)+1;
   if(!Array.isArray(state.lifeEvents))state.lifeEvents=[];
   state.lifeEvents.unshift({time:gameTimeText(),day:gameDateText(),text:'Пока ты спал, рынок обновился и появились новые объявления.'});
   state.lifeEvents=state.lifeEvents.slice(0,10);
   if(state.liveMarket){state.liveMarket.cycle=Number(state.liveMarket.cycle||0)+1;state.liveMarket.visits=0;state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];}
   persist();
-  render('<div class="app">'+head('Утро')+'<div class="note"><small>СОН ДО 08:00</small><h3>☀️ '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">Ночь закончилась. Пока ты спал, игровой мир продолжил жить.</p></div><div class="notification"><b>🚗 AutoMarket</b><span>Рынок обновился. Появились новые объявления и изменились цены.</span></div><div class="notification"><b>🔔 Телефон</b><span>Есть новое уведомление.</span></div><button class="action green" onclick="home()">📱 Взять телефон</button></div>');
+  render('<div class="app">'+head('Утро')+'<div class="note"><small>СОН ДО 08:00</small><h3>☀️ '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">Ночь закончилась. Пока ты спал, игровой мир продолжил жить.</p></div><div class="notification"><b>🚗 AutoMarket</b><span>Рынок обновился. Появились новые объявления и изменились цены.</span></div>'+(sleepBuyerCount?'<div class="notification"><b>💬 Покупатели</b><span>Пока ты спал, пришло сообщений по объявлению: '+sleepBuyerCount+'.</span></div>':'<div class="notification"><b>🔔 Телефон</b><span>За ночь новых сообщений от покупателей не было.</span></div>')+'<button class="action green" onclick="home()">📱 Взять телефон</button></div>');
 };
 window.realty=function(){
   var total=gameTotal(),minute=((total%1440)+1440)%1440,canSleep=minute>=1260||minute<480;
