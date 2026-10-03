@@ -1,22 +1,37 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AutoFlip — Car Dealer Simulator</title><link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AutoFlip — V7</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><a class="logo" href="#game">● AutoFlip</a><nav><a href="#game">Игра</a><a href="#about">Система</a></nav><div class="hdr"><button id="soundBtn" class="sound" onclick="toggleSound()">🔊</button><span id="saveState">Сохранено</span></div></header>
+<header>
+  <a class="logo" href="#game"><span>●</span> AutoFlip</a>
+  <nav><a href="#game">Игра</a><a href="#about">Система</a></nav>
+  <div class="hdr"><button id="soundBtn" class="sound" onclick="toggleSound()">🔊</button><span id="saveState">Сохранено</span></div>
+</header>
 <main>
-<section class="hero"><div><small>CAR DEALER SIMULATOR · V6</small><h1>Твой первый<br><b>автобизнес.</b></h1><p>Покупай автомобили ниже рынка, проверяй их, торгуйся, ремонтируй, путешествуй между городами и продавай дороже.</p><a class="start" href="#game">Начать игру ↓</a></div><div class="hero-card"><small>КАПИТАЛ</small><b id="heroMoney">1 500 000 ₽</b><div class="hero-line"><span>Репутация</span><strong id="heroRep">0</strong></div><div class="hero-line"><span>Сделки</span><strong id="heroDeals">0</strong></div></div></section>
-
-<section id="game" class="game"><div class="game-title"><small>LIVE GAME</small><h2>Игровой телефон</h2><p>Это уже самостоятельный игровой прототип с сохранением прогресса.</p></div>
-<div class="layout"><div class="phone"><div class="notch"></div><div id="screen"></div><div class="homebar"></div></div>
-<aside><div class="objective"><small>ЦЕЛЬ</small><b id="objective">Найди выгодный автомобиль</b><span id="objectiveSub">Открой рынок.</span></div><div id="statsbox" class="statsbox"></div><div id="journal" class="journal"></div><div class="side-buttons"><button onclick="randomEvent()">🎲 Событие</button><button onclick="resetGame()">↻ Сброс</button></div></aside></div></section>
-
-<section id="about" class="about"><small>V6 SYSTEM</small><h2>Теперь есть настоящий игровой цикл.</h2><div class="features">
-<article><b>01</b><h3>30 автомобилей</h3><p>Разные классы, цены, пробеги, риски и потенциальная прибыль.</p></article>
-<article><b>02</b><h3>5 городов</h3><p>Цены и спрос зависят от города. Можно строить маршруты.</p></article>
-<article><b>03</b><h3>Покупатели</h3><p>Разные типы клиентов: торгаш, срочный покупатель, любитель премиума.</p></article>
-<article><b>04</b><h3>Экономика</h3><p>Кредиты, ремонт, топливо, комиссии, репутация и случайные события.</p></article>
-</div></section></main><footer>AutoFlip · браузерный игровой прототип · 2026</footer>
-<script src="script.js"></script></body></html>
+<section class="hero">
+  <div><small>CAR DEALER SIMULATOR · V7</small><h1>Твой первый<br><b>автобизнес.</b></h1><p>Теперь это не просто рынок: внутри игры появился полноценный смартфон с приложениями, уведомлениями, чатами, банком, картой, СТО, гаражом и бизнес-профилем.</p><a class="start" href="#game">Открыть телефон ↓</a></div>
+  <div class="hero-card"><small>КАПИТАЛ</small><b id="heroMoney">1 500 000 ₽</b><div class="hero-line"><span>Репутация</span><strong id="heroRep">0</strong></div><div class="hero-line"><span>Сделки</span><strong id="heroDeals">0</strong></div><div class="hero-line"><span>Город</span><strong id="heroCity">Москва</strong></div></div>
+</section>
+<section id="game" class="game">
+  <div class="game-title"><small>LIVE GAME · V7</small><h2>Твой смартфон</h2><p>Нажимай приложения — они работают вместе и меняют состояние игры.</p></div>
+  <div class="layout">
+    <div class="phone"><div class="notch"></div><div id="screen"></div><div class="homebar"></div></div>
+    <aside><div class="objective"><small>ЦЕЛЬ</small><b id="objective">Найди выгодный автомобиль</b><span id="objectiveSub">Открой рынок и изучи объявления.</span></div><div id="statsbox" class="statsbox"></div><div id="journal" class="journal"></div><div class="side-buttons"><button onclick="randomEvent()">🎲 Событие</button><button onclick="resetGame()">↻ Сброс</button></div></aside>
+  </div>
+</section>
+<section id="about" class="about"><small>V7 SYSTEM</small><h2>Телефон стал частью игрового мира.</h2><div class="features">
+<article><b>01</b><h3>10+ приложений</h3><p>Рынок, сообщения, банк, карта, СТО, гараж, недвижимость, профиль и настройки.</p></article>
+<article><b>02</b><h3>Единый мир</h3><p>Купил авто на рынке — оно появляется в гараже. Ремонт влияет на продажу, деньги идут через банк.</p></article>
+<article><b>03</b><h3>Живой интерфейс</h3><p>Статус-бар, уведомления, чаты, карточки, нижняя панель и плавные переходы создают ощущение телефона.</p></article>
+<article><b>04</b><h3>Сохранение</h3><p>Прогресс автоматически хранится в браузере. Cloudflare обновляет сайт после нового commit.</p></article>
+</div></section>
+</main>
+<footer>AutoFlip · браузерный игровой прототип · V7 · 2026</footer>
+<script src="script.js"></script>
+</body>
+</html>
