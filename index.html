@@ -51,7 +51,7 @@ function deal(id){
   renderNegotiation('start');
 }
 function renderNegotiation(mode,counter=0){
-  const n=negotiation,c=makes[n.id],p=n.personality,inspection=n.inspection||null;
+  const n=negotiation,c=makes[n.id],p=n.personality,inspection=n.inspection||null,tradeReady=Array.isArray(state.cars)&&state.cars.some(function(x){return x&&!x.listed;});
   let sellerText=p.open;
   if(mode==='counter')sellerText=`«${money(n.lastOffer)} мало. Могу пойти навстречу и отдать за ${money(counter)}. Это уже близко к моему пределу.»`;
   if(mode==='reject')sellerText=p.reject;
@@ -67,7 +67,7 @@ function renderNegotiation(mode,counter=0){
   if(mode!=='accept'){
     const suggested=mode==='counter'?counter:(n.lastOffer?Math.round((n.lastOffer+n.asking)/2):Math.round(n.asking*.90));
     controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><button class="action green" onclick="makeOffer()">💬 Предложить цену</button>${mode==='counter'?`<button class="action" onclick="acceptCounter(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="market()">🚪 Закончить переговоры</button>`;
-  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Ориентир ремонта</span><strong>~ ${money(c.repair)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button><button class="action" onclick="market()">Отказаться от сделки</button>`;}
+  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Ориентир ремонта</span><strong>~ ${money(c.repair)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button>${tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}<button class="action" onclick="market()">Отказаться от сделки</button>`;}
   render(`<div class="app">${head('Переговоры')}${purchaseFlowHtml(mode==='accept'?4:3)}<div class="note"><small>Продавец</small><h3>${p.icon} ${n.seller} · ${c.name}</h3><span class="muted">${p.type} · Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
 }
 function acceptCounter(counter){negotiation.lastOffer=counter;renderNegotiation('accept');}
@@ -256,6 +256,141 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
 
 <script>
+// V7.9 — обмен автомобилей и trade-in.
+(function(){
+  window.tradeRound=function(n){return Math.max(10000,Math.round(Number(n||0)/1000)*1000);};
+
+  window.makeExchangeCar=function(reference){
+    var templates=(typeof marketTemplates!=='undefined'&&Array.isArray(marketTemplates))?marketTemplates.slice():[];
+    if(!templates.length)return null;
+    var refValue=Number(reference&&reference.market||reference&&reference.buy||500000);
+    var targetValue=refValue*(.58+Math.random()*.78);
+    var ranked=templates.filter(function(t){return !reference||t.name!==reference.name;}).sort(function(a,b){
+      return Math.abs(Number(a.market||0)-targetValue)-Math.abs(Number(b.market||0)-targetValue);
+    });
+    var pick=ranked[Math.floor(Math.random()*Math.min(6,ranked.length))]||templates[0],car;
+    if(typeof createMarketListing==='function')car=createMarketListing(pick,Number(state.marketListingSeq||0)+17);
+    else car=Object.assign({},pick);
+    car.listingId='EX-'+String(Date.now()).slice(-6)+'-'+Math.floor(Math.random()*900+100);
+    car.basePrice=Number(car.market||car.price||0);
+    car.price=Number(car.market||car.price||0);
+    car.sale=Number(car.market||car.sale||car.price||0);
+    car.repaired=false;car.repairSpent=0;car.listed=false;car.tradeOnly=true;
+    return car;
+  };
+
+  window.tradeSaleCashText=function(dealValue,tradeValue){
+    var diff=tradeRound(Number(dealValue||0)-Number(tradeValue||0));
+    if(Math.abs(Number(dealValue||0)-Number(tradeValue||0))<500)return 'Без доплаты';
+    return Number(dealValue||0)>=Number(tradeValue||0)?'Покупатель доплачивает '+money(Math.abs(diff)):'Ты доплачиваешь '+money(Math.abs(diff));
+  };
+
+  window.tradePurchaseCashText=function(price,tradeValue){
+    var raw=Number(price||0)-Number(tradeValue||0),diff=Math.max(0,Math.round(Math.abs(raw)/1000)*1000);
+    if(Math.abs(raw)<500)return 'Без доплаты';
+    return raw>=0?'Твоя доплата '+money(diff):'Продавец доплачивает '+money(diff);
+  };
+
+  window.tradeCarCardHtml=function(car,valuation,label){
+    if(!car)return '';
+    return '<div class="trade-car-card"><div class="trade-car-photo" style="background-image:linear-gradient(180deg,#0000 48%,#0008),url(\''+photo(car)+'\'),url(\''+fallbackPhoto(car)+'\')"><span>'+label+'</span></div>'+
+      '<div class="trade-car-info"><div class="auto-market-title"><b>'+car.name+'</b><strong>'+money(car.market||car.price||0)+'</strong></div>'+
+      '<div class="auto-market-specs"><span>📅 '+car.year+'</span><span>🛣️ '+Number(car.km||0).toLocaleString('ru-RU')+' км</span><span>📍 '+car.city+'</span><span>🚘 '+(car.body||'—')+'</span></div>'+
+      '<div class="trade-values"><span>Рынок <b>'+money(car.market||car.price||0)+'</b></span>'+(valuation?'<span>Оценка в обмене <b>'+money(valuation)+'</b></span>':'')+'</div></div></div>';
+  };
+
+  var purchaseTradeDeal=null;
+  function ownedTradeCars(){return (Array.isArray(state.cars)?state.cars:[]).filter(function(c){return c&&!c.listed;});}
+  function ownedCarKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
+
+  window.sellerTradeIn=function(targetId){
+    var target=makes[targetId],cars=ownedTradeCars();
+    if(!target)return market();
+    if(!cars.length)return alert('Для обмена нужна хотя бы одна твоя машина без активного объявления.');
+    var html=cars.map(function(c,i){
+      return '<button class="trade-owned-choice" onclick="startSellerTradeIn('+targetId+','+i+')">'+
+        '<div class="trade-owned-photo" style="background-image:url(\''+photo(c)+'\')"></div><div><small>ТВОЯ МАШИНА</small><b>'+c.name+'</b><span>'+c.year+' · '+Number(c.km||0).toLocaleString('ru-RU')+' км</span><strong>Рынок ~ '+money(c.market||c.sale||0)+'</strong></div><em>›</em></button>';
+    }).join('');
+    render('<div class="app">'+head('Предложить обмен')+
+      '<div class="note"><small>ПОКУПКА С TRADE-IN</small><h3>'+target.name+'</h3><p class="muted">Выбери свою машину. Продавец оценит её и назовёт доплату в одну из сторон.</p></div>'+html+
+      '<button class="action" onclick="renderNegotiation(\'accept\')">‹ Назад к покупке</button></div>');
+  };
+
+  window.startSellerTradeIn=function(targetId,index){
+    var target=makes[targetId],cars=ownedTradeCars(),own=cars[index];
+    if(!target||!own)return sellerTradeIn(targetId);
+    var purchasePrice=(typeof negotiation!=='undefined'&&negotiation&&negotiation.id===targetId&&Number(negotiation.lastOffer||0)>0)?Number(negotiation.lastOffer):Number(target.price||0);
+    var ownMarket=Number(own.market||own.sale||own.buy||0);
+    var base=tradeRound(ownMarket*(own.repaired?.96:.89)*(.98+Math.random()*.04));
+    var max=tradeRound(ownMarket*(own.repaired?1.01:.96));
+    purchaseTradeDeal={target:Object.assign({},target),targetId:targetId,targetListingId:target.listingId||'',ownKey:ownedCarKey(own),purchasePrice:purchasePrice,valuation:Math.min(base,max),maxValue:max,round:0,seller:(typeof negotiation!=='undefined'&&negotiation&&negotiation.seller)||target.sellerName||'Продавец'};
+    renderSellerTradeIn('start');
+  };
+
+  window.renderSellerTradeIn=function(mode,counter){
+    var d=purchaseTradeDeal;if(!d)return market();
+    var own=(state.cars||[]).find(function(c){return ownedCarKey(c)===d.ownKey;});
+    if(!own)return sellerTradeIn(d.targetId);
+    var val=mode==='counter'?Number(counter||d.valuation):Number(d.valuation||0),cash=Number(d.purchasePrice)-val;
+    var sellerText='«Могу принять вашу машину в зачёт за '+money(val)+'. '+tradePurchaseCashText(d.purchasePrice,val)+'.»';
+    if(mode==='counter')sellerText='«Так высоко вашу машину не оценю. Могу зачесть её за '+money(val)+'.»';
+    if(mode==='accept')sellerText='«Договорились. Вашу машину считаем за '+money(val)+'. Оформляем обмен.»';
+    if(mode==='reject')sellerText='«Нет, по такой оценке обмен мне неинтересен.»';
+    var controls='';
+    if(mode==='accept'){
+      controls='<button class="action green" onclick="completeSellerTrade()">✅ Оформить обмен</button><button class="action" onclick="renderNegotiation(\'accept\')">Отказаться от обмена</button>';
+    }else if(mode==='reject'){
+      controls='<button class="action" onclick="renderNegotiation(\'accept\')">‹ Вернуться к покупке</button>';
+    }else{
+      var suggested=mode==='counter'?val:tradeRound(Math.min(d.maxValue,val*1.05));
+      controls='<div class="note"><b>Как оценить твою машину</b><input id="sellerTradeValue" type="number" min="10000" step="1000" value="'+suggested+'" style="display:block;width:100%;margin-top:8px;padding:12px"></div>'+
+        '<button class="action green" onclick="makeSellerTradeOffer()">💬 Предложить эту оценку</button>'+
+        (mode==='counter'?'<button class="action" onclick="acceptSellerTradeCounter('+val+')">🤝 Принять оценку '+money(val)+'</button>':'')+
+        '<button class="action" onclick="renderNegotiation(\'accept\')">‹ Назад</button>';
+    }
+    render('<div class="app">'+head('Обмен с продавцом')+
+      tradeCarCardHtml(d.target,d.purchasePrice,'ПОКУПАЕШЬ')+
+      '<div class="trade-swap-arrow">⇅</div>'+tradeCarCardHtml(own,val,'ОТДАЁШЬ')+
+      '<div class="note trade-deal-summary"><small>РАСЧЁТ ОБМЕНА</small><div class="hero-line"><span>Цена покупаемой машины</span><strong>'+money(d.purchasePrice)+'</strong></div><div class="hero-line"><span>Оценка твоей машины</span><strong>'+money(val)+'</strong></div><div class="hero-line"><span>Доплата</span><strong class="'+(cash<=0?'profit':'')+'">'+tradePurchaseCashText(d.purchasePrice,val)+'</strong></div></div>'+
+      '<div class="bubble seller">'+d.seller+': '+sellerText+'</div>'+controls+'</div>');
+  };
+
+  window.makeSellerTradeOffer=function(){
+    var d=purchaseTradeDeal,input=document.getElementById('sellerTradeValue');if(!d)return;
+    var ask=tradeRound(input&&input.value);d.round++;
+    if(ask<=d.maxValue){d.valuation=ask;return renderSellerTradeIn('accept',ask);}
+    if(d.round>=3)return renderSellerTradeIn('reject');
+    var counter=tradeRound(Math.min(d.maxValue,d.valuation+(d.maxValue-d.valuation)*.7));
+    d.valuation=counter;renderSellerTradeIn('counter',counter);
+  };
+  window.acceptSellerTradeCounter=function(value){if(!purchaseTradeDeal)return;purchaseTradeDeal.valuation=tradeRound(value);renderSellerTradeIn('accept',purchaseTradeDeal.valuation);};
+
+  window.completeSellerTrade=function(){
+    var d=purchaseTradeDeal;if(!d)return market();
+    var own=(state.cars||[]).find(function(c){return ownedCarKey(c)===d.ownKey;});
+    if(!own)return alert('Твоя машина для обмена больше недоступна.');
+    var cash=Number(d.purchasePrice)-Number(d.valuation);
+    if(cash>0&&Number(state.money||0)<cash)return alert('Не хватает '+money(cash-Number(state.money||0))+' для доплаты.');
+    state.money=Number(state.money||0)-cash;
+    var repairSpent=Number(own.repairSpent||0),tradeProfit=Number(d.valuation)-Number(own.buy||0)-repairSpent;
+    if(!Array.isArray(state.businessHistory))state.businessHistory=[];
+    state.businessHistory.unshift({car:own.name,buy:Number(own.buy||0),repair:repairSpent,sale:Number(d.valuation),profit:tradeProfit,rep:0,day:state.day,city:own.city,year:own.year,exchange:true});
+    state.businessHistory=state.businessHistory.slice(0,30);
+    state.cars=(state.cars||[]).filter(function(c){return ownedCarKey(c)!==d.ownKey;});
+    var added=Object.assign({},d.target,{buy:Number(d.purchasePrice),repaired:false,repairSpent:0,listed:false,_garageId:'car-ex-'+Date.now()+'-'+Math.floor(Math.random()*999)});
+    state.cars.push(added);state.car=added;state.deals=Number(state.deals||0)+1;
+    if(d.targetListingId&&typeof removePurchasedListing==='function')removePurchasedListing(d.targetListingId);
+    log('Обмен: '+own.name+' зачтён за '+money(d.valuation)+', получен '+added.name+'. '+tradePurchaseCashText(d.purchasePrice,d.valuation)+'.');
+    if(typeof persist==='function')persist();else save();
+    purchaseTradeDeal=null;
+    render('<div class="app">'+head('Обмен завершён')+
+      '<div class="note"><h3>🔄 '+added.name+' теперь в твоём гараже</h3><div class="hero-line"><span>Цена машины</span><strong>'+money(d.purchasePrice)+'</strong></div><div class="hero-line"><span>Твоя машина в зачёт</span><strong>'+money(d.valuation)+'</strong></div><div class="hero-line"><span>Доплата</span><strong>'+tradePurchaseCashText(d.purchasePrice,d.valuation)+'</strong></div></div>'+
+      '<button class="action green" onclick="garage()">🚗 Открыть гараж</button><button class="action" onclick="market()">Объявления</button></div>');
+  };
+})();
+</script>
+
+<script>
 // V7.9 — входящие покупатели: объявление живёт само, люди пишут в течение игрового дня.
 (function(){
   const buyerProfiles=[
@@ -428,7 +563,9 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
     if(activeBuyerCount(l)>=6){l.nextBuyerAt=Number(total)+240;saveLife();return false;}
     const p=buyerProfiles[Math.floor(Math.random()*buyerProfiles.length)],prices=buyerOffer(car,l,p);
-    const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:p.icon,kind:p.kind,text:buyerMessage(p,prices.offer),offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(total)};
+    const wantsTrade=Math.random()<.36&&typeof makeExchangeCar==='function',tradeCar=wantsTrade?makeExchangeCar(car):null,tradeValue=tradeCar?round1000(Number(tradeCar.market||tradeCar.price||0)*(.94+Math.random()*.08)):0;
+    const tradeText=tradeCar?('Предлагаю обмен на '+tradeCar.name+'. '+tradeSaleCashText(prices.offer,tradeValue)+'. Рассмотрим?'):buyerMessage(p,prices.offer);
+    const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:tradeCar?'🔄':p.icon,kind:tradeCar?'Обмен + доплата':p.kind,text:tradeText,offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(total),trade:!!tradeCar,tradeCar:tradeCar,tradeValue:tradeValue};
     state.buyerInbox.unshift(msg);
     state.notifications=Number(state.notifications||0)+1;
     scheduleNext(l,car,total);
@@ -479,8 +616,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     let html='<div class="app">'+head('Сообщения');
     if(items.length){
       html+=items.map(function(x){
-        const muted=x.status==='declined'?' · разговор завершён':x.status==='accepted'?' · договорились':x.status==='sold'?' · продано':'';
-        return '<div class="contact" onclick="openBuyerChat(\''+x.id+'\')"><div class="mini">'+x.icon+'</div><div><b>'+x.name+' · '+x.kind+'</b><small>'+x.text+muted+'</small></div>'+(x.read?'':'<span class="unread">1</span>')+'</div>';
+        const muted=x.status==='declined'?' · разговор завершён':x.status==='accepted'?' · договорились':x.status==='sold'?(x.trade?' · обмен завершён':' · продано'):'';
+        return '<div class="contact '+(x.trade?'trade-thread':'')+'" onclick="openBuyerChat(\''+x.id+'\')"><div class="mini">'+x.icon+'</div><div><b>'+x.name+' · '+x.kind+'</b><small>'+x.text+muted+'</small></div>'+(x.read?'':'<span class="unread">1</span>')+'</div>';
       }).join('');
     }else{
       html+='<div class="note"><b>Пока тишина</b><p class="muted">'+(state.activeListing?'Объявление опубликовано. Покупатели напишут сами, когда заинтересуются машиной.':'Сначала выставь автомобиль на продажу.')+'</p></div>';
@@ -495,12 +632,16 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!x)return messages();
     if(!x.read){x.read=true;state.notifications=Math.max(0,Number(state.notifications||0)-1);saveLife();}
     const c=listingCar(),sold=x.status==='sold';
-    let controls='';
-    if(sold)controls='<div class="note"><b>✅ Сделка завершена</b></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
+    let controls='',tradeBlock='';
+    if(x.trade&&x.tradeCar){
+      tradeBlock=tradeCarCardHtml(x.tradeCar,x.tradeValue,'МАШИНА ПОКУПАТЕЛЯ')+
+        '<div class="note trade-deal-summary"><small>ПРЕДЛОЖЕНИЕ ПО ОБМЕНУ</small><div class="hero-line"><span>Оценка твоей машины</span><strong>'+money(x.offer)+'</strong></div><div class="hero-line"><span>Машина покупателя</span><strong>'+money(x.tradeValue)+'</strong></div><div class="hero-line"><span>Доплата</span><strong>'+tradeSaleCashText(x.offer,x.tradeValue)+'</strong></div></div>';
+    }
+    if(sold)controls='<div class="note"><b>✅ '+(x.trade?'Обмен завершён':'Сделка завершена')+'</b></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
     else if(x.status==='declined')controls='<div class="note"><b>Разговор завершён</b><p class="muted">Этот покупатель отказался от сделки.</p></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
-    else if(x.status==='accepted')controls='<div class="note"><b>🤝 Цена согласована: '+money(x.offer)+'</b></div><button class="action green" onclick="completeBuyerSale(\''+x.id+'\','+x.offer+')">🚗 Продать автомобиль</button><button class="action" onclick="messages()">Пока не продавать</button>';
-    else controls='<div class="note"><b>Твоя встречная цена</b><input id="buyerCounterPrice" type="number" min="10000" step="1000" value="'+round1000(Math.min((state.activeListing&&state.activeListing.ask)||x.max,x.offer*1.05))+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><button class="action green" onclick="acceptBuyerOffer(\''+x.id+'\')">🤝 Принять '+money(x.offer)+'</button><button class="action" onclick="counterBuyer(\''+x.id+'\')">💬 Предложить свою цену</button><button class="action" onclick="declineBuyer(\''+x.id+'\')">Отказать</button>';
-    render('<div class="app">'+head(x.name)+'<div class="note"><small>'+x.kind+'</small><h3>'+x.icon+' '+x.name+(c?' · '+c.name:'')+'</h3><span class="muted">'+x.time+'</span></div><div class="bubble seller">'+x.name+': «'+x.text+'»</div><div class="bubble seller">Предложение: '+money(x.offer)+'</div>'+controls+'</div>');
+    else if(x.status==='accepted')controls='<div class="note"><b>🤝 Договорились: '+money(x.offer)+'</b></div><button class="action green" onclick="'+(x.trade?'completeBuyerTrade(\''+x.id+'\','+x.offer+')':'completeBuyerSale(\''+x.id+'\','+x.offer+')')+'">'+(x.trade?'🔄 Оформить обмен':'🚗 Продать автомобиль')+'</button><button class="action" onclick="messages()">Пока не оформлять</button>';
+    else controls='<div class="note"><b>'+(x.trade?'Твоя оценка своей машины':'Твоя встречная цена')+'</b><input id="buyerCounterPrice" type="number" min="10000" step="1000" value="'+round1000(Math.min((state.activeListing&&state.activeListing.ask)||x.max,x.offer*1.05))+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px"></div><button class="action green" onclick="acceptBuyerOffer(\''+x.id+'\')">🤝 Принять '+money(x.offer)+'</button><button class="action" onclick="counterBuyer(\''+x.id+'\')">💬 Предложить свою цену</button><button class="action" onclick="declineBuyer(\''+x.id+'\')">Отказать</button>';
+    render('<div class="app">'+head(x.name)+'<div class="note"><small>'+x.kind+'</small><h3>'+x.icon+' '+x.name+(c?' · '+c.name:'')+'</h3><span class="muted">'+x.time+'</span></div><div class="bubble seller">'+x.name+': «'+x.text+'»</div>'+tradeBlock+(!x.trade?'<div class="bubble seller">Предложение: '+money(x.offer)+'</div>':'')+controls+'</div>');
   };
 
   window.acceptBuyerOffer=function(id){
@@ -513,7 +654,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     const ask=round1000(input&&input.value);if(ask<10000)return alert('Введи корректную цену.');
     x.round=Number(x.round||0)+1;
     if(ask<=x.max){
-      x.offer=ask;x.status='accepted';x.text='Хорошо, '+money(ask)+' меня устраивает. Договорились.';
+      x.offer=ask;x.status='accepted';x.text=x.trade?('Хорошо, считаем вашу машину за '+money(ask)+'. По обмену договорились.'):('Хорошо, '+money(ask)+' меня устраивает. Договорились.');
       saveLife();openBuyerChat(id);return;
     }
     if(x.round>=x.patience){
@@ -522,7 +663,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     }
     const step=Math.max(1000,Math.round((x.max-x.offer)*.6/1000)*1000);
     x.offer=Math.min(x.max,x.offer+step);
-    x.text='Могу немного подняться. '+money(x.offer)+' — мой вариант.';
+    x.text=x.trade?('Могу поднять оценку вашей машины до '+money(x.offer)+'. Выше уже тяжело.'):('Могу немного подняться. '+money(x.offer)+' — мой вариант.');
     saveLife();openBuyerChat(id);
   };
   window.declineBuyer=function(id){
@@ -563,6 +704,46 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     render('<div class="app">'+head('Сделка завершена')+'<div class="note"><h3>🎉 '+c.name+' продан</h3><div class="hero-line"><span>Цена продажи</span><strong>'+money(finalPrice)+'</strong></div><div class="hero-line"><span>Покупка + ремонт</span><strong>'+money(Number(c.buy||0)+repairSpent)+'</strong></div><div class="hero-line"><span>Результат</span><strong class="profit">'+(profit>=0?'+':'')+money(profit)+'</strong></div><div class="hero-line"><span>Репутация</span><strong>'+(delta>=0?'+':'')+delta+'</strong></div></div><button class="action green" onclick="market()">🚗 Искать следующий автомобиль</button><button class="action" onclick="home()">📱 На главный экран</button></div>');
   };
 
+  window.completeBuyerTrade=function(id,dealValue){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id),c=listingCar();
+    if(!x||!c||!x.trade||!x.tradeCar)return messages();
+    const finalValue=round1000(dealValue),tradeValue=round1000(x.tradeValue),cash=finalValue-tradeValue;
+    if(cash<0&&Number(state.money||0)<Math.abs(cash))return alert('Для обмена нужно доплатить '+money(Math.abs(cash))+'. На руках недостаточно денег.');
+    const repairSpent=Number(c.repairSpent||0),profit=finalValue-Number(c.buy||0)-repairSpent;
+    const beforeRep=Number(state.rep||0),invested=Math.max(1,Number(c.buy||0)+repairSpent),margin=profit/invested;
+    let delta=0,streakBonus=0;
+    if(profit<0){delta=-6;state.profitStreak=0;}
+    else{
+      state.profitStreak=Number(state.profitStreak||0)+1;
+      if(margin<.05)delta=4;else if(margin<.12)delta=7;else if(margin<.20)delta=10;else delta=14;
+      if(state.profitStreak>=3)streakBonus=Math.min(6,Math.floor(state.profitStreak/3)*2);
+      delta+=streakBonus;
+    }
+    state.money=Number(state.money||0)+cash;
+    state.rep=Math.max(0,beforeRep+delta);
+    state.deals=Number(state.deals||0)+1;
+    if(!Array.isArray(state.repHistory))state.repHistory=[];
+    state.repHistory.unshift({delta:delta,reason:'Обмен '+c.name+' · оценка '+money(finalValue)+(profit>=0?' · прибыль '+money(profit):' · убыток '+money(Math.abs(profit))),day:state.day});
+    state.repHistory=state.repHistory.slice(0,20);
+    if(!Array.isArray(state.businessHistory))state.businessHistory=[];
+    state.businessHistory.unshift({car:c.name,buy:Number(c.buy||0),repair:repairSpent,sale:finalValue,profit:profit,rep:delta,day:state.day,city:c.city,year:c.year,exchange:true,received:x.tradeCar.name});
+    state.businessHistory=state.businessHistory.slice(0,30);
+
+    x.status='sold';x.offer=finalValue;x.tradeCompleted=true;
+    (state.buyerInbox||[]).forEach(v=>{if(v.listingId===x.listingId&&v.id!==x.id&&v.status!=='sold')v.status='declined';});
+    c.listed=false;
+    if(Array.isArray(state.cars))state.cars=state.cars.filter(v=>v!==c&&v._garageId!==c._garageId);
+    const received=Object.assign({},x.tradeCar,{buy:tradeValue,repaired:false,repairSpent:0,listed:false,_garageId:'car-trade-'+Date.now()+'-'+Math.floor(Math.random()*999)});
+    if(!Array.isArray(state.cars))state.cars=[];
+    state.cars.push(received);state.car=received;state.activeListing=null;
+    log('Обмен: '+c.name+' оценён в '+money(finalValue)+'. Получен '+received.name+' за '+money(tradeValue)+'. '+tradeSaleCashText(finalValue,tradeValue)+'.');
+    saveLife();
+    render('<div class="app">'+head('Обмен завершён')+
+      tradeCarCardHtml(received,tradeValue,'ТЕПЕРЬ ТВОЯ')+
+      '<div class="note"><h3>🔄 Обмен оформлен</h3><div class="hero-line"><span>Твоя машина оценена</span><strong>'+money(finalValue)+'</strong></div><div class="hero-line"><span>Полученная машина</span><strong>'+money(tradeValue)+'</strong></div><div class="hero-line"><span>Доплата</span><strong>'+tradeSaleCashText(finalValue,tradeValue)+'</strong></div><div class="hero-line"><span>Результат старой сделки</span><strong class="'+(profit>=0?'profit':'market-bad')+'">'+(profit>=0?'+':'')+money(profit)+'</strong></div></div>'+
+      '<button class="action green" onclick="garage()">🚗 Открыть гараж</button><button class="action" onclick="messages()">Сообщения</button></div>');
+  };
+
   // Disable old instant-sale flow from earlier V7 screens.
   window.sell=function(){return window.sellCar();};
   window.showBuyers=function(){return state.activeListing?window.messages():window.sellCar();};
@@ -600,8 +781,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     wrapped.__autoBottomTab=true;
     window[name]=wrapped;
   }
-  ['market','carView','marketInspection'].forEach(function(name){wrapAutoTab(name,'listings');});
-  ['messages','openBuyerChat','completeBuyerSale'].forEach(function(name){wrapAutoTab(name,'messages');});
+  ['market','carView','marketInspection','sellerTradeIn','startSellerTradeIn','renderSellerTradeIn','makeSellerTradeOffer','acceptSellerTradeCounter','completeSellerTrade'].forEach(function(name){wrapAutoTab(name,'listings');});
+  ['messages','openBuyerChat','completeBuyerSale','completeBuyerTrade'].forEach(function(name){wrapAutoTab(name,'messages');});
   ['profile'].forEach(function(name){wrapAutoTab(name,'profile');});
   ['sellCar','editListingPrice','saveListingPrice','publishCarListing'].forEach(function(name){wrapAutoTab(name,'sell');});
 })();

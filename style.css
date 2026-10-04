@@ -1653,3 +1653,134 @@ button[disabled]{cursor:default}
   .auto-bottom-nav{left:8px;right:8px}
   .auto-tab small{font-size:6.1px}
 }
+
+
+/* AUTOMARKET EXCHANGE DEALS */
+.trade-action{
+  border-color:#c8dbf3!important;
+  background:#f3f8ff!important;
+  color:#246fc8!important;
+}
+.trade-thread{
+  border-color:#cfe1f4!important;
+  background:linear-gradient(145deg,#fff,#f5f9ff)!important;
+}
+.trade-car-card{
+  overflow:hidden;
+  margin:9px 0;
+  border:1px solid #dce6ef;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 7px 20px rgba(48,72,94,.08);
+}
+.trade-car-photo{
+  position:relative;
+  height:145px;
+  background-color:#dfe8ef;
+  background-position:center;
+  background-size:cover;
+}
+.trade-car-photo>span{
+  position:absolute;
+  left:9px;
+  bottom:9px;
+  padding:5px 8px;
+  border-radius:9px;
+  background:rgba(15,29,42,.78);
+  color:#fff;
+  font-size:6px;
+  font-weight:850;
+  letter-spacing:.7px;
+}
+.trade-car-info{padding:10px 11px 11px}
+.trade-values{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-top:9px;
+}
+.trade-values span{
+  padding:8px;
+  border-radius:10px;
+  background:#f5f8fb;
+  color:#778a9b;
+  font-size:6.5px;
+}
+.trade-values b{
+  display:block;
+  margin-top:3px;
+  color:#23384b;
+  font-size:8px;
+}
+.trade-deal-summary{
+  border-color:#cfe0f2!important;
+  background:linear-gradient(145deg,#f7fbff,#fff)!important;
+}
+.trade-swap-arrow{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  margin:-3px auto;
+  border:1px solid #d2e1ef;
+  border-radius:50%;
+  background:#fff;
+  color:#2b78d5;
+  box-shadow:0 5px 13px rgba(43,100,160,.12);
+  font-size:18px;
+  font-weight:800;
+}
+.trade-owned-choice{
+  width:100%;
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr) 16px;
+  gap:10px;
+  align-items:center;
+  margin-bottom:9px;
+  padding:8px;
+  border:1px solid #dfe8ef;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 5px 15px rgba(48,72,94,.07);
+  color:#1d3042;
+  text-align:left;
+}
+.trade-owned-photo{
+  width:82px;
+  height:66px;
+  border-radius:11px;
+  background-color:#e4ebf1;
+  background-position:center;
+  background-size:cover;
+}
+.trade-owned-choice small{
+  display:block;
+  color:#73879a;
+  font-size:6px;
+  font-weight:850;
+}
+.trade-owned-choice b{
+  display:block;
+  margin-top:2px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:9.5px;
+  white-space:nowrap;
+}
+.trade-owned-choice span{
+  display:block;
+  margin-top:3px;
+  color:#8191a0;
+  font-size:6.7px;
+}
+.trade-owned-choice strong{
+  display:block;
+  margin-top:5px;
+  color:#2474d1;
+  font-size:7.5px;
+}
+.trade-owned-choice em{
+  color:#91a2b1;
+  font-size:22px;
+  font-style:normal;
+}
