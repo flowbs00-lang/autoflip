@@ -9,6 +9,114 @@ var legacyTemplateCount=30;
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
 var marketPhotoCatalogVersion=2;
+var marketPhotoColorCatalogVersion=1;
+var marketPhotoColors={};
+[
+ ['1992 Lada 2106.jpg','Бежевый'],
+ ['VAZ-2106.jpg','Синий'],
+ ['Lada 2106.jpg','Бежевый'],
+ ['Lada 2107 (VAZ-2107) 01.jpg','Белый'],
+ ['Vaz 2107.jpg','Белый'],
+ ['Lada VAZ 2107.jpg','Белый'],
+ ['Vaz-2107.JPG','Синий'],
+ ['Vaz2107.jpg','Чёрный'],
+ ['VAZ-2109 "Devyatka" (4714544714).jpg','Белый'],
+ ['Lada 110-VAZ-2110 (4713570255).jpg','Белый'],
+ ['LADA-110.jpg','Серебристый'],
+ ['Lada priora.jpg','Чёрный'],
+ ['Lada Priora.jpg','Чёрный'],
+ ['Lada Kalina 1.jpg','Красный'],
+ ['Lada Kalina.jpg','Жёлтый'],
+ ['Lada Kalina.JPG','Красный'],
+ ['20110809 daewoo nexia 01.jpg','Серый'],
+ ['Renault Logan .jpg','Белый'],
+ ['Ford Focus II.jpg','Серебристый'],
+ ['2014-2017 Hyundai Solaris Sedan (front).jpg','Белый'],
+ ['Kia Rio (UB) sedan in Babat Pertamina Petrol Station - Bbt. Supat, Musi Banyuasin, SS.jpg','Белый'],
+ ['LADA Vesta.jpg','Серый'],
+ ['2012 Škoda Rapid (NH) sedan (2012-10-26).jpg','Белый'],
+ ['Vw polo sedan.jpg','Серебристый'],
+ ['2015 Toyota Corolla Altis (ZRE172R) 2.0V sedan (2015-12-30).jpg','Серебристый'],
+ ['BMW 320i F30 (10118122084).jpg','Белый'],
+ ['2018 Toyota Camry (XV70).jpg','Белый'],
+ ['Kia K5 DL3 grey (1).jpg','Серый'],
+ ['BMW X5 F15.jpg','Белый'],
+ ['Mercedes-Benz C180 W205 (16005105286).jpg','Чёрный'],
+ ['Audi A4 B9.jpg','Белый'],
+ ['2018 Volkswagen Tiguan 280 TSI (front).jpg','Белый'],
+ ['Toyota RAV4 (XA50) IMG 1998.jpg','Белый'],
+ ['Geely Monjaro.jpg','Синий'],
+ ['Haval F7 IMG001.jpg','Серебристый'],
+ ['Mercedes-Benz E 200 Sports (W213) front.jpg','Серебристый'],
+ ['Audi Q5 FY Facelift IMG 5684.jpg','Зелёный'],
+ ['BMW X5 xDrive45e M Sport (G05, 2022) (54537623230).jpg','Чёрный'],
+ ['Mercedes-Benz W167 GLE 300d 4MATIC 2022.jpg','Серый'],
+ ['2022 Porsche Macan 1X7A6048.jpg','Белый'],
+ ['Chevrolet Lacetti front.jpg','Синий'],
+ ['Chevrolet Lacetti 170530.jpg','Серебристый'],
+ ['Chevrolet Lacetti (7158279272).jpg','Серебристый'],
+ ['Chevrolet Cruze J300 sedan China 2012-06-16.jpg','Чёрный'],
+ ['Chevrolet Cruze J300 sedan China 2012-06-23.jpg','Синий'],
+ ['Chevrolet Cruze J300 sedan China 2012-04-14.jpg','Белый'],
+ ['Opel Astra J.JPG','Чёрный'],
+ ['Opel Astra J 100805.jpg','Зелёный'],
+ ['Opel Astra J in Pendik.jpg','Чёрный'],
+ ['Nissan Almera.jpg','Белый'],
+ ['Mitsubishi Lancer X 001.jpg','Белый'],
+ ['Mazda 3 3rd generation sedan.jpg','Синий'],
+ ['Skoda Octavia III facelift IMG001.jpg','Белый'],
+ ['Hyundai Elantra (AD).jpg','Белый'],
+ ['HYUNDAI ELANTRA (AD) China.jpg','Белый'],
+ ["Kia Ceed - Mondial de l'Automobile de Paris 2018 - 001.jpg",'Синий'],
+ ['Kia Ceed Monrepos 2018 IMG 0107.jpg','Синий'],
+ ['Kia Ceed, GIMS 2018, Le Grand-Saconnex (1X7A1901).jpg','Синий'],
+ ['Renault Duster.JPG','Серебристый'],
+ ['Renault-Duster-.jpg','Серебристый'],
+ ['Nissan Qashqai J11 Enmis.jpeg','Белый'],
+ ['Nissan Qashqai (J11) 190039.jpg','Белый'],
+ ['0 Nissan Qashqai (J11) 1.jpg','Серый'],
+ ['Mazda6 (GJ) front.jpg','Красный'],
+ ['Mazda6 (GJ) in Jambi City, JA.jpg','Белый'],
+ ['MAZDA6 (GJ) China (37).jpg','Красный'],
+ ['HONDA ACCORD (CR1-CR3, CR6-CR7, CT1-CT2) China (63).jpg','Белый'],
+ ['HONDA ACCORD (CR1-CR3, CR6-CR7, CT1-CT2) China (facelift).jpg','Белый'],
+ ['Subaru Forester 2018 (SK) CUV Front.jpg','Белый'],
+ ['Subaru FORESTER Premium (5BA-SK9) front.jpg','Белый'],
+ ['Chery Tiggo7 Pro 2023 (53631773981).jpg','Серый'],
+ ['2023 Chery Tiggo 7 Pro, Pakuwon Mall, West Surabaya.jpg','Красный'],
+ ['Chery Tiggo 7 Pro каршеринга Ситидрайв в Москве (июнь 2022) (01).jpg','Белый'],
+ ['Coolray Front.jpg','Синий'],
+ ['Geely Coolray 2022 (1).jpg','Белый'],
+ ['Geely Coolray 2023.jpg','Синий'],
+ ['Volvo XC60 II Shishi 01 2022-09-09.jpg','Белый'],
+ ['Volvo XC60 II Shishi 02 2022-09-09.jpg','Белый'],
+ ['Volvo XC60 II Shishi 01 2022-03-11.jpg','Белый'],
+ ['2018 Lexus RX 350L 3.5L front 3.24.19.jpg','Белый'],
+ ['2018 Lexus RX 350L 3.5L rear 3.24.19.jpg','Белый'],
+ ['Toyota Land Cruiser Prado 150.jpg','Белый']
+].forEach(function(x){marketPhotoColors[commons(x[0])]=x[1];});
+
+var marketModelPhotoColors={
+ 'ВАЗ 2106':'Бежевый','ВАЗ 2107':'Белый','ВАЗ 2109':'Белый','ВАЗ 2110':'Белый',
+ 'Lada Priora':'Чёрный','Lada Kalina':'Красный','Daewoo Nexia':'Серый',
+ 'Renault Logan':'Белый','Ford Focus II':'Серебристый','Hyundai Solaris':'Белый',
+ 'Kia Rio':'Белый','Lada Vesta':'Серый','Skoda Rapid':'Белый','Volkswagen Polo':'Серебристый',
+ 'Toyota Corolla':'Серебристый','BMW 320i':'Белый','Toyota Camry 70':'Белый','Kia K5':'Серый',
+ 'BMW X5':'Белый','Mercedes C180':'Чёрный','Audi A4':'Белый','Volkswagen Tiguan':'Белый',
+ 'Toyota RAV4':'Белый','Geely Monjaro':'Синий','Haval F7':'Серебристый','Mercedes E200':'Серебристый',
+ 'Audi Q5':'Зелёный','BMW X5 G05':'Чёрный','Mercedes GLE 300d':'Серый','Porsche Macan':'Белый',
+ 'Chevrolet Lacetti':'Синий','Chevrolet Cruze':'Чёрный','Opel Astra J':'Чёрный','Nissan Almera':'Белый',
+ 'Mitsubishi Lancer X':'Белый','Mazda 3':'Синий','Skoda Octavia':'Белый','Hyundai Elantra':'Белый',
+ 'Kia Ceed':'Синий','Renault Duster':'Серебристый','Nissan Qashqai':'Белый','Mazda 6':'Красный',
+ 'Honda Accord':'Белый','Subaru Forester':'Белый','Chery Tiggo 7 Pro':'Красный',
+ 'Geely Coolray':'Синий','Volvo XC60':'Белый','Lexus RX 350':'Белый',
+ 'Toyota Land Cruiser Prado':'Белый'
+};
+
+function marketColorFor(car,variant){
+ var url=car&&car.photoUrl?car.photoUrl:marketPhotoFor(car,variant);
+ return marketPhotoColors[url]||marketModelPhotoColors[car&&car.name]||(car&&car.color)||'Серый';
+}
 function marketPhotoHash(value){
  var s=String(value||''),h=0;
  for(var i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;
@@ -97,7 +205,7 @@ function createMarketListing(template,forcedVariant){
  return Object.assign({},template,{
    id:0,modelId:template.id,listingId:listingId,city:city,year:year,km:km,
    basePrice:price,price:price,market:fair,sale:fair,repair:repair,risk:risk,
-   color:marketColors[Math.abs(variant)%marketColors.length],body:marketBody(template.name),
+   color:marketColorFor({name:template.name,photoUrl:photoUrl},variant),body:marketBody(template.name),
    trim:marketTrim(template,variant),condition:condition,conditionLabel:marketConditionLabel(condition),
    photoUrl:photoUrl,photoVariant:Math.abs(variant)%Math.max(1,pool.length),
    photoPosition:marketPhotoPositions[Math.abs(variant)%marketPhotoPositions.length],
@@ -119,6 +227,7 @@ function ensureMarketListingMeta(car,index){
  if(!car.sellerUrgency)car.sellerUrgency=car.sellerKind==='Срочная продажа'?'high':(car.sellerKind==='Перекупщик'?'medium':'normal');
  if(!car.photoPosition)car.photoPosition=marketPhotoPositions[Math.abs(variant)%marketPhotoPositions.length];
  if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion)car.photoUrl=marketPhotoFor(car,variant);
+ if(Number(state.marketPhotoColorCatalogVersion||0)<marketPhotoColorCatalogVersion)car.color=marketColorFor(car,variant);
  return car;
 }
 function marketAgeText(car){
@@ -243,6 +352,14 @@ if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion){
  if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=marketPhotoFor(car,i);});
  if(state.car)state.car.photoUrl=marketPhotoFor(state.car,0);
  state.marketPhotoCatalogVersion=marketPhotoCatalogVersion;
+ reindexMarketListings();
+ localStorage.setItem(KEY,JSON.stringify(state));
+}
+if(Number(state.marketPhotoColorCatalogVersion||0)<marketPhotoColorCatalogVersion){
+ if(typeof makes!=='undefined')makes.forEach(function(car,i){if(car)car.color=marketColorFor(car,i);});
+ if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.color=marketColorFor(car,i);});
+ if(state.car)state.car.color=marketColorFor(state.car,0);
+ state.marketPhotoColorCatalogVersion=marketPhotoColorCatalogVersion;
  reindexMarketListings();
  localStorage.setItem(KEY,JSON.stringify(state));
 }
