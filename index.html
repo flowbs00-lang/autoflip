@@ -50,8 +50,15 @@ function deal(id){
   objectiveSub.textContent=inspection?`Осмотр дал аргумент для торга: ${inspection.risk}.`:`${p.icon} ${p.type}: можно торговаться и без осмотра, но позиция слабее.`;
   renderNegotiation('start');
 }
+function cancelPurchaseNegotiation(){
+  negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0,inspection:null};
+  return market('all',0);
+}
 function renderNegotiation(mode,counter=0){
-  const n=negotiation,c=makes[n.id],p=n.personality,inspection=n.inspection||null,tradeReady=Array.isArray(state.cars)&&state.cars.some(function(x){return x&&!x.listed;});
+  const n=negotiation;
+  if(!n||n.id===null||n.id===undefined||!makes[n.id])return market('all',0);
+  if(mode==='accept'&&Number(n.lastOffer||0)<10000)return cancelPurchaseNegotiation();
+  const c=makes[n.id],p=n.personality,inspection=n.inspection||null,tradeReady=Array.isArray(state.cars)&&state.cars.some(function(x){return x&&!x.listed;});
   let sellerText=p.open;
   if(mode==='counter')sellerText=`«${money(n.lastOffer)} мало. Могу пойти навстречу и отдать за ${money(counter)}. Это уже близко к моему пределу.»`;
   if(mode==='reject')sellerText=p.reject;
@@ -66,8 +73,8 @@ function renderNegotiation(mode,counter=0){
   let controls='';
   if(mode!=='accept'){
     const suggested=mode==='counter'?counter:(n.lastOffer?Math.round((n.lastOffer+n.asking)/2):Math.round(n.asking*.90));
-    controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><div class="negotiation-choice-row"><button class="action green" onclick="makeOffer()">💬 Предложить цену</button>${mode==='start'&&tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}</div>${mode==='counter'?`<button class="action" onclick="acceptCounter(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="market()">🚪 Закончить переговоры</button>`;
-  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Ориентир ремонта</span><strong>~ ${money(c.repair)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button>${tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}<button class="action" onclick="market()">Отказаться от сделки</button>`;}
+    controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><div class="negotiation-choice-row"><button class="action green" onclick="makeOffer()">💬 Предложить цену</button>${mode==='start'&&tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}</div>${mode==='counter'?`<button class="action" onclick="acceptCounter(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="cancelPurchaseNegotiation()">🚪 Закончить переговоры</button>`;
+  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Ориентир ремонта</span><strong>~ ${money(c.repair)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button>${tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}<button class="action" onclick="cancelPurchaseNegotiation()">Отказаться от сделки</button>`;}
   render(`<div class="app">${head('Переговоры')}${purchaseFlowHtml(mode==='accept'?4:3)}<div class="note"><small>Продавец</small><h3>${p.icon} ${n.seller} · ${c.name}</h3><span class="muted">${p.type} · Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
 }
 function acceptCounter(counter){negotiation.lastOffer=counter;renderNegotiation('accept');}
@@ -300,6 +307,14 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   };
 
   var purchaseTradeDeal=null;
+  window.cancelSellerTrade=function(){
+    purchaseTradeDeal=null;
+    if(typeof negotiation!=='undefined'&&negotiation){
+      negotiation.lastOffer=0;
+      negotiation.counter=0;
+    }
+    return typeof cancelPurchaseNegotiation==='function'?cancelPurchaseNegotiation():market('all',0);
+  };
   function ownedTradeCars(){return (Array.isArray(state.cars)?state.cars:[]).filter(function(c){return c&&!c.listed;});}
   function ownedCarKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
 
@@ -338,15 +353,15 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(mode==='reject')sellerText='«Нет, по такой оценке обмен мне неинтересен.»';
     var controls='';
     if(mode==='accept'){
-      controls='<button class="action green" onclick="completeSellerTrade()">✅ Оформить обмен</button><button class="action" onclick="renderNegotiation(\'accept\')">Отказаться от обмена</button>';
+      controls='<button class="action green" onclick="completeSellerTrade()">✅ Оформить обмен</button><button class="action" onclick="cancelSellerTrade()">Отказаться от сделки</button>';
     }else if(mode==='reject'){
-      controls='<button class="action" onclick="renderNegotiation(\'accept\')">‹ Вернуться к покупке</button>';
+      controls='<button class="action" onclick="cancelSellerTrade()">‹ Вернуться к объявлениям</button>';
     }else{
       var suggested=mode==='counter'?val:tradeRound(Math.min(d.maxValue,val*1.05));
       controls='<div class="note"><b>Как оценить твою машину</b><input id="sellerTradeValue" type="number" min="10000" step="1000" value="'+suggested+'" style="display:block;width:100%;margin-top:8px;padding:12px"></div>'+
         '<button class="action green" onclick="makeSellerTradeOffer()">💬 Предложить эту оценку</button>'+
         (mode==='counter'?'<button class="action" onclick="acceptSellerTradeCounter('+val+')">🤝 Принять оценку '+money(val)+'</button>':'')+
-        '<button class="action" onclick="renderNegotiation(\'accept\')">‹ Назад</button>';
+        '<button class="action" onclick="cancelSellerTrade()">🚪 Отказаться от сделки</button>';
     }
     render('<div class="app">'+head('Обмен с продавцом')+
       tradeCarCardHtml(d.target,d.purchasePrice,'ПОКУПАЕШЬ')+
