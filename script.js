@@ -8,6 +8,18 @@ var marketTargetSize=36;
 var legacyTemplateCount=30;
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
+var marketPhotoCatalogVersion=2;
+function marketPhotoHash(value){
+ var s=String(value||''),h=0;
+ for(var i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;
+ return Math.abs(h);
+}
+function marketPhotoFor(car,variant){
+ var pool=marketPhotoPools[car&&car.name]||[];
+ if(!pool.length)return exactPhotos[car&&car.name]||fallbackPhoto(car||{id:Number(variant||0)});
+ var key=(car&&car.listingId)||((car&&car.name)||'car')+'-'+String(variant||0);
+ return pool[marketPhotoHash(key)%pool.length];
+}
 var marketRisks=['кузов и пороги','двигатель','коробка','электрика','ходовая','сцепление','тормоза','охлаждение'];
 var marketSellerNames=['Алексей','Дмитрий','Илья','Максим','Роман','Сергей','Антон','Никита','Олег','Андрей','Евгений','Виктор'];
 var marketSellerKinds=['Частник','Срочная продажа','Владелец','Перекупщик'];
@@ -16,7 +28,26 @@ var marketPhotoPools={
  'ВАЗ 2107':[commons('Lada 2107 (VAZ-2107) 01.jpg'),commons('Vaz 2107.jpg'),commons('Lada VAZ 2107.jpg'),commons('Vaz-2107.JPG'),commons('Vaz2107.jpg')],
  'ВАЗ 2110':[commons('Lada 110-VAZ-2110 (4713570255).jpg'),commons('LADA-110.jpg')],
  'Lada Priora':[commons('Lada priora.jpg'),commons('Lada Priora.jpg')],
- 'Lada Kalina':[commons('Lada Kalina 1.jpg'),commons('Lada Kalina.jpg'),commons('Lada Kalina.JPG')]
+ 'Lada Kalina':[commons('Lada Kalina 1.jpg'),commons('Lada Kalina.jpg'),commons('Lada Kalina.JPG')],
+ 'Chevrolet Lacetti':[commons('Chevrolet Lacetti front.jpg'),commons('Chevrolet Lacetti 170530.jpg'),commons('Chevrolet Lacetti (7158279272).jpg')],
+ 'Chevrolet Cruze':[commons('Chevrolet Cruze J300 sedan China 2012-06-16.jpg'),commons('Chevrolet Cruze J300 sedan China 2012-06-23.jpg'),commons('Chevrolet Cruze J300 sedan China 2012-04-14.jpg')],
+ 'Opel Astra J':[commons('Opel Astra J.JPG'),commons('Opel Astra J 100805.jpg'),commons('Opel Astra J in Pendik.jpg')],
+ 'Nissan Almera':[commons('Nissan Almera.jpg')],
+ 'Mitsubishi Lancer X':[commons('Mitsubishi Lancer X 001.jpg')],
+ 'Mazda 3':[commons('Mazda 3 3rd generation sedan.jpg')],
+ 'Skoda Octavia':[commons('Skoda Octavia III facelift IMG001.jpg')],
+ 'Hyundai Elantra':[commons('Hyundai Elantra (AD).jpg'),commons('HYUNDAI ELANTRA (AD) China.jpg')],
+ 'Kia Ceed':[commons("Kia Ceed - Mondial de l'Automobile de Paris 2018 - 001.jpg"),commons('Kia Ceed Monrepos 2018 IMG 0107.jpg'),commons('Kia Ceed, GIMS 2018, Le Grand-Saconnex (1X7A1901).jpg')],
+ 'Renault Duster':[commons('Renault Duster.JPG'),commons('Renault-Duster-.jpg')],
+ 'Nissan Qashqai':[commons('Nissan Qashqai J11 Enmis.jpeg'),commons('Nissan Qashqai (J11) 190039.jpg'),commons('0 Nissan Qashqai (J11) 1.jpg')],
+ 'Mazda 6':[commons('Mazda6 (GJ) front.jpg'),commons('Mazda6 (GJ) in Jambi City, JA.jpg'),commons('MAZDA6 (GJ) China (37).jpg')],
+ 'Honda Accord':[commons('HONDA ACCORD (CR1-CR3, CR6-CR7, CT1-CT2) China (63).jpg'),commons('HONDA ACCORD (CR1-CR3, CR6-CR7, CT1-CT2) China (facelift).jpg')],
+ 'Subaru Forester':[commons('Subaru Forester 2018 (SK) CUV Front.jpg'),commons('Subaru FORESTER Premium (5BA-SK9) front.jpg')],
+ 'Chery Tiggo 7 Pro':[commons('Chery Tiggo7 Pro 2023 (53631773981).jpg'),commons('2023 Chery Tiggo 7 Pro, Pakuwon Mall, West Surabaya.jpg'),commons('Chery Tiggo 7 Pro каршеринга Ситидрайв в Москве (июнь 2022) (01).jpg')],
+ 'Geely Coolray':[commons('Coolray Front.jpg'),commons('Geely Coolray 2022 (1).jpg'),commons('Geely Coolray 2023.jpg')],
+ 'Volvo XC60':[commons('Volvo XC60 II Shishi 01 2022-09-09.jpg'),commons('Volvo XC60 II Shishi 02 2022-09-09.jpg'),commons('Volvo XC60 II Shishi 01 2022-03-11.jpg')],
+ 'Lexus RX 350':[commons('2018 Lexus RX 350L 3.5L front 3.24.19.jpg'),commons('2018 Lexus RX 350L 3.5L rear 3.24.19.jpg')],
+ 'Toyota Land Cruiser Prado':[commons('Toyota Land Cruiser Prado 150.jpg')]
 };
 function marketRound(n,step){step=step||1000;return Math.max(step,Math.round(Number(n||0)/step)*step);}
 function marketBody(name){
@@ -58,9 +89,9 @@ function createMarketListing(template,forcedVariant){
  var price=marketRound(fair*askFactor);
  var repair=marketRound(Number(template.repair||10000)*(1.18+(1-condition)*1.7)*(.82+Math.random()*.35));
  var pool=marketPhotoPools[template.name]||[];
- var photoUrl=pool.length?pool[Math.abs(variant)%pool.length]:(exactPhotos[template.name]||fallbackPhoto(template));
  var risk=Math.random()<.56?template.risk:marketRisks[Math.floor(Math.random()*marketRisks.length)];
  var listingId='AF-'+String(Date.now()).slice(-6)+'-'+String(seq).padStart(4,'0');
+ var photoUrl=marketPhotoFor({name:template.name,listingId:listingId},variant);
  var city=cities[Math.floor(Math.random()*cities.length)]||template.city;
  var postedAt=Number(state.gameClock&&state.gameClock.total||450),sellerIndex=Math.abs(variant)%marketSellerNames.length,sellerKind=marketSellerKinds[Math.abs(variant*3)%marketSellerKinds.length];
  return Object.assign({},template,{
@@ -87,6 +118,7 @@ function ensureMarketListingMeta(car,index){
  if(!car.sellerKind)car.sellerKind=marketSellerKinds[Math.abs(variant*3)%marketSellerKinds.length];
  if(!car.sellerUrgency)car.sellerUrgency=car.sellerKind==='Срочная продажа'?'high':(car.sellerKind==='Перекупщик'?'medium':'normal');
  if(!car.photoPosition)car.photoPosition=marketPhotoPositions[Math.abs(variant)%marketPhotoPositions.length];
+ if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion)car.photoUrl=marketPhotoFor(car,variant);
  return car;
 }
 function marketAgeText(car){
@@ -206,6 +238,14 @@ function removePurchasedListing(listingId){
  state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];
 }
 loadOrCreateGeneratedMarket();
+if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion){
+ if(typeof makes!=='undefined')makes.forEach(function(car,i){car.photoUrl=marketPhotoFor(car,i);});
+ if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=marketPhotoFor(car,i);});
+ if(state.car)state.car.photoUrl=marketPhotoFor(state.car,0);
+ state.marketPhotoCatalogVersion=marketPhotoCatalogVersion;
+ reindexMarketListings();
+ localStorage.setItem(KEY,JSON.stringify(state));
+}
 
 var liveBasePrices=(typeof makes!=='undefined'?makes:[]).map(function(x){return Number(x.price||0);});
 if(!state.gameClock||typeof state.gameClock!=='object')state.gameClock={total:450};
