@@ -1022,3 +1022,318 @@ button[disabled]{cursor:default}
   .auto-market-hero p{max-width:190px}
   .auto-market-photo{height:128px}
 }
+
+
+/* AUTO APP V1 — MARKET EXPERIENCE */
+.auto-market-app .head{margin-bottom:10px}
+.auto-market-hero{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+  padding:15px;
+  margin-bottom:9px;
+  border:1px solid #dce8f2;
+  border-radius:17px;
+  background:
+    radial-gradient(circle at 90% 0,rgba(79,153,247,.16),transparent 35%),
+    linear-gradient(145deg,#ffffff,#f3f8fc);
+  box-shadow:0 9px 24px rgba(48,72,94,.08);
+}
+.auto-market-hero small{
+  font-size:7px;
+  letter-spacing:1.15px;
+  color:#2878df;
+  font-weight:800;
+}
+.auto-market-hero h3{
+  margin:5px 0 4px;
+  color:#172636;
+  font-size:16px;
+  letter-spacing:-.35px;
+}
+.auto-market-hero p{
+  max-width:195px;
+  margin:0;
+  color:#748699;
+  font-size:8px;
+  line-height:1.45;
+}
+.auto-market-balance{
+  min-width:91px;
+  padding:10px 9px;
+  border-radius:13px;
+  background:#edf5ff;
+  border:1px solid #d8e9ff;
+  text-align:right;
+}
+.auto-market-balance span{
+  display:block;
+  font-size:7px;
+  color:#71869a;
+  margin-bottom:3px;
+}
+.auto-market-balance b{
+  display:block;
+  color:#1d66c2;
+  font-size:11px;
+  line-height:1.2;
+}
+.auto-market-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-bottom:9px;
+}
+.auto-market-stats>span{
+  min-width:0;
+  padding:8px 5px;
+  border:1px solid #e0e9f1;
+  border-radius:11px;
+  background:#fff;
+  text-align:center;
+  box-shadow:0 4px 12px rgba(48,72,94,.05);
+}
+.auto-market-stats b{
+  display:block;
+  color:#1c2c3c;
+  font-size:9.5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.auto-market-stats small{
+  display:block;
+  margin-top:2px;
+  color:#8393a2;
+  font-size:6.5px;
+}
+.market-search-box{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:39px;
+  margin-bottom:8px;
+  padding:5px 6px 5px 10px;
+  border:1px solid #dce7f0;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(48,72,94,.05);
+}
+.market-search-box>span{
+  flex:0 0 auto;
+  color:#8798a9;
+  font-size:17px;
+}
+.market-search-box input{
+  min-width:0;
+  flex:1;
+  padding:7px 0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-size:9px!important;
+}
+.market-search-box button{
+  flex:0 0 auto;
+  min-width:39px;
+  border:0;
+  border-radius:9px;
+  padding:7px 9px;
+  background:#e9f3ff;
+  color:#2470d0;
+  font-size:8px;
+  font-weight:750;
+  cursor:pointer;
+}
+.auto-market-filters{margin-bottom:8px}
+.market-section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:5px 2px 8px;
+}
+.market-section-title b{
+  color:#1b2c3d;
+  font-size:10px;
+}
+.market-section-title span{
+  color:#8495a5;
+  font-size:7px;
+}
+.auto-market-card{
+  padding:8px;
+  margin-bottom:10px;
+}
+.auto-market-photo{
+  height:132px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  padding:7px;
+}
+.market-city-badge,.car-year-badge{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:75%;
+  padding:4px 7px;
+  border-radius:9px;
+  background:rgba(17,28,40,.72);
+  color:#fff;
+  font-size:7px;
+  font-weight:750;
+  line-height:1;
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+}
+.market-card-title{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:flex-start;
+  margin-top:1px;
+}
+.market-card-title>div{
+  min-width:0;
+  flex:1;
+}
+.market-card-title b{
+  margin-top:8px;
+  color:#172636;
+  font-size:12px;
+}
+.market-card-title small{
+  display:block;
+  margin-top:3px;
+  color:#788b9e;
+}
+.market-card-title strong{
+  flex:0 0 auto;
+  margin-top:8px;
+  color:#176fd3;
+  font-size:12.5px;
+  text-align:right;
+}
+.market-card-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:7px;
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid #edf2f6;
+  font-size:7px;
+}
+.market-card-meta>span{
+  min-width:0;
+  color:#718497;
+}
+.market-card-meta b{color:#31475a}
+.market-good{color:#14956a!important;font-weight:750}
+.market-bad{color:#d94d5f!important;font-weight:750}
+.market-pager{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:8px;
+  align-items:center;
+  margin-top:4px;
+}
+.market-pager .action{margin:0}
+.market-pager>span{
+  min-width:34px;
+  text-align:center;
+  color:#708396;
+  font-size:8px;
+  font-weight:700;
+}
+
+/* Auto detail */
+.auto-car-view .head{margin-bottom:10px}
+.car-detail-photo{
+  height:190px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding:8px;
+  border-radius:16px;
+}
+.car-year-badge{
+  background:rgba(255,255,255,.90);
+  color:#28435f;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+.car-detail-heading{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:10px;
+  padding:13px 2px 4px;
+}
+.car-detail-heading small{
+  display:block;
+  color:#8495a6;
+  font-size:6.8px;
+  font-weight:800;
+  letter-spacing:.65px;
+}
+.car-detail-heading .price{
+  margin:3px 0 0;
+  font-size:27px;
+  line-height:1;
+}
+.car-km{
+  flex:0 0 auto;
+  padding:6px 8px;
+  border-radius:9px;
+  background:#edf5fd;
+  color:#4f6880;
+  font-size:7.5px;
+  font-weight:700;
+}
+.car-economics{
+  margin:10px 0;
+}
+.car-economics span{
+  padding:9px 6px;
+}
+.car-opportunity{
+  background:linear-gradient(145deg,#f5fbff,#fff);
+}
+.car-opportunity b{color:#1768c8}
+.car-buy-status{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin:9px 0;
+}
+.car-buy-status>span{
+  padding:10px;
+  border:1px solid #e0e9f1;
+  border-radius:11px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(48,72,94,.05);
+}
+.car-buy-status small{
+  display:block;
+  margin-bottom:4px;
+  color:#7c8e9f;
+  font-size:6.8px;
+}
+.car-buy-status b{
+  display:block;
+  color:#1c2f42;
+  font-size:10px;
+}
+.auto-car-view .warning{
+  line-height:1.5;
+}
+.auto-car-view .warning b{
+  display:inline-block;
+  margin-bottom:3px;
+  color:#8d5d11;
+}
+
+@media(max-width:500px){
+  .auto-market-photo{height:128px}
+  .car-detail-photo{height:182px}
+}
