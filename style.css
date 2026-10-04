@@ -1784,3 +1784,21 @@ button[disabled]{cursor:default}
   font-size:22px;
   font-style:normal;
 }
+
+
+/* NEGOTIATION CHOICE ROW */
+.negotiation-choice-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.negotiation-choice-row .action{
+  width:100%;
+  margin-top:0;
+  min-height:42px;
+  padding:9px 7px;
+  font-size:8.4px;
+}
+.negotiation-choice-row .action:only-child{
+  grid-column:1 / -1;
+}
