@@ -102,7 +102,6 @@ function home(){
  <button onclick="garage()"><div class="icon orange">🔧</div><small>Гараж</small></button>
  <button onclick="bank()"><div class="icon">🏦</div><small>Банк</small></button>
  <button onclick="mapApp()"><div class="icon blue">🗺️</div><small>Карты</small></button>
- <button onclick="service()"><div class="icon orange">🛠️</div><small>СТО</small></button>
  <button onclick="realty()"><div class="icon">🏠</div><small>Дом</small></button>
  <button onclick="contacts()"><div class="icon blue">📞</div><small>Телефон</small></button>
  <button onclick="notes()"><div class="icon">📝</div><small>Заметки</small></button>
@@ -251,14 +250,14 @@ function market(filter='all',page=0){
    </div>
    ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
    <div class="auto-market-list">
-   ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
+   ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0),pct=Math.round(potential/Math.max(1,Number(c.price||1))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
      <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}');background-position:${c.photoPosition||'50% 50%'}"><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${isMarketFavorite(c)?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${isMarketFavorite(c)?'Убрать из избранного':'Добавить в избранное'}">${isMarketFavorite(c)?'♥':'♡'}</button></div>
      <div class="auto-market-info">
        <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
        <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span></div>
        <div class="auto-market-bottom">
          <span>Рынок <b>${money(c.market)}</b></span>
-         <span class="${potential>=0?'auto-profit':'auto-loss'}">Потенциал ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
+         <span class="${potential>=0?'auto-profit':'auto-loss'}">Разница ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
        </div>
      </div>
    </div>`}).join('')}
@@ -283,41 +282,41 @@ function marketInspection(id){
  const c=makes[id];if(!c)return market();
  const key=marketInspectionKey(c),done=marketInspectionData(c);
  if(done){
-   const estimate=done.mode==='expert'?'<div class="hero-line"><span>Ориентир ремонта</span><strong>'+money(done.repairLow)+' – '+money(done.repairHigh)+'</strong></div>':'';
-   render('<div class="app">'+head('Осмотр автомобиля')+purchaseFlowHtml(2)+'<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span></div><div class="note inspection-result"><small>РЕЗУЛЬТАТ ОСМОТРА</small><h3>'+(done.mode==='expert'?'🧑‍🔧 Осмотр экспертом':'👀 Самостоятельный осмотр')+'</h3><div class="hero-line"><span>Объявление</span><strong>'+key+'</strong></div><div class="hero-line"><span>Обнаружено</span><strong>'+done.risk+'</strong></div>'+estimate+'<p class="muted">'+(done.mode==='expert'?'Эксперт снижает неопределённость и даёт более сильную позицию в торге. Скрытые дефекты всё ещё возможны.':'Ты заметил основной внешний риск. Без эксперта часть проблем может остаться незамеченной.')+'</p></div><button class="action green" onclick="deal('+id+')">💬 Перейти к торгу</button><button class="action" onclick="carView('+id+')">‹ Назад к машине</button></div>');
+   render('<div class="app">'+head('Осмотр автомобиля')+purchaseFlowHtml(2)+'<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span></div><div class="note inspection-result"><small>РЕЗУЛЬТАТ ОСМОТРА</small><h3>'+(done.mode==='expert'?'🧑‍🔧 Осмотр специалистом':'👀 Самостоятельный осмотр')+'</h3><div class="hero-line"><span>Объявление</span><strong>'+key+'</strong></div><div class="hero-line"><span>Что заметили</span><strong>'+done.risk+'</strong></div><p class="muted">Осмотр помогает в торге, но не раскрывает внутреннюю поломку и стоимость ремонта. Настоящая диагностика доступна уже после покупки.</p></div><button class="action green" onclick="deal('+id+')">💬 Перейти к торгу</button><button class="action" onclick="carView('+id+')">‹ Назад к машине</button></div>');
    return;
  }
- render('<div class="app">'+head('Осмотр автомобиля')+purchaseFlowHtml(2)+'<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span></div><div class="note"><small>ПЕРЕД ТОРГОМ</small><h3>'+c.name+'</h3><p class="muted">Сначала реши, насколько глубоко проверять машину. Осмотр не гарантирует отсутствие скрытых дефектов.</p></div><div class="inspection-choice"><div><b>👀 Самостоятельно</b><small>Бесплатно · увидишь основной заметный риск</small><button class="action" onclick="completeMarketInspection('+id+',\'self\')">Осмотреть самому</button></div><div><b>🧑‍🔧 Эксперт</b><small>3 000 ₽ · ориентир ремонта + преимущество в торге</small><button class="action green" onclick="completeMarketInspection('+id+',\'expert\')">Позвать эксперта</button></div></div><button class="action" onclick="carView('+id+')">‹ Назад к объявлению</button></div>');
+ render('<div class="app">'+head('Осмотр автомобиля')+purchaseFlowHtml(2)+'<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span></div><div class="note"><small>ПЕРЕД ТОРГОМ</small><h3>'+c.name+'</h3><p class="muted">Здесь только внешний осмотр. Скрытая техническая поломка и цена ремонта до покупки неизвестны.</p></div><div class="inspection-choice"><div><b>👀 Самостоятельно</b><small>Бесплатно · базовый аргумент для торга</small><button class="action" onclick="completeMarketInspection('+id+',\'self\')">Осмотреть самому</button></div><div><b>🧑‍🔧 Специалист</b><small>3 000 ₽ · более сильная позиция в торге</small><button class="action green" onclick="completeMarketInspection('+id+',\'expert\')">Позвать специалиста</button></div></div><button class="action" onclick="carView('+id+')">‹ Назад к объявлению</button></div>');
 }
 function completeMarketInspection(id,mode){
  const c=makes[id];if(!c)return market();
  const expert=mode==='expert',cost=expert?3000:0;
- if(cost&&Number(state.money||0)<cost)return alert('Для осмотра экспертом нужно 3 000 ₽.');
+ if(cost&&Number(state.money||0)<cost)return alert('Для осмотра специалистом нужно 3 000 ₽.');
  if(cost)state.money-=cost;
  if(!state.marketInspections||typeof state.marketInspections!=='object')state.marketInspections={};
- const low=Math.max(1000,Math.round(Number(c.repair||0)*.75/1000)*1000),high=Math.max(low,Math.round(Number(c.repair||0)*1.25/1000)*1000);
- state.marketInspections[marketInspectionKey(c)]={mode:expert?'expert':'self',risk:c.risk,repairLow:low,repairHigh:high,negotiationBonus:expert?.02:.01};
+ const notes=['следы эксплуатации по кузову','неравномерный износ шин','косметические недочёты','следы мелкого окраса','люфт в элементах салона','нужна дополнительная проверка истории'];
+ const note=notes[Math.abs(Number(c.id||0)+Number(c.year||0))%notes.length];
+ state.marketInspections[marketInspectionKey(c)]={mode:expert?'expert':'self',risk:note,negotiationBonus:expert?.02:.01};
  objective.textContent='Осмотр завершён';
- objectiveSub.textContent='Используй найденный риск в переговорах с продавцом.';
- log((expert?'Эксперт осмотрел ':'Самостоятельно осмотрен ')+c.name+'. Найден риск: '+c.risk+'.');
+ objectiveSub.textContent='Используй результат внешнего осмотра в переговорах.';
+ log((expert?'Специалист осмотрел ':'Самостоятельно осмотрен ')+c.name+'. Замечено: '+note+'.');
  marketInspection(id);
 }
 function carView(id){
  let c=makes[id];if(!c)return market();
  let inspection=marketInspectionData(c);
- let profit=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),margin=Math.round(profit/Math.max(1,Number(c.price||1))*100),needRep=(typeof requiredRepForCar==='function'?requiredRepForCar(c):0),repOk=Number(state.rep||0)>=needRep,canAfford=Number(state.money||0)>=Number(c.price||0);
+ let spread=Number(c.market||0)-Number(c.price||0),margin=Math.round(spread/Math.max(1,Number(c.price||1))*100),needRep=(typeof requiredRepForCar==='function'?requiredRepForCar(c):0),repOk=Number(state.rep||0)>=needRep,canAfford=Number(state.money||0)>=Number(c.price||0);
  render(`<div class="app auto-car-view">${head(c.name)}
    ${purchaseFlowHtml(inspection?3:2)}
    <div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span><span class="car-year-badge">${c.year}</span></div>
    <div class="car-detail-heading"><div><small>ЦЕНА ПРОДАВЦА</small><div class="price">${money(c.price)}</div></div><span class="car-km">${c.km.toLocaleString('ru-RU')} км</span></div>
-   <div class="note" style="margin:8px 0"><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Кузов</span><strong>${c.body||'—'}</strong></div><div class="hero-line"><span>Комплектация</span><strong>${c.trim||'—'}</strong></div><div class="hero-line"><span>Состояние</span><strong>${c.conditionLabel||'Неизвестно'}</strong></div></div>
+   <div class="note" style="margin:8px 0"><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Кузов</span><strong>${c.body||'—'}</strong></div><div class="hero-line"><span>Комплектация</span><strong>${c.trim||'—'}</strong></div><div class="hero-line"><span>Состояние</span><strong>неизвестно до покупки</strong></div></div>
    <div class="deal-score car-economics">
      <span>РЫНОК<b>${money(c.market)}</b></span>
-     <span>РЕМОНТ ~<b>${money(c.repair)}</b></span>
-     <span>ПОТЕНЦИАЛ<b class="${profit>=0?'profit':'market-bad'}">${profit>=0?'+':''}${money(profit)}</b></span>
+     <span>ЦЕНА<b>${money(c.price)}</b></span>
+     <span>РАЗНИЦА<b class="${spread>=0?'profit':'market-bad'}">${spread>=0?'+':''}${money(spread)}</b></span>
    </div>
-   <div class="note car-opportunity"><b>${profit>=0?'📈 Потенциал сделки':'📉 Слабая экономика'}</b><p class="muted">Расчётная маржа: ${margin}% до дополнительных скрытых расходов и торга.</p></div>
-   ${inspection?'<div class="note inspection-brief"><b>'+(inspection.mode==='expert'?'🧑‍🔧 Эксперт осмотрел машину':'👀 Ты осмотрел машину')+'</b><p class="muted">Обнаружено: '+inspection.risk+(inspection.mode==='expert'?'. Ремонт ориентировочно '+money(inspection.repairLow)+' – '+money(inspection.repairHigh):'. Детальная стоимость пока неизвестна')+'.</p></div>':'<div class="warning"><b>⚠ Машина ещё не осмотрена</b><br>Перед торгом лучше проверить автомобиль. Скрытые проблемы возможны даже после осмотра.</div>'}
+   <div class="note car-opportunity"><b>🕵️ Техническое состояние скрыто</b><p class="muted">До покупки ты не знаешь, исправна машина или в ней есть поломка. Стоимость ремонта заранее не показывается.</p></div>
+   ${inspection?'<div class="note inspection-brief"><b>'+(inspection.mode==='expert'?'🧑‍🔧 Осмотр специалистом':'👀 Самостоятельный осмотр')+'</b><p class="muted">Замечено: '+inspection.risk+'. Это только внешний осмотр, не диагностика агрегатов.</p></div>':'<div class="warning"><b>⚠ Внешний осмотр не проведён</b><br>Можно осмотреть машину перед торгом, но скрытая поломка всё равно останется неизвестной до покупки.</div>'}
    <div class="car-buy-status">
      <span><small>На руках</small><b>${money(state.money)}</b></span>
      <span><small>Репутация</small><b>${Number(state.rep||0)}${needRep?' / '+needRep:''}</b></span>
@@ -331,7 +330,7 @@ function carView(id){
 }
 function inspect(id){return marketInspection(id)}
 function deal(id){let c=makes[id],base=Math.floor(c.price*.92),seller=['Алексей','Дмитрий','Илья'][id%3];render(`<div class="app">${head('Переговоры')}<div class="bubble seller">${seller}: «Цена ${money(c.price)}. Машина хорошая.»</div><div class="bubble you">Ты: «После диагностики вижу проблему с ${c.risk}. Готов дать ${money(base)}.»</div><div class="buyers"><div class="buyer"><b>🤝 Торг</b><small>−12% · риск выше</small></div><div class="buyer"><b>⚡ Сегодня</b><small>−6% · быстро</small></div><div class="buyer"><b>💎 Премиум</b><small>позже дороже</small></div></div><button class="action green" onclick="buy(${id},${base})">Согласовать ${money(base)}</button><button class="action" onclick="market()">Назад</button></div>`)}
-function buy(id,price){price=Number(price);let c=makes[id];if(!c)return market('all',0);if(!Number.isFinite(price)||price<10000)return alert('Ошибка сделки: некорректная цена. Вернись в объявления и начни переговоры заново.');if(state.money<price)return alert('Не хватает денег. Используй Банк.');state.money-=price;state.car={...c,buy:price,repaired:false};state.deals++;state.notifications++;objective.textContent='Подготовить автомобиль';objectiveSub.textContent='Открой гараж или СТО.';log(`Куплен ${c.name} за ${money(price)}.`);garage()}
+function buy(id,price){price=Number(price);let c=makes[id];if(!c)return market('all',0);if(!Number.isFinite(price)||price<10000)return alert('Ошибка сделки: некорректная цена. Вернись в объявления и начни переговоры заново.');if(state.money<price)return alert('Не хватает денег. Используй Банк.');state.money-=price;state.car={...c,buy:price,repaired:false};state.deals++;state.notifications++;objective.textContent='Подготовить автомобиль';objectiveSub.textContent='Открой гараж и проверь техническое состояние.';log(`Куплен ${c.name} за ${money(price)}.`);garage()}
 function garage(){let c=state.car;if(!c)return render(`<div class="app">${head('Гараж')}<div class="note">Гараж пуст. Первая машина ждёт тебя на рынке.</div><button class="action green" onclick="market()">🚗 Открыть рынок</button></div>`);render(`<div class="app">${head('Гараж')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}'),url('${fallbackPhoto(c)}')">🚘</div><h3>${c.name}</h3><p class="muted">${c.city} · куплена за ${money(c.buy)}</p><div class="bar"><i style="width:${c.repaired?100:45}%"></i></div><p class="muted">Состояние ${c.repaired?'100':'45'}%</p><div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЕМОНТ<b>${money(c.repair)}</b></span><span>ПРОДАЖА<b class="profit">${money(c.sale)}</b></span></div><button class="action green" onclick="repair()">🔧 ${c.repaired?'Авто отремонтировано':`Ремонт · ${money(c.repair)}`}</button><button class="action" onclick="sell()">💰 Найти покупателя</button><button class="action" onclick="service()">🛠️ Открыть СТО</button></div>`)}
 function repair(){let c=state.car;if(!c)return garage();if(c.repaired)return; if(state.money<c.repair)return alert('Не хватает денег на ремонт.');state.money-=c.repair;c.repaired=true;objective.textContent='Продать автомобиль';objectiveSub.textContent='Открой сообщения или гараж и выбери покупателя.';log(`Ремонт ${c.name}: -${money(c.repair)}.`);garage()}
 function sell(){let c=state.car;if(!c)return garage();if(!c.repaired)return alert('Сначала закончи ремонт.');let names=[['Андрей','торгаш',.94],['Максим','срочный',.99],['Роман','премиум',1.05]];render(`<div class="app">${head('Покупатели')}<p class="muted">Выбери стратегию продажи.</p>${names.map((n,i)=>`<div class="buyer" style="margin:7px 0"><b>${i===0?'🤝':i===1?'⚡':'💎'} ${n[0]} · ${n[1]}</b><small>Предложение: ${money(c.sale*n[2])}</small><button class="action ${i===2?'green':''}" onclick="closeSale(${n[2]})">Принять</button></div>`).join('')}</div>`)}

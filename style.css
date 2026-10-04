@@ -1895,3 +1895,91 @@ button[disabled]{cursor:default}
   margin-bottom:76px;
   min-height:44px;
 }
+
+
+/* DIAGNOSTICS & REPAIR V2 */
+.condition-card{
+  margin:10px 0;
+  padding:14px;
+  border:1px solid #dfe8ef;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 7px 20px rgba(48,72,94,.07);
+}
+.condition-card small{
+  display:block;
+  color:#7b8ea0;
+  font-size:6.6px;
+  font-weight:850;
+  letter-spacing:1px;
+}
+.condition-card h3{
+  margin:5px 0 7px;
+  color:#1c2e3f;
+  font-size:14px;
+}
+.condition-card p{
+  margin:0 0 8px;
+  color:#708396;
+  font-size:7.6px;
+  line-height:1.5;
+}
+.condition-card.broken{
+  border-color:#f0c9cf;
+  background:linear-gradient(145deg,#fff8f9,#fff);
+}
+.condition-card.broken h3{color:#c83f53}
+.condition-card.healthy,.condition-card.repaired{
+  border-color:#cfe7dc;
+  background:linear-gradient(145deg,#f6fcf9,#fff);
+}
+.condition-card.healthy h3,.condition-card.repaired h3{color:#168a61}
+.condition-card.unknown{
+  background:linear-gradient(145deg,#f8fbfe,#fff);
+}
+.diagnostic-choice-v2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:10px 0;
+}
+.diagnostic-choice-v2>div{
+  padding:11px 9px;
+  border:1px solid #dfe8ef;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 5px 14px rgba(48,72,94,.06);
+}
+.diagnostic-choice-v2 small{
+  display:block;
+  color:#6f8498;
+  font-size:6px;
+  font-weight:850;
+  letter-spacing:.8px;
+}
+.diagnostic-choice-v2 b{
+  display:block;
+  margin:4px 0;
+  color:#1b3044;
+  font-size:11px;
+}
+.diagnostic-choice-v2 span{
+  display:block;
+  min-height:35px;
+  color:#7d8fa0;
+  font-size:6.3px;
+  line-height:1.4;
+}
+.diagnostic-choice-v2 .action{
+  min-height:38px;
+  padding:7px 5px;
+  font-size:7.2px;
+}
+.garage-v2-card{
+  margin-bottom:9px;
+  cursor:pointer;
+}
+.garage-v2-card:hover{
+  border-color:#cbddeb;
+  transform:translateY(-1px);
+}

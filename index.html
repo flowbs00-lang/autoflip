@@ -80,7 +80,7 @@ function renderNegotiation(mode,counter=0){
   if(mode!=='accept'){
     const suggested=mode==='counter'?counter:(n.lastOffer?Math.round((n.lastOffer+n.asking)/2):Math.round(n.asking*.90));
     controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><div class="negotiation-choice-row"><button class="action green" onclick="makeOffer()">💬 Предложить цену</button>${mode==='start'&&tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}</div>${mode==='counter'?`<button class="action" onclick="acceptCounter(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="cancelPurchaseNegotiation()">🚪 Закончить переговоры</button>`;
-  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Ориентир ремонта</span><strong>~ ${money(c.repair)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button>${tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}<button class="action" onclick="cancelPurchaseNegotiation()">Отказаться от сделки</button>`;}
+  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button>${tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}<button class="action" onclick="cancelPurchaseNegotiation()">Отказаться от сделки</button>`;}
   render(`<div class="app">${head('Переговоры')}${purchaseFlowHtml(mode==='accept'?4:3)}<div class="note"><small>Продавец</small><h3>${p.icon} ${n.seller} · ${c.name}</h3><span class="muted">${p.type} · Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
 }
 function acceptCounter(counter){negotiation.lastOffer=counter;renderNegotiation('accept');}
@@ -784,6 +784,262 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       },130);
     };
     window.home.__buyerInbox=true;
+  }
+})();
+</script>
+
+<script>
+// V7.9 — новая механика технического состояния, диагностики и ремонта.
+(function(){
+  var CONDITION_VERSION=2;
+  var mediumFaults=[
+    'Шаровая опора','Ступичный подшипник','Тормозные диски и колодки',
+    'Стойка стабилизатора','Рулевой наконечник','Приводной ремень','Датчик ABS'
+  ];
+  var cheapFaults=[
+    'Перегорела лампочка фары','Сел аккумулятор','Отвалился колпак со штампа',
+    'Изношены дворники','Заедает ручка двери','Не работает кнопка стеклоподъёмника',
+    'Треснул корпус зеркала','Перегорел предохранитель','Не горит габарит',
+    'Не работает омыватель','Заедает замок багажника','Подклинивает стеклоподъёмник',
+    'Не работает звуковой сигнал','Не горит подсветка номера','Оторвался брызговик'
+  ];
+  var faultTiers=[
+    {weight:5,name:'Двигатель',loss:.35},
+    {weight:7,name:'Коробка передач',loss:.25},
+    {weight:10,name:'Рулевая рейка',loss:.20},
+    {weight:15,name:'Подвеска',loss:.15},
+    {weight:30,names:mediumFaults,loss:.05},
+    {weight:40,names:cheapFaults,loss:.02}
+  ];
+
+  function rubles(n){return Math.max(1,Math.floor(Number(n||0)));}
+  function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+  function faultRoll(){
+    if(Math.random()<.60)return null;
+    var total=faultTiers.reduce(function(sum,x){return sum+x.weight;},0),r=Math.random()*total;
+    for(var i=0;i<faultTiers.length;i++){
+      r-=faultTiers[i].weight;
+      if(r<=0){
+        var t=faultTiers[i];
+        return {name:t.names?pick(t.names):t.name,loss:t.loss};
+      }
+    }
+    return {name:'Мелкая неисправность',loss:.02};
+  }
+  function carKeyV2(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
+
+  window.ensureFlipCondition=function(car){
+    if(!car)return null;
+    if(Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&car.flipCondition)return car.flipCondition;
+    var healthyMarket=Math.max(10000,rubles(car.healthyMarket||car.market||car.sale||car.buy||50000));
+    var fault=faultRoll();
+    car.healthyMarket=healthyMarket;
+    car.diagnosticSpent=Number(car.diagnosticSpent||0);
+    car.hiddenDefects=[];
+    car.hiddenSaleChecks=0;
+    car.hiddenScanCount=0;
+    car.diagnostics=[];
+    car.diagnosed=false;
+    car.totalRepair=0;
+    if(!fault){
+      car.flipCondition={healthy:true,name:'Исправный автомобиль',loss:0,cost:0,discovered:false,repaired:true};
+      car.market=healthyMarket;
+      car.sale=healthyMarket;
+      car.repaired=true;
+    }else{
+      var cost=rubles(healthyMarket*fault.loss);
+      car.flipCondition={healthy:false,name:fault.name,loss:fault.loss,cost:cost,discovered:false,repaired:false};
+      car.market=rubles(healthyMarket*(1-fault.loss));
+      car.sale=car.market;
+      car.repaired=false;
+    }
+    car.flipConditionVersion=CONDITION_VERSION;
+    return car.flipCondition;
+  };
+
+  window.standardDiagnosticCost=function(car){
+    ensureFlipCondition(car);
+    return rubles(Number(car.market||0)*.10);
+  };
+  window.fullDiagnosticCost=function(car){
+    ensureFlipCondition(car);
+    // По конкретным примерам: 50 000 → 16 666, 250 000 → 83 333.
+    return rubles(Number(car.market||0)/3);
+  };
+
+  window.runGarageDiagnostic=function(mode){
+    var c=state.car;if(!c)return garage();
+    var issue=ensureFlipCondition(c),full=mode==='full',cost=full?fullDiagnosticCost(c):standardDiagnosticCost(c);
+    if(Number(state.money||0)<cost)return alert('Не хватает '+money(cost-Number(state.money||0))+' на диагностику.');
+    state.money=Number(state.money||0)-cost;
+    c.diagnosticSpent=Number(c.diagnosticSpent||0)+cost;
+    var found=!issue.healthy&&(full||Math.random()<.30);
+    if(found)issue.discovered=true;
+    c.diagnosed=true;
+    c.lastDiagnostic={
+      mode:full?'full':'standard',
+      cost:cost,
+      found:found,
+      healthyConfirmed:full&&issue.healthy,
+      at:(typeof gameTotal==='function'?gameTotal():0)
+    };
+    if(found){
+      objective.textContent='Поломка обнаружена';
+      objectiveSub.textContent=issue.name+' · ремонт '+money(issue.cost)+'.';
+      log((full?'Полная':'Стандартная')+' диагностика '+c.name+': обнаружено — '+issue.name+'. Ремонт '+money(issue.cost)+'.');
+    }else if(full&&issue.healthy){
+      objective.textContent='Автомобиль исправен';
+      objectiveSub.textContent='Полная диагностика не обнаружила поломок.';
+      log('Полная диагностика '+c.name+': автомобиль исправен.');
+    }else{
+      objective.textContent='Диагностика завершена';
+      objectiveSub.textContent=full?'Поломок не обнаружено.':'Поломок не обнаружено, но стандартная проверка находит скрытую неисправность только с шансом 30%.';
+      log((full?'Полная':'Стандартная')+' диагностика '+c.name+': поломок не обнаружено.');
+    }
+    if(typeof persist==='function')persist();else if(typeof save==='function')save();
+    garageDetails();
+  };
+
+  window.repairDetectedIssue=function(){
+    var c=state.car;if(!c)return garage();
+    var issue=ensureFlipCondition(c);
+    if(issue.healthy)return alert('Автомобиль исправен — ремонт не требуется.');
+    if(!issue.discovered)return alert('Сначала нужно обнаружить поломку диагностикой.');
+    if(issue.repaired)return alert('Эта поломка уже устранена.');
+    if(Number(state.money||0)<Number(issue.cost||0))return alert('Не хватает '+money(Number(issue.cost||0)-Number(state.money||0))+' на ремонт.');
+    state.money=Number(state.money||0)-Number(issue.cost||0);
+    c.repairSpent=Number(c.repairSpent||0)+Number(issue.cost||0);
+    issue.repaired=true;
+    c.repaired=true;
+    c.market=Number(c.healthyMarket||c.market||0);
+    c.sale=c.market;
+    objective.textContent='Автомобиль восстановлен';
+    objectiveSub.textContent=issue.name+' устранена. Рыночная стоимость восстановлена.';
+    log('Ремонт '+c.name+': '+issue.name+' — '+money(issue.cost)+'. Рыночная стоимость восстановлена до '+money(c.market)+'.');
+    if(typeof persist==='function')persist();else if(typeof save==='function')save();
+    garageDetails();
+  };
+
+  window.saleValue=function(c){
+    if(!c)return 0;
+    ensureFlipCondition(c);
+    return Math.max(10000,Math.round(Number(c.market||c.buy||0)/1000)*1000);
+  };
+
+  function diagResultHtml(c,issue){
+    var last=c.lastDiagnostic||null;
+    if(issue.repaired){
+      return '<div class="condition-card repaired"><small>ТЕХНИЧЕСКОЕ СОСТОЯНИЕ</small><h3>✅ Поломка устранена</h3><p>'+issue.name+' отремонтирована. Рыночная стоимость автомобиля восстановлена.</p><div class="hero-line"><span>Рыночная цена</span><strong>'+money(c.market)+'</strong></div></div>';
+    }
+    if(issue.discovered){
+      return '<div class="condition-card broken"><small>ОБНАРУЖЕНА ПОЛОМКА</small><h3>⚠️ '+issue.name+'</h3><p>Из-за неисправности рыночная стоимость автомобиля ниже на '+Math.round(issue.loss*100)+'%.</p><div class="hero-line"><span>Цена ремонта</span><strong>'+money(issue.cost)+'</strong></div><div class="hero-line"><span>Текущий рынок</span><strong>'+money(c.market)+'</strong></div><div class="hero-line"><span>После ремонта</span><strong>'+money(c.healthyMarket)+'</strong></div><button class="action green" onclick="repairDetectedIssue()">🔧 Починить за '+money(issue.cost)+'</button></div>';
+    }
+    if(last&&last.healthyConfirmed){
+      return '<div class="condition-card healthy"><small>ПОЛНАЯ ДИАГНОСТИКА</small><h3>✅ Автомобиль исправен</h3><p>Полная проверка не обнаружила технических поломок. Ремонт не требуется.</p></div>';
+    }
+    if(last){
+      return '<div class="condition-card unknown"><small>'+(last.mode==='full'?'ПОЛНАЯ':'СТАНДАРТНАЯ')+' ДИАГНОСТИКА</small><h3>Поломок не обнаружено</h3><p>'+(last.mode==='standard'?'Стандартная диагностика имеет 30% шанс обнаружить скрытую поломку. Результат не является гарантией исправности.':'Полная диагностика проверила автомобиль полностью.')+'</p><div class="hero-line"><span>Потрачено на диагностику</span><strong>'+money(c.diagnosticSpent||0)+'</strong></div></div>';
+    }
+    return '<div class="condition-card unknown"><small>СОСТОЯНИЕ НЕИЗВЕСТНО</small><h3>🔍 Машина ещё не диагностирована</h3><p>После покупки скрытая неисправность заранее не показывается. Проведи диагностику, чтобы узнать, нужен ли ремонт.</p></div>';
+  }
+
+  function diagnosticsChoiceHtml(c){
+    var standard=standardDiagnosticCost(c),full=fullDiagnosticCost(c);
+    return '<div class="diagnostic-choice-v2">'+
+      '<div><small>СТАНДАРТНАЯ</small><b>'+money(standard)+'</b><span>10% от текущей рыночной цены · шанс найти поломку 30%</span><button class="action" onclick="runGarageDiagnostic(\'standard\')">🔎 Стандартная диагностика</button></div>'+
+      '<div><small>ПОЛНАЯ</small><b>'+money(full)+'</b><span>1/3 текущей рыночной цены · шанс найти поломку 100%</span><button class="action green" onclick="runGarageDiagnostic(\'full\')">🧰 Полная диагностика</button></div>'+
+    '</div>';
+  }
+
+  window.garageCarDetails=function(index){
+    var cars=Array.isArray(state.cars)?state.cars:[],c=cars[index];
+    if(!c)return garage();
+    state.car=c;ensureFlipCondition(c);
+    var issue=c.flipCondition,key=carKeyV2(c),listed=state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===key;
+    render('<div class="app">'+head(c.name)+
+      '<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span><span class="car-year-badge">'+c.year+'</span></div>'+
+      '<div class="note"><div class="hero-line"><span>Пробег</span><strong>'+Number(c.km||0).toLocaleString('ru-RU')+' км</strong></div><div class="hero-line"><span>Цена покупки</span><strong>'+money(c.buy)+'</strong></div><div class="hero-line"><span>Рыночная цена сейчас</span><strong>'+money(c.market)+'</strong></div><div class="hero-line"><span>Потрачено на диагностику</span><strong>'+money(c.diagnosticSpent||0)+'</strong></div><div class="hero-line"><span>Потрачено на ремонт</span><strong>'+money(c.repairSpent||0)+'</strong></div></div>'+
+      (listed?'<div class="note"><b>🟢 Объявление активно</b><p class="muted">Цена: '+money(state.activeListing.ask)+'. Покупатели могут написать в «Сообщения».</p></div>':'')+
+      diagResultHtml(c,issue)+diagnosticsChoiceHtml(c)+
+      '<button class="action green" onclick="sellCar()">'+(listed?'💬 Моё объявление':'🏷️ Выставить на продажу')+'</button>'+
+      '<button class="action" onclick="garage()">‹ Назад к моим машинам</button></div>');
+    if(typeof persist==='function')persist();
+  };
+
+  window.garageDetails=function(){
+    var cars=Array.isArray(state.cars)?state.cars:[],idx=cars.indexOf(state.car);
+    if(idx<0&&state.car){idx=cars.findIndex(function(c){return carKeyV2(c)===carKeyV2(state.car);});}
+    return idx>=0?garageCarDetails(idx):garage();
+  };
+
+  window.garage=function(){
+    var cars=Array.isArray(state.cars)?state.cars:[];
+    cars.forEach(ensureFlipCondition);
+    if(!cars.length){
+      render('<div class="app">'+head('Мои машины')+'<div class="note"><b>Гараж пуст</b><p class="muted">Купи автомобиль в объявлениях — он появится здесь.</p></div><button class="action green" onclick="market()">🚗 Смотреть объявления</button></div>');
+      return;
+    }
+    var cards=cars.map(function(c,i){
+      var issue=c.flipCondition,last=c.lastDiagnostic||null,status='⚪ Не диагностирована';
+      if(issue.repaired&&!issue.healthy)status='🟢 Поломка устранена';
+      else if(issue.discovered&&!issue.repaired)status='🔴 '+issue.name;
+      else if(last&&last.healthyConfirmed)status='🟢 Исправна';
+      else if(last)status='🟡 Поломок не найдено';
+      return '<div class="note garage-v2-card" onclick="garageCarDetails('+i+')"><div class="row"><span><b>🚗 '+c.name+'</b><small>'+c.year+' · '+Number(c.km||0).toLocaleString('ru-RU')+' км</small></span><b>'+money(c.market)+'</b></div><div class="muted">'+status+'</div><div class="row"><span>Куплена за</span><b>'+money(c.buy)+'</b></div></div>';
+    }).join('');
+    render('<div class="app">'+head('Мои машины')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/3</b><small>машин</small></div><div class="stat"><b>'+money(state.money)+'</b><small>деньги</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.market||0);},0))+'</b><small>рынок авто</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button></div>');
+    if(typeof persist==='function')persist();
+  };
+
+  // СТО удалена из новой механики.
+  window.service=function(){return garageDetails();};
+  window.diagnose=function(){return runGarageDiagnostic('standard');};
+  window.repair=function(){return repairDetectedIssue();};
+
+  // Normal purchase: roll exactly one outcome (healthy OR one fault) immediately after acquisition.
+  var previousBuy=window.buy;
+  if(typeof previousBuy==='function'&&!previousBuy.__conditionV2){
+    var buyV2=function(){
+      var before=state.car,result=previousBuy.apply(this,arguments),car=state.car;
+      if(car&&car!==before){
+        car.flipConditionVersion=0;
+        ensureFlipCondition(car);
+        objective.textContent='Проверить автомобиль';
+        objectiveSub.textContent='Техническое состояние неизвестно. Можно продать как есть или провести диагностику.';
+        if(typeof persist==='function')persist();else if(typeof save==='function')save();
+        garageDetails();
+      }
+      return result;
+    };
+    buyV2.__conditionV2=true;window.buy=buyV2;
+  }
+
+  // Cars received through either exchange path use the same condition roll.
+  function wrapReceivedCar(fnName){
+    var original=window[fnName];
+    if(typeof original!=='function'||original.__conditionV2)return;
+    var wrapped=function(){
+      var before=state.car,result=original.apply(this,arguments),car=state.car;
+      if(car&&car!==before){
+        car.flipConditionVersion=0;
+        ensureFlipCondition(car);
+        if(typeof persist==='function')persist();else if(typeof save==='function')save();
+      }
+      return result;
+    };
+    wrapped.__conditionV2=true;window[fnName]=wrapped;
+  }
+  wrapReceivedCar('completeSellerTrade');
+  wrapReceivedCar('completeBuyerTrade');
+
+  // Migrate currently owned cars to the new one-fault-or-healthy model.
+  if(Array.isArray(state.cars)){
+    state.cars.forEach(ensureFlipCondition);
+    if(state.car){
+      var current=state.cars.find(function(c){return carKeyV2(c)===carKeyV2(state.car);});
+      if(current)state.car=current;
+    }
+    if(typeof persist==='function')persist();else if(typeof save==='function')save();
   }
 })();
 </script>
