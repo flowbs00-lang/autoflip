@@ -83,42 +83,46 @@ function marketSearch(){
 function clearMarketSearch(){marketSearchTerm='';market('all',0)}
 function market(filter='all',page=0){
  let arr=[...makes];
- const q=String(marketSearchTerm||'').trim().toLowerCase();
- if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km)].join(' ').toLowerCase().includes(q));
  if(filter==='cheap')arr=arr.filter(c=>c.price<500000);
  if(filter==='profit')arr.sort((a,b)=>(b.market-b.price-b.repair)-(a.market-a.price-a.repair));
  if(filter==='city')arr=arr.filter(c=>c.city===state.city);
  const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
  page=Math.max(0,Math.min(Number(page)||0,totalPages-1));
  const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
- render(`<div class="app auto-market-app">${head('Авто')}
- <div class="auto-market-hero">
-   <div><small>AUTOFLIP MARKET</small><h3>Найди следующую сделку</h3><p>Живые объявления, меняющиеся цены и реальные риски.</p></div>
-   <div class="auto-market-balance"><span>На руках</span><b>${money(state.money)}</b></div>
- </div>
- <div class="auto-market-stats">
-   <span><b>${arr.length}</b><small>найдено</small></span>
-   <span><b>${state.city}</b><small>город</small></span>
-   <span><b>${garageCount}/3</b><small>гараж</small></span>
- </div>
- <div class="market-search-box">
-   <span>⌕</span>
-   <input id="marketSearch" type="text" value="${String(marketSearchTerm||'').replace(/"/g,'&quot;')}" placeholder="Марка, модель, город..." onkeydown="if(event.key==='Enter')marketSearch()">
-   ${marketSearchTerm?'<button onclick="clearMarketSearch()">×</button>':'<button onclick="marketSearch()">Найти</button>'}
- </div>
- <div class="filters auto-market-filters">
-   <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
-   <button class="${filter==='city'?'active':''}" onclick="market('city',0)">📍 ${state.city}</button>
-   <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">До 500К</button>
-   <button class="${filter==='profit'?'active':''}" onclick="market('profit',0)">↗ Лучшая маржа</button>
- </div>
- ${visible.length?'<div class="market-section-title"><b>Объявления</b><span>Стр. '+(page+1)+' из '+totalPages+'</span></div>':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй изменить поиск или сбросить фильтры.</p></div>'}
- ${visible.map(c=>{const profit=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),margin=Math.round(profit/Math.max(1,Number(c.price||1))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
-   <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0008),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span></div>
-   <div class="market-card-title"><div><b>${c.name}</b><small>${c.year} · ${c.km.toLocaleString('ru-RU')} км</small></div><strong>${money(c.price)}</strong></div>
-   <div class="market-card-meta"><span>Рынок <b>${money(c.market)}</b></span><span class="${profit>=0?'market-good':'market-bad'}">Маржа ~ ${profit>=0?'+':''}${money(profit)} · ${margin}%</span></div>
- </div>`}).join('')}
- ${visible.length?'<div class="market-pager"><button class="action" '+(page<=0?'disabled':'')+' onclick="market(\''+filter+'\','+(page-1)+')">‹ Назад</button><span>'+(page+1)+' / '+totalPages+'</span><button class="action" '+(page>=totalPages-1?'disabled':'')+' onclick="market(\''+filter+'\','+(page+1)+')">Дальше ›</button></div>':''}
+ render(`<div class="app">${head('Авто')}
+   <section class="auto-market-hero">
+     <div class="auto-market-hero-copy"><small>AUTOMARKET</small><h3>Рынок автомобилей</h3><p>Ищи недооценённые машины, считай вложения и выбирай сделки с запасом по прибыли.</p></div>
+     <div class="auto-market-wallet"><span>Свободные деньги</span><b>${money(state.money)}</b></div>
+   </section>
+   <div class="auto-market-stats">
+     <div><b>${arr.length}</b><span>объявлений</span></div>
+     <div><b>${garageCount}/3</b><span>в гараже</span></div>
+     <div><b>${Number(state.rep||0)}</b><span>репутация</span></div>
+   </div>
+   <div class="filters auto-market-filters">
+     <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
+     <button class="${filter==='city'?'active':''}" onclick="market('city',0)">📍 ${state.city}</button>
+     <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">До 500К</button>
+     <button class="${filter==='profit'?'active':''}" onclick="market('profit',0)">Лучший потенциал</button>
+   </div>
+   <div class="auto-market-list">
+   ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
+     <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="auto-card-city">📍 ${c.city}</span></div>
+     <div class="auto-market-info">
+       <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
+       <div class="auto-market-specs"><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span></div>
+       <div class="auto-market-bottom">
+         <span>Рынок <b>${money(c.market)}</b></span>
+         <span class="${potential>=0?'auto-profit':'auto-loss'}">Потенциал ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
+       </div>
+     </div>
+   </div>`}).join('')}
+   </div>
+   <div class="auto-market-pagination">
+     <button class="action" ${page<=0?'disabled':''} onclick="market('${filter}',${page-1})">‹ Назад</button>
+     <div><small>СТРАНИЦА</small><b>${page+1} / ${totalPages}</b></div>
+     <button class="action" ${page>=totalPages-1?'disabled':''} onclick="market('${filter}',${page+1})">Дальше ›</button>
+   </div>
  </div>`)
 }
 function carView(id){
