@@ -89,14 +89,16 @@ function market(filter='all',page=0){
  let arr=[...makes];
  const q=String(marketSearchTerm||'').trim().toLowerCase();
  if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km),c.color,c.body,c.trim,c.listingId].join(' ').toLowerCase().includes(q));
- if(filter==='profit')arr.sort((a,b)=>(b.market-b.price-b.repair)-(a.market-a.price-a.repair));
- if(filter==='city')arr=arr.filter(c=>c.city===state.city);
+ if(filter==='cheap')arr.sort((a,b)=>Number(a.price||0)-Number(b.price||0));
+ if(filter==='expensive')arr.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
+ if(filter==='city')arr=arr.filter(c=>c.city===state.city).sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
+ if(filter==='new')arr.sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
  const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
  page=Math.max(0,Math.min(Number(page)||0,totalPages-1));
  const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
  render(`<div class="app">${head('Авто')}
    <section class="auto-market-hero">
-     <div class="auto-market-hero-copy"><small>AUTOMARKET</small><h3>Рынок автомобилей</h3><p>Ищи недооценённые машины, считай вложения и выбирай сделки с запасом по прибыли.</p></div>
+     <div class="auto-market-hero-copy"><small>AUTOMARKET · LIVE</small><h3>Рынок автомобилей</h3><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p></div>
      <div class="auto-market-wallet"><span>Свободные деньги</span><b>${money(state.money)}</b></div>
    </section>
    <div class="auto-market-stats">
@@ -111,13 +113,15 @@ function market(filter='all',page=0){
    </div>
    <div class="filters auto-market-filters">
      <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
+     <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">↑ Дешевле</button>
+     <button class="${filter==='expensive'?'active':''}" onclick="market('expensive',0)">↓ Дороже</button>
      <button class="${filter==='city'?'active':''}" onclick="market('city',0)">📍 ${state.city}</button>
-     <button class="${filter==='profit'?'active':''}" onclick="market('profit',0)">Лучший потенциал</button>
+     <button class="${filter==='new'?'active':''}" onclick="market('new',0)">🆕 Новые</button>
    </div>
    ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
    <div class="auto-market-list">
    ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
-     <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="auto-card-city">📍 ${c.city}</span></div>
+     <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}');background-position:${c.photoPosition||'50% 50%'}"><span class="auto-card-city">📍 ${c.city}</span></div>
      <div class="auto-market-info">
        <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
        <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🎨 ${c.color||'—'}</span><span>🚘 ${c.body||'—'}</span></div>
