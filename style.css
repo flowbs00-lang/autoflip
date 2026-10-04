@@ -1426,3 +1426,230 @@ button[disabled]{cursor:default}
   .purchase-step{padding:7px 2px}
   .inspection-choice{gap:6px}
 }
+
+
+/* AUTOMARKET BOTTOM TABS */
+.phone #screen{position:relative}
+.auto-market-tab-page{
+  padding-bottom:112px!important;
+}
+.auto-bottom-nav{
+  position:absolute;
+  z-index:45;
+  left:10px;
+  right:10px;
+  bottom:23px;
+  height:62px;
+  display:grid;
+  grid-template-columns:1fr 1fr .88fr 1fr 1fr;
+  align-items:end;
+  gap:2px;
+  padding:7px 7px 6px;
+  border:1px solid rgba(213,225,235,.94);
+  border-radius:20px;
+  background:rgba(255,255,255,.95);
+  box-shadow:0 12px 34px rgba(41,62,79,.18);
+  backdrop-filter:blur(18px);
+}
+.auto-tab{
+  position:relative;
+  min-width:0;
+  height:48px;
+  padding:3px 2px 2px;
+  border:0;
+  border-radius:12px;
+  background:transparent;
+  color:#7c8d9d;
+  cursor:pointer;
+}
+.auto-tab-icon{
+  display:block;
+  height:24px;
+  font-size:17px;
+  line-height:24px;
+  filter:grayscale(.35);
+}
+.auto-tab small{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:6.4px;
+  font-weight:750;
+  line-height:1.1;
+  white-space:nowrap;
+}
+.auto-tab.active{
+  color:#2475df;
+  background:#eef6ff;
+}
+.auto-tab.active .auto-tab-icon{filter:none}
+.auto-tab-badge{
+  position:absolute;
+  top:1px;
+  right:7px;
+  min-width:15px;
+  height:15px;
+  padding:0 3px;
+  border:2px solid #fff;
+  border-radius:9px;
+  background:#ef4d63;
+  color:#fff;
+  font-size:6px;
+  font-style:normal;
+  font-weight:850;
+  line-height:11px;
+  text-align:center;
+}
+.auto-tab-plus{
+  align-self:center;
+  width:50px;
+  height:50px;
+  margin:0 auto 10px;
+  padding:0;
+  border-radius:50%;
+  background:linear-gradient(145deg,#3387f4,#216bdb);
+  color:#fff;
+  box-shadow:0 9px 20px rgba(37,116,225,.35);
+}
+.auto-tab-plus span{
+  display:block;
+  margin-top:-3px;
+  font-size:30px;
+  font-weight:300;
+  line-height:50px;
+}
+.auto-tab-plus.active{
+  background:linear-gradient(145deg,#1e6ed9,#1557bd);
+  box-shadow:0 10px 22px rgba(29,96,195,.40);
+}
+
+.auto-favorite-btn{
+  position:absolute;
+  z-index:4;
+  top:8px;
+  right:8px;
+  width:31px;
+  height:31px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:50%;
+  background:rgba(255,255,255,.90);
+  color:#5c7185;
+  box-shadow:0 5px 14px rgba(32,50,67,.16);
+  font-size:19px;
+  line-height:29px;
+  text-align:center;
+}
+.auto-favorite-btn.saved{
+  color:#e74359;
+  background:#fff;
+}
+.auto-detail-favorite.saved{
+  color:#d83f56;
+  border-color:#f2c2ca;
+  background:#fff5f7;
+}
+
+.auto-tab-intro{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+  padding:14px;
+  border:1px solid #dce8f2;
+  border-radius:16px;
+  background:linear-gradient(145deg,#fff,#f3f8fc);
+  box-shadow:0 7px 20px rgba(48,72,94,.07);
+}
+.auto-tab-intro>div{min-width:0}
+.auto-tab-intro small{
+  color:#2878df;
+  font-size:6.7px;
+  font-weight:850;
+  letter-spacing:1px;
+}
+.auto-tab-intro h3{
+  margin:4px 0;
+  color:#192c3e;
+  font-size:15px;
+}
+.auto-tab-intro p{
+  margin:0;
+  color:#738699;
+  font-size:7.2px;
+  line-height:1.45;
+}
+.auto-tab-intro>b{
+  flex:0 0 auto;
+  padding:8px 9px;
+  border-radius:11px;
+  background:#edf5ff;
+  color:#236dca;
+  font-size:11px;
+}
+.auto-empty-tab{
+  margin-top:12px;
+  text-align:center;
+}
+
+.auto-sell-car{
+  width:100%;
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr) 16px;
+  gap:10px;
+  align-items:center;
+  margin-bottom:9px;
+  padding:8px;
+  border:1px solid #dfe8ef;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 5px 15px rgba(48,72,94,.07);
+  color:#1c2d3e;
+  text-align:left;
+  cursor:pointer;
+}
+.auto-sell-car-photo{
+  width:82px;
+  height:66px;
+  border-radius:11px;
+  background-color:#e4ebf1;
+  background-position:center;
+  background-size:cover;
+}
+.auto-sell-car small{
+  display:block;
+  margin-bottom:2px;
+  color:#71869a;
+  font-size:6px;
+  font-weight:800;
+}
+.auto-sell-car b{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:10px;
+  white-space:nowrap;
+}
+.auto-sell-car span{
+  display:block;
+  margin-top:3px;
+  color:#8091a1;
+  font-size:6.7px;
+}
+.auto-sell-car strong{
+  display:block;
+  margin-top:5px;
+  color:#2475d8;
+  font-size:7.5px;
+}
+.auto-sell-car em{
+  color:#95a5b3;
+  font-size:22px;
+  font-style:normal;
+}
+
+@media(max-width:500px){
+  .auto-bottom-nav{left:8px;right:8px}
+  .auto-tab small{font-size:6.1px}
+}

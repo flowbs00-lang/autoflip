@@ -586,5 +586,26 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 })();
 </script>
 
+<script>
+// AutoMarket bottom navigation — final wrappers after all V7.9 overrides.
+(function(){
+  function wrapAutoTab(name,active){
+    var original=window[name];
+    if(typeof original!=='function'||original.__autoBottomTab)return;
+    var wrapped=function(){
+      var result=original.apply(this,arguments);
+      setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav(active);},145);
+      return result;
+    };
+    wrapped.__autoBottomTab=true;
+    window[name]=wrapped;
+  }
+  ['market','carView','marketInspection'].forEach(function(name){wrapAutoTab(name,'listings');});
+  ['messages','openBuyerChat','completeBuyerSale'].forEach(function(name){wrapAutoTab(name,'messages');});
+  ['profile'].forEach(function(name){wrapAutoTab(name,'profile');});
+  ['sellCar','editListingPrice','saveListingPrice','publishCarListing'].forEach(function(name){wrapAutoTab(name,'sell');});
+})();
+</script>
+
 </body>
 </html>

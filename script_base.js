@@ -113,6 +113,87 @@ function home(){
 }
 function lockScreen(){render(`<div class="lock" onclick="unlock()">${status()}<div class="time">${now()}</div><div class="date">${dateText()}</div><div class="lock-card"><b>🔔 AutoFlip</b><small>Нажми, чтобы разблокировать телефон</small></div><div class="swipe">▲ НАЖМИТЕ ДЛЯ РАЗБЛОКИРОВКИ</div></div>`)}
 function unlock(){home()}
+
+function ensureMarketFavorites(){
+ if(!Array.isArray(state.marketFavorites))state.marketFavorites=[];
+ return state.marketFavorites;
+}
+function marketFavoriteId(car){return car&&car.listingId?car.listingId:''}
+function isMarketFavorite(car){
+ var id=marketFavoriteId(car);return !!id&&ensureMarketFavorites().indexOf(id)>=0;
+}
+function toggleMarketFavorite(id,event,source){
+ if(event){event.preventDefault();event.stopPropagation();}
+ var car=makes[id];if(!car||!car.listingId)return;
+ var list=ensureMarketFavorites(),key=car.listingId,pos=list.indexOf(key);
+ if(pos>=0)list.splice(pos,1);else list.unshift(key);
+ localStorage.setItem(KEY,JSON.stringify(state));
+ if(source==='favorites')return autoFavorites();
+ if(source==='detail')return carView(id);
+ if(event&&event.currentTarget){
+   var saved=list.indexOf(key)>=0;
+   event.currentTarget.classList.toggle('saved',saved);
+   event.currentTarget.textContent=saved?'♥':'♡';
+   event.currentTarget.setAttribute('aria-label',saved?'Убрать из избранного':'Добавить в избранное');
+ }
+ setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav('listings');},40);
+}
+function autoBottomUnread(){
+ return Array.isArray(state.buyerInbox)?state.buyerInbox.filter(function(x){return x&&!x.read&&x.status!=='declined';}).length:0;
+}
+function mountAutoBottomNav(active){
+ var screen=document.getElementById('screen');if(!screen)return;
+ var old=document.getElementById('autoBottomNav');if(old)old.remove();
+ var app=screen.querySelector('.app');if(!app)return;
+ app.classList.add('auto-market-tab-page');
+ var fav=ensureMarketFavorites().length,unread=autoBottomUnread();
+ var nav=document.createElement('nav');nav.id='autoBottomNav';nav.className='auto-bottom-nav';
+ nav.innerHTML=
+   '<button class="auto-tab '+(active==='listings'?'active':'')+'" onclick="market(\'all\',0)"><span class="auto-tab-icon">🚗</span><small>Объявления</small></button>'+
+   '<button class="auto-tab '+(active==='favorites'?'active':'')+'" onclick="autoFavorites()"><span class="auto-tab-icon">♡</span><small>Избранное</small>'+(fav?'<i class="auto-tab-badge">'+(fav>9?'9+':fav)+'</i>':'')+'</button>'+
+   '<button class="auto-tab auto-tab-plus '+(active==='sell'?'active':'')+'" onclick="autoSellHub()" aria-label="Продать автомобиль"><span>+</span></button>'+
+   '<button class="auto-tab '+(active==='messages'?'active':'')+'" onclick="messages()"><span class="auto-tab-icon">💬</span><small>Сообщения</small>'+(unread?'<i class="auto-tab-badge">'+(unread>9?'9+':unread)+'</i>':'')+'</button>'+
+   '<button class="auto-tab '+(active==='profile'?'active':'')+'" onclick="profile()"><span class="auto-tab-icon">👤</span><small>Профиль</small></button>';
+ screen.appendChild(nav);
+}
+function autoFavorites(){
+ var ids=ensureMarketFavorites().slice(),live=ids.map(function(key){return makes.find(function(c){return c.listingId===key;});}).filter(Boolean),removed=Math.max(0,ids.length-live.length);
+ state.marketFavorites=live.map(function(c){return c.listingId;});
+ localStorage.setItem(KEY,JSON.stringify(state));
+ var cards=live.map(function(c){
+   var potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);
+   return '<div class="market auto-market-card" onclick="carView('+c.id+')">'+
+     '<div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\');background-position:'+(c.photoPosition||'50% 50%')+'">'+
+       '<span class="auto-card-city">📍 '+c.city+'</span><button class="auto-favorite-btn saved" onclick="toggleMarketFavorite('+c.id+',event,\'favorites\')" aria-label="Убрать из избранного">♥</button>'+
+     '</div><div class="auto-market-info"><div class="auto-market-title"><b>'+c.name+'</b><strong>'+money(c.price)+'</strong></div>'+
+     '<div class="auto-market-specs"><span>🆔 '+(c.listingId?c.listingId.slice(-5):('M'+c.id))+'</span><span>📅 '+c.year+'</span><span>🛣️ '+c.km.toLocaleString('ru-RU')+' км</span><span>🚘 '+(c.body||'—')+'</span></div>'+
+     '<div class="auto-market-bottom"><span>Рынок <b>'+money(c.market)+'</b></span><span class="'+(potential>=0?'auto-profit':'auto-loss')+'">Потенциал '+(potential>=0?'+':'')+money(potential)+' · '+(pct>=0?'+':'')+pct+'%</span></div></div></div>';
+ }).join('');
+ render('<div class="app">'+head('Избранное')+
+   '<div class="auto-tab-intro"><div><small>AUTOMARKET</small><h3>Избранные объявления</h3><p>Сохраняй интересные машины и возвращайся к ним до того, как объявление уйдёт с рынка.</p></div><b>'+live.length+'</b></div>'+
+   (removed?'<div class="note"><b>📴 '+removed+' объявл. уже снято</b><p class="muted">Они автоматически удалены из избранного.</p></div>':'')+
+   (cards?'<div class="auto-market-list">'+cards+'</div>':'<div class="note auto-empty-tab"><b>♡ Пока пусто</b><p class="muted">Нажми на сердечко в объявлении, чтобы сохранить машину сюда.</p><button class="action green" onclick="market(\'all\',0)">Смотреть объявления</button></div>')+
+   '</div>');
+ setTimeout(function(){mountAutoBottomNav('favorites');},130);
+}
+function autoSellCarKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):''}
+function autoSelectSellCar(index){
+ var cars=Array.isArray(state.cars)?state.cars:[],c=cars[index];if(!c)return autoSellHub();
+ state.car=c;localStorage.setItem(KEY,JSON.stringify(state));return sellCar();
+}
+function autoSellHub(){
+ var cars=Array.isArray(state.cars)?state.cars.filter(Boolean):[],active=state.activeListing&&state.activeListing.status==='active'?state.activeListing:null;
+ var cards=cars.map(function(c,i){
+   var listed=active&&active.carKey===autoSellCarKey(c),marketValue=c.repaired?Math.round(Number(c.market||0)*1.02):Number(c.market||0);
+   return '<button class="auto-sell-car" onclick="autoSelectSellCar('+i+')"><div class="auto-sell-car-photo" style="background-image:url(\''+photo(c)+'\')"></div><div><small>'+(listed?'🟢 ОБЪЯВЛЕНИЕ АКТИВНО':'ТВОЯ МАШИНА')+'</small><b>'+c.name+'</b><span>'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</span><strong>'+(listed?'Открыть объявление':'Рынок ~ '+money(marketValue))+'</strong></div><em>›</em></button>';
+ }).join('');
+ render('<div class="app">'+head('Продать автомобиль')+
+   '<div class="auto-tab-intro sell"><div><small>МОИ АВТО</small><h3>Выбери машину для продажи</h3><p>Нажми на купленный автомобиль, чтобы создать или открыть его объявление.</p></div><b>'+cars.length+'/3</b></div>'+
+   (cards||'<div class="note auto-empty-tab"><b>🚗 У тебя пока нет машин</b><p class="muted">Купи автомобиль в «Объявлениях», и он появится здесь.</p><button class="action green" onclick="market(\'all\',0)">Перейти к объявлениям</button></div>')+
+   '</div>');
+ setTimeout(function(){mountAutoBottomNav('sell');},130);
+}
+
 let marketSearchTerm='';
 let marketAllOrder=[];
 function marketListingKey(c){return c&&c.listingId?c.listingId:('market-'+c.id+'-'+c.name)}
@@ -145,7 +226,7 @@ function market(filter='all',page=0){
  const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
  page=Math.max(0,Math.min(Number(page)||0,totalPages-1));
  const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
- render(`<div class="app">${head('Авто')}
+ render(`<div class="app">${head('Объявления')}
    <section class="auto-market-hero">
      <div class="auto-market-hero-copy"><small>AUTOMARKET · LIVE</small><h3>Рынок автомобилей</h3><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p></div>
      <div class="auto-market-wallet"><span>Свободные деньги</span><b>${money(state.money)}</b></div>
@@ -170,7 +251,7 @@ function market(filter='all',page=0){
    ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
    <div class="auto-market-list">
    ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
-     <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}');background-position:${c.photoPosition||'50% 50%'}"><span class="auto-card-city">📍 ${c.city}</span></div>
+     <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}');background-position:${c.photoPosition||'50% 50%'}"><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${isMarketFavorite(c)?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${isMarketFavorite(c)?'Убрать из избранного':'Добавить в избранное'}">${isMarketFavorite(c)?'♥':'♡'}</button></div>
      <div class="auto-market-info">
        <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
        <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span></div>
@@ -242,6 +323,7 @@ function carView(id){
    </div>
    ${!repOk?'<div class="note"><b>🔒 Автомобиль пока недоступен</b><p class="muted">Для этого уровня сделки нужно '+needRep+' репутации.</p></div>':''}
    ${repOk&&!canAfford?'<div class="note"><b>🏦 Не хватает '+money(c.price-state.money)+'</b><p class="muted">Можно накопить или проверить доступный лимит в Банке.</p></div>':''}
+   <button class="action auto-detail-favorite ${isMarketFavorite(c)?'saved':''}" onclick="toggleMarketFavorite(${id},event,'detail')">${isMarketFavorite(c)?'♥ В избранном':'♡ Добавить в избранное'}</button>
    <button class="action" onclick="marketInspection(${id})">🔎 ${inspection?'Результат осмотра':'Осмотреть автомобиль'}</button>
    <button class="action green" onclick="deal(${id})" ${repOk?'':'disabled'}>💬 ${inspection?'Перейти к торгу':'Связаться с продавцом'}</button>
  </div>`)
