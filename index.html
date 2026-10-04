@@ -50,14 +50,20 @@ function deal(id){
   objectiveSub.textContent=inspection?`Осмотр дал аргумент для торга: ${inspection.risk}.`:`${p.icon} ${p.type}: можно торговаться и без осмотра, но позиция слабее.`;
   renderNegotiation('start');
 }
-function cancelPurchaseNegotiation(){
+function cancelPurchaseNegotiation(reason){
+  var text=reason||'Ты отказался от условий сделки. Машина осталась у продавца.';
   negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0,inspection:null};
-  return market('all',0);
+  render(`<div class="app">${head('Сделка сорвалась')}<div class="deal-failed-card"><div class="deal-failed-icon">✕</div><small>СДЕЛКА НЕ СОСТОЯЛАСЬ</small><h3>Сделка сорвалась</h3><p>${text}</p></div><button class="action green" onclick="market('all',0)">🚗 Смотреть объявления</button></div>`);
+  setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav('listings');},130);
+}
+function returnToPurchaseNegotiation(){
+  if(!negotiation||negotiation.id===null||negotiation.id===undefined||!makes[negotiation.id])return market('all',0);
+  return renderNegotiation(Number(negotiation.lastOffer||0)>=10000?'accept':'start');
 }
 function renderNegotiation(mode,counter=0){
   const n=negotiation;
   if(!n||n.id===null||n.id===undefined||!makes[n.id])return market('all',0);
-  if(mode==='accept'&&Number(n.lastOffer||0)<10000)return cancelPurchaseNegotiation();
+  if(mode==='accept'&&Number(n.lastOffer||0)<10000)return cancelPurchaseNegotiation('Переговоры завершились без согласованной цены.');
   const c=makes[n.id],p=n.personality,inspection=n.inspection||null,tradeReady=Array.isArray(state.cars)&&state.cars.some(function(x){return x&&!x.listed;});
   let sellerText=p.open;
   if(mode==='counter')sellerText=`«${money(n.lastOffer)} мало. Могу пойти навстречу и отдать за ${money(counter)}. Это уже близко к моему пределу.»`;
@@ -84,7 +90,7 @@ function makeOffer(){
   n.lastOffer=offer;n.round++;
   const gap=offer/n.minimum;
   if(offer>=n.minimum){log(`Переговоры: ${n.seller} (${p.type}) согласился на ${money(offer)} за ${makes[n.id].name}.`);renderNegotiation('accept');return;}
-  if(n.round>=p.patience&&gap<.96){log(`${n.seller} устал от торга и завершил разговор.`);return market();}
+  if(n.round>=p.patience&&gap<.96){log(`${n.seller} устал от торга и завершил разговор.`);return cancelPurchaseNegotiation('Продавец отказался продолжать торг. Договориться по цене не получилось.');}
   if(gap>=.90){const step=(n.asking-offer)*p.flex,counter=Math.round(Math.max(n.minimum,offer+step)/1000)*1000;n.counter=counter;log(`Переговоры: ${n.seller} сделал встречное предложение ${money(counter)}.`);renderNegotiation('counter',counter);return;}
   if(n.round>=2){log(`Переговоры: ${n.seller} раздражён слишком низкой ценой.`);renderNegotiation('angry');return;}
   log(`Переговоры: ${n.seller} отклонил предложение ${money(offer)}.`);renderNegotiation('reject');
@@ -307,13 +313,13 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   };
 
   var purchaseTradeDeal=null;
-  window.cancelSellerTrade=function(){
+  window.cancelSellerTrade=function(reason){
     purchaseTradeDeal=null;
     if(typeof negotiation!=='undefined'&&negotiation){
       negotiation.lastOffer=0;
       negotiation.counter=0;
     }
-    return typeof cancelPurchaseNegotiation==='function'?cancelPurchaseNegotiation():market('all',0);
+    return typeof cancelPurchaseNegotiation==='function'?cancelPurchaseNegotiation(reason||'Ты отказался от обмена. Сделка по этой машине завершена.'):market('all',0);
   };
   function ownedTradeCars(){return (Array.isArray(state.cars)?state.cars:[]).filter(function(c){return c&&!c.listed;});}
   function ownedCarKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
@@ -328,7 +334,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     }).join('');
     render('<div class="app">'+head('Предложить обмен')+
       '<div class="note"><small>ПОКУПКА С TRADE-IN</small><h3>'+target.name+'</h3><p class="muted">Выбери свою машину. Продавец оценит её и назовёт доплату в одну из сторон.</p></div>'+html+
-      '<button class="action" onclick="renderNegotiation(\'accept\')">‹ Назад к покупке</button></div>');
+      '<button class="action" onclick="returnToPurchaseNegotiation()">‹ Назад к покупке</button></div>');
   };
 
   window.startSellerTradeIn=function(targetId,index){
@@ -374,7 +380,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var d=purchaseTradeDeal,input=document.getElementById('sellerTradeValue');if(!d)return;
     var ask=tradeRound(input&&input.value);d.round++;
     if(ask<=d.maxValue){d.valuation=ask;return renderSellerTradeIn('accept',ask);}
-    if(d.round>=3)return renderSellerTradeIn('reject');
+    if(d.round>=3)return cancelSellerTrade('Продавец отказался от обмена: по оценке твоей машины договориться не получилось.');
     var counter=tradeRound(Math.min(d.maxValue,d.valuation+(d.maxValue-d.valuation)*.7));
     d.valuation=counter;renderSellerTradeIn('counter',counter);
   };
