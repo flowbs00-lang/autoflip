@@ -51,9 +51,9 @@ function deal(id){
   renderNegotiation('start');
 }
 function cancelPurchaseNegotiation(reason){
-  var text=reason||'Ты отказался от условий сделки. Машина осталась у продавца.';
+  var text=reason||'По условиям не сошлись. Машина остаётся у продавца.';
   negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0,inspection:null};
-  render(`<div class="app">${head('Сделка сорвалась')}<div class="deal-failed-card"><div class="deal-failed-icon">✕</div><small>СДЕЛКА НЕ СОСТОЯЛАСЬ</small><h3>Сделка сорвалась</h3><p>${text}</p></div><button class="action green" onclick="market('all',0)">🚗 Смотреть объявления</button></div>`);
+  render(`<div class="app deal-ended-page">${head('Переговоры завершены')}<section class="deal-ended-card"><div class="deal-ended-mark"><span>↩</span></div><small>ДОГОВОРИТЬСЯ НЕ ПОЛУЧИЛОСЬ</small><h3>Ищем следующий вариант</h3><p>${text}</p><div class="deal-ended-safe"><span>✓</span><div><b>Без последствий</b><small>Деньги не списаны, место в гараже не изменилось.</small></div></div></section><button class="action green deal-ended-action" onclick="market('all',0)">🚗 Смотреть объявления</button></div>`);
   setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav('listings');},130);
 }
 function returnToPurchaseNegotiation(){
@@ -400,7 +400,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     state.cars=(state.cars||[]).filter(function(c){return ownedCarKey(c)!==d.ownKey;});
     var added=Object.assign({},d.target,{buy:Number(d.purchasePrice),repaired:false,repairSpent:0,listed:false,_garageId:'car-ex-'+Date.now()+'-'+Math.floor(Math.random()*999)});
     state.cars.push(added);state.car=added;state.deals=Number(state.deals||0)+1;
-    if(d.targetListingId&&typeof removePurchasedListing==='function')removePurchasedListing(d.targetListingId);
+    if(typeof removePurchasedListing==='function')removePurchasedListing(d.targetListingId||d.target.listingId,d.target);
     log('Обмен: '+own.name+' зачтён за '+money(d.valuation)+', получен '+added.name+'. '+tradePurchaseCashText(d.purchasePrice,d.valuation)+'.');
     if(typeof persist==='function')persist();else save();
     purchaseTradeDeal=null;

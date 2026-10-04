@@ -339,12 +339,26 @@ function loadOrCreateGeneratedMarket(){
  }else generateInitialMarket();
 }
 function rotateGeneratedMarket(){return processScheduledMarketRefresh();}
-function removePurchasedListing(listingId){
- if(!listingId||typeof makes==='undefined')return;
- var idx=makes.findIndex(function(x){return x.listingId===listingId;});
- if(idx>=0)makes.splice(idx,1);
+function removePurchasedListing(listingId,snapshot){
+ if(typeof makes==='undefined')return 0;
+ var before=makes.length,id=String(listingId||'');
+ for(var i=makes.length-1;i>=0;i--){
+   var car=makes[i],sameId=id&&String(car.listingId||'')===id;
+   var sameSnapshot=!id&&snapshot&&car&&car.name===snapshot.name&&Number(car.year||0)===Number(snapshot.year||0)&&Number(car.km||0)===Number(snapshot.km||0)&&Number(car.price||0)===Number(snapshot.price||0);
+   if(sameId||sameSnapshot)makes.splice(i,1);
+ }
+ // Extra fallback for exchange snapshots if an older save lost listingId.
+ if(before===makes.length&&snapshot){
+   var fallback=makes.findIndex(function(car){
+     return car&&car.name===snapshot.name&&Number(car.year||0)===Number(snapshot.year||0)&&Number(car.km||0)===Number(snapshot.km||0);
+   });
+   if(fallback>=0)makes.splice(fallback,1);
+ }
  reindexMarketListings();
+ if(Array.isArray(state.marketFavorites)&&id)state.marketFavorites=state.marketFavorites.filter(function(x){return String(x)!==id;});
  state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];
+ if(typeof localStorage!=='undefined')localStorage.setItem(KEY,JSON.stringify(state));
+ return before-makes.length;
 }
 loadOrCreateGeneratedMarket();
 if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion){
