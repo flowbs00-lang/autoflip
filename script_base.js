@@ -81,9 +81,20 @@ function marketSearch(){
  market('all',0);
 }
 function clearMarketSearch(){marketSearchTerm='';market('all',0)}
+let marketSearchTerm='';
+function marketSearch(){
+  const input=document.getElementById('marketSearch');
+  marketSearchTerm=(input?input.value:'').trim();
+  market('all',0);
+}
+function clearMarketSearch(){
+  marketSearchTerm='';
+  market('all',0);
+}
 function market(filter='all',page=0){
  let arr=[...makes];
- if(filter==='cheap')arr=arr.filter(c=>c.price<500000);
+ const q=String(marketSearchTerm||'').trim().toLowerCase();
+ if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km)].join(' ').toLowerCase().includes(q));
  if(filter==='profit')arr.sort((a,b)=>(b.market-b.price-b.repair)-(a.market-a.price-a.repair));
  if(filter==='city')arr=arr.filter(c=>c.city===state.city);
  const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
@@ -99,12 +110,17 @@ function market(filter='all',page=0){
      <div><b>${garageCount}/3</b><span>в гараже</span></div>
      <div><b>${Number(state.rep||0)}</b><span>репутация</span></div>
    </div>
+   <div class="market-search-box">
+     <span>🔎</span>
+     <input id="marketSearch" type="text" value="${String(marketSearchTerm||'').replace(/"/g,'&quot;')}" placeholder="Марка, модель или город" onkeydown="if(event.key==='Enter')marketSearch()">
+     ${marketSearchTerm?'<button onclick="clearMarketSearch()">Сбросить</button>':'<button onclick="marketSearch()">Поиск</button>'}
+   </div>
    <div class="filters auto-market-filters">
      <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
      <button class="${filter==='city'?'active':''}" onclick="market('city',0)">📍 ${state.city}</button>
-     <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">До 500К</button>
      <button class="${filter==='profit'?'active':''}" onclick="market('profit',0)">Лучший потенциал</button>
    </div>
+   ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
    <div class="auto-market-list">
    ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
      <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="auto-card-city">📍 ${c.city}</span></div>
@@ -118,11 +134,11 @@ function market(filter='all',page=0){
      </div>
    </div>`}).join('')}
    </div>
-   <div class="auto-market-pagination">
+   ${visible.length?`<div class="auto-market-pagination">
      <button class="action" ${page<=0?'disabled':''} onclick="market('${filter}',${page-1})">‹ Назад</button>
      <div><small>СТРАНИЦА</small><b>${page+1} / ${totalPages}</b></div>
      <button class="action" ${page>=totalPages-1?'disabled':''} onclick="market('${filter}',${page+1})">Дальше ›</button>
-   </div>
+   </div>`:''}
  </div>`)
 }
 function carView(id){
