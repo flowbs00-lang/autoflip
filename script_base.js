@@ -74,12 +74,76 @@ function home(){
 }
 function lockScreen(){render(`<div class="lock" onclick="unlock()">${status()}<div class="time">${now()}</div><div class="date">${dateText()}</div><div class="lock-card"><b>🔔 AutoFlip</b><small>Нажми, чтобы разблокировать телефон</small></div><div class="swipe">▲ НАЖМИТЕ ДЛЯ РАЗБЛОКИРОВКИ</div></div>`)}
 function unlock(){home()}
-function market(filter='all',page=0){
- let arr=[...makes];if(filter==='cheap')arr=arr.filter(c=>c.price<500000);if(filter==='profit')arr.sort((a,b)=>(b.market-b.price-b.repair)-(a.market-a.price-a.repair));if(filter==='city')arr=arr.filter(c=>c.city===state.city);
- const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));page=Math.max(0,Math.min(Number(page)||0,totalPages-1));const start=page*perPage,visible=arr.slice(start,start+perPage);
- render(`<div class="app">${head('Авто')}<div class="filters"><button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button><button class="${filter==='city'?'active':''}" onclick="market('city',0)">${state.city}</button><button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">До 500К</button><button class="${filter==='profit'?'active':''}" onclick="market('profit',0)">Маржа</button></div>${visible.map(c=>`<div class="market" onclick="carView(${c.id})"><div class="pic" style="background-image:linear-gradient(#0003,#0008),url('${photo(c)}'),url('${fallbackPhoto(c)}')">🚘</div><b>${c.name}</b><small>${c.city} · ${c.year} · ${c.km.toLocaleString('ru-RU')} км</small><strong>${money(c.price)}</strong></div>`).join('')}<div class="row" style="gap:8px;justify-content:center;align-items:center"><button class="action" style="margin:0;flex:1" ${page<=0?'disabled':''} onclick="market('${filter}',${page-1})">‹ Назад</button><b style="white-space:nowrap">Стр. ${page+1}/${totalPages}</b><button class="action" style="margin:0;flex:1" ${page>=totalPages-1?'disabled':''} onclick="market('${filter}',${page+1})">Дальше ›</button></div></div>`)
+let marketSearchTerm='';
+function marketSearch(){
+ const input=document.getElementById('marketSearch');
+ marketSearchTerm=(input?input.value:'').trim();
+ market('all',0);
 }
-function carView(id){let c=makes[id],profit=c.market-c.price-c.repair;render(`<div class="app">${head(c.name)}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}'),url('${fallbackPhoto(c)}')">🚘</div><div class="price">${money(c.price)}</div><div class="muted">${c.city} · ${c.year} · ${c.km.toLocaleString('ru-RU')} км</div><div class="deal-score"><span>РЫНОК<b>${money(c.market)}</b></span><span>РЕМОНТ<b>${money(c.repair)}</b></span><span>МАРЖА<b class="profit">${money(profit)}</b></span></div><div class="warning">⚠ Риск: ${c.risk}. Диагностика перед покупкой откроет слабое место.</div><button class="action" onclick="inspect(${id})">🔎 Диагностика</button><button class="action green" onclick="deal(${id})">💬 Открыть переговоры</button></div>`)}
+function clearMarketSearch(){marketSearchTerm='';market('all',0)}
+function market(filter='all',page=0){
+ let arr=[...makes];
+ const q=String(marketSearchTerm||'').trim().toLowerCase();
+ if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km)].join(' ').toLowerCase().includes(q));
+ if(filter==='cheap')arr=arr.filter(c=>c.price<500000);
+ if(filter==='profit')arr.sort((a,b)=>(b.market-b.price-b.repair)-(a.market-a.price-a.repair));
+ if(filter==='city')arr=arr.filter(c=>c.city===state.city);
+ const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
+ page=Math.max(0,Math.min(Number(page)||0,totalPages-1));
+ const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
+ render(`<div class="app auto-market-app">${head('Авто')}
+ <div class="auto-market-hero">
+   <div><small>AUTOFLIP MARKET</small><h3>Найди следующую сделку</h3><p>Живые объявления, меняющиеся цены и реальные риски.</p></div>
+   <div class="auto-market-balance"><span>На руках</span><b>${money(state.money)}</b></div>
+ </div>
+ <div class="auto-market-stats">
+   <span><b>${arr.length}</b><small>найдено</small></span>
+   <span><b>${state.city}</b><small>город</small></span>
+   <span><b>${garageCount}/3</b><small>гараж</small></span>
+ </div>
+ <div class="market-search-box">
+   <span>⌕</span>
+   <input id="marketSearch" type="text" value="${String(marketSearchTerm||'').replace(/"/g,'&quot;')}" placeholder="Марка, модель, город..." onkeydown="if(event.key==='Enter')marketSearch()">
+   ${marketSearchTerm?'<button onclick="clearMarketSearch()">×</button>':'<button onclick="marketSearch()">Найти</button>'}
+ </div>
+ <div class="filters auto-market-filters">
+   <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
+   <button class="${filter==='city'?'active':''}" onclick="market('city',0)">📍 ${state.city}</button>
+   <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">До 500К</button>
+   <button class="${filter==='profit'?'active':''}" onclick="market('profit',0)">↗ Лучшая маржа</button>
+ </div>
+ ${visible.length?'<div class="market-section-title"><b>Объявления</b><span>Стр. '+(page+1)+' из '+totalPages+'</span></div>':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй изменить поиск или сбросить фильтры.</p></div>'}
+ ${visible.map(c=>{const profit=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),margin=Math.round(profit/Math.max(1,Number(c.price||1))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
+   <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0008),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span></div>
+   <div class="market-card-title"><div><b>${c.name}</b><small>${c.year} · ${c.km.toLocaleString('ru-RU')} км</small></div><strong>${money(c.price)}</strong></div>
+   <div class="market-card-meta"><span>Рынок <b>${money(c.market)}</b></span><span class="${profit>=0?'market-good':'market-bad'}">Маржа ~ ${profit>=0?'+':''}${money(profit)} · ${margin}%</span></div>
+ </div>`}).join('')}
+ ${visible.length?'<div class="market-pager"><button class="action" '+(page<=0?'disabled':'')+' onclick="market(\''+filter+'\','+(page-1)+')">‹ Назад</button><span>'+(page+1)+' / '+totalPages+'</span><button class="action" '+(page>=totalPages-1?'disabled':'')+' onclick="market(\''+filter+'\','+(page+1)+')">Дальше ›</button></div>':''}
+ </div>`)
+}
+function carView(id){
+ let c=makes[id];if(!c)return market();
+ let profit=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),margin=Math.round(profit/Math.max(1,Number(c.price||1))*100),needRep=(typeof requiredRepForCar==='function'?requiredRepForCar(c):0),repOk=Number(state.rep||0)>=needRep,canAfford=Number(state.money||0)>=Number(c.price||0);
+ render(`<div class="app auto-car-view">${head(c.name)}
+   <div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span><span class="car-year-badge">${c.year}</span></div>
+   <div class="car-detail-heading"><div><small>ЦЕНА ПРОДАВЦА</small><div class="price">${money(c.price)}</div></div><span class="car-km">${c.km.toLocaleString('ru-RU')} км</span></div>
+   <div class="deal-score car-economics">
+     <span>РЫНОК<b>${money(c.market)}</b></span>
+     <span>РЕМОНТ ~<b>${money(c.repair)}</b></span>
+     <span>ПОТЕНЦИАЛ<b class="${profit>=0?'profit':'market-bad'}">${profit>=0?'+':''}${money(profit)}</b></span>
+   </div>
+   <div class="note car-opportunity"><b>${profit>=0?'📈 Потенциал сделки':'📉 Слабая экономика'}</b><p class="muted">Расчётная маржа: ${margin}% до дополнительных скрытых расходов и торга.</p></div>
+   <div class="warning"><b>⚠ Что известно сейчас</b><br>Риск: ${c.risk}. Диагностика поможет узнать машину лучше, но скрытые проблемы всё равно возможны.</div>
+   <div class="car-buy-status">
+     <span><small>На руках</small><b>${money(state.money)}</b></span>
+     <span><small>Репутация</small><b>${Number(state.rep||0)}${needRep?' / '+needRep:''}</b></span>
+   </div>
+   ${!repOk?'<div class="note"><b>🔒 Автомобиль пока недоступен</b><p class="muted">Для этого уровня сделки нужно '+needRep+' репутации.</p></div>':''}
+   ${repOk&&!canAfford?'<div class="note"><b>🏦 Не хватает '+money(c.price-state.money)+'</b><p class="muted">Можно накопить или проверить доступный лимит в Банке.</p></div>':''}
+   <button class="action" onclick="inspect(${id})">🔎 Проверить автомобиль</button>
+   <button class="action green" onclick="deal(${id})" ${repOk?'':'disabled'}>💬 Связаться с продавцом</button>
+ </div>`)
+}
 function inspect(id){let c=makes[id];objective.textContent='Переговоры';objectiveSub.textContent='Найден риск: '+c.risk+'. Используй его в торге.';log(`Диагностика ${c.name}: найден риск — ${c.risk}.`);carView(id)}
 function deal(id){let c=makes[id],base=Math.floor(c.price*.92),seller=['Алексей','Дмитрий','Илья'][id%3];render(`<div class="app">${head('Переговоры')}<div class="bubble seller">${seller}: «Цена ${money(c.price)}. Машина хорошая.»</div><div class="bubble you">Ты: «После диагностики вижу проблему с ${c.risk}. Готов дать ${money(base)}.»</div><div class="buyers"><div class="buyer"><b>🤝 Торг</b><small>−12% · риск выше</small></div><div class="buyer"><b>⚡ Сегодня</b><small>−6% · быстро</small></div><div class="buyer"><b>💎 Премиум</b><small>позже дороже</small></div></div><button class="action green" onclick="buy(${id},${base})">Согласовать ${money(base)}</button><button class="action" onclick="market()">Назад</button></div>`)}
 function buy(id,price){if(state.money<price)return alert('Не хватает денег. Используй Банк.');let c=makes[id];state.money-=price;state.car={...c,buy:price,repaired:false};state.deals++;state.notifications++;objective.textContent='Подготовить автомобиль';objectiveSub.textContent='Открой гараж или СТО.';log(`Куплен ${c.name} за ${money(price)}.`);garage()}
