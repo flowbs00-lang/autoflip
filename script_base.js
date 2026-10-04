@@ -40,8 +40,9 @@ const exactPhotos={
 };
 function fallbackPhoto(c){return `https://images.unsplash.com/${photos[c.id%photos.length]}?auto=format&fit=crop&w=700&q=75`}
 function photo(c){return c&&c.photoUrl?c.photoUrl:(exactPhotos[c.name]||fallbackPhoto(c))}
-const initial={money:50000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 50 000 ₽. Поднимись с самого низа.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
+const initial={money:100000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 100 000 ₽. Найди первую выгодную машину.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
 let state=JSON.parse(localStorage.getItem(KEY)||'null')||structuredClone(initial);
+if(Number(state.money||0)===50000&&Number(state.deals||0)===0&&!state.car&&(!Array.isArray(state.cars)||state.cars.length===0)&&Number(state.loan||0)===0)state.money=100000;
 if(state.notifications===undefined)state.notifications=2;if(!state.notes)state.notes=[];if(!state.seen)state.seen={};
 const screen=document.getElementById('screen'),objective=document.getElementById('objective'),objectiveSub=document.getElementById('objectiveSub'),journal=document.getElementById('journal');
 function money(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}
