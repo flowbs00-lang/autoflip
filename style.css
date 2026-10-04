@@ -1337,3 +1337,92 @@ button[disabled]{cursor:default}
   .auto-market-photo{height:128px}
   .car-detail-photo{height:182px}
 }
+
+
+/* AUTO PURCHASE FLOW V1 */
+.purchase-flow{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:5px;
+  margin:0 0 10px;
+}
+.purchase-step{
+  position:relative;
+  min-width:0;
+  padding:7px 3px;
+  border:1px solid #e1e9f0;
+  border-radius:10px;
+  background:#fff;
+  text-align:center;
+  opacity:.58;
+}
+.purchase-step b{
+  width:19px;height:19px;
+  display:grid;place-items:center;
+  margin:0 auto 4px;
+  border-radius:50%;
+  background:#e9eff5;
+  color:#64788b;
+  font-size:7px;
+}
+.purchase-step span{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#6f8192;
+  font-size:6.4px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.purchase-step.done,.purchase-step.active{opacity:1}
+.purchase-step.done b{
+  background:#dff6ed;
+  color:#14845f;
+}
+.purchase-step.active{
+  border-color:#bcd7fa;
+  background:#f4f9ff;
+  box-shadow:0 4px 12px rgba(47,128,237,.08);
+}
+.purchase-step.active b{
+  background:#2f80ed;
+  color:#fff;
+}
+.purchase-step.active span{color:#2369bf}
+.inspection-choice{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:9px 0;
+}
+.inspection-choice>div{
+  padding:11px;
+  border:1px solid #e0e9f1;
+  border-radius:13px;
+  background:#fff;
+  box-shadow:0 5px 15px rgba(48,72,94,.06);
+}
+.inspection-choice b{
+  display:block;
+  color:#1d3042;
+  font-size:9px;
+}
+.inspection-choice small{
+  display:block;
+  min-height:31px;
+  margin-top:5px;
+  color:#74879a;
+  font-size:6.8px;
+  line-height:1.45;
+}
+.inspection-choice .action{min-height:34px;padding:7px;font-size:8px}
+.inspection-result,.inspection-brief,.negotiation-evidence,.purchase-summary{
+  border-color:#d8e8f7;
+  background:linear-gradient(145deg,#f8fbff,#fff);
+}
+.purchase-summary .hero-line strong{max-width:52%;text-align:right}
+@media(max-width:500px){
+  .purchase-flow{gap:4px}
+  .purchase-step{padding:7px 2px}
+  .inspection-choice{gap:6px}
+}

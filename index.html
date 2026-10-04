@@ -44,21 +44,21 @@ const sellerTypes=[
  {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.»'}
 ];
 function deal(id){
-  const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'];
-  negotiation={id,asking:c.price,minimum:Math.round(c.price*p.min),seller:sellers[id%sellers.length],round:0,lastOffer:0,personality:p,counter:0};
+  const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'],inspection=(state.marketInspections&&state.marketInspections[marketInspectionKey(c)])||null,inspectionBonus=inspection?Number(inspection.negotiationBonus||0):0;
+  negotiation={id,asking:c.price,minimum:Math.round(c.price*Math.max(.82,p.min-inspectionBonus)),seller:sellers[id%sellers.length],round:0,lastOffer:0,personality:p,counter:0,inspection:inspection};
   objective.textContent='Переговоры с продавцом';
-  objectiveSub.textContent=`${p.icon} ${p.type}: подбери правильную тактику.`;
+  objectiveSub.textContent=inspection?`Осмотр дал аргумент для торга: ${inspection.risk}.`:`${p.icon} ${p.type}: можно торговаться и без осмотра, но позиция слабее.`;
   renderNegotiation('start');
 }
 function renderNegotiation(mode,counter=0){
-  const n=negotiation,c=makes[n.id],p=n.personality;
+  const n=negotiation,c=makes[n.id],p=n.personality,inspection=n.inspection||null;
   let sellerText=p.open;
   if(mode==='counter')sellerText=`«${money(n.lastOffer)} мало. Могу пойти навстречу и отдать за ${money(counter)}. Это уже близко к моему пределу.»`;
   if(mode==='reject')sellerText=p.reject;
   if(mode==='accept')sellerText=`«Хорошо, ${money(n.lastOffer)} меня устраивает. Договорились.»`;
   if(mode==='angry')sellerText=`«Я же сказал, что слишком низко. Если хотите купить — давайте серьёзнее.»`;
   let extra='';
-  if(mode==='start')extra=`<p class="muted">${p.icon} ${p.type}. У каждого продавца свой предел и терпение. Можно торговаться несколько раундов.</p>`;
+  if(mode==='start')extra=`${inspection?'<div class="note negotiation-evidence"><b>🔎 Аргумент после осмотра</b><p class="muted">'+inspection.risk+(inspection.mode==='expert'?' · эксперт дал более сильную позицию по цене.':'.')+'</p></div>':'<div class="warning">⚠ Ты начал торг без осмотра. Можно вернуться к машине и сначала проверить её.</div>'}<p class="muted">${p.icon} ${p.type}. У каждого продавца свой предел и терпение. Можно торговаться несколько раундов.</p>`;
   if(mode==='reject')extra='<p class="muted">Предложение отвергнуто. Попробуй поднять цену или закончить разговор.</p>';
   if(mode==='counter')extra='<p class="muted">Продавец сделал встречное предложение. Теперь можно принять его или попробовать улучшить цену.</p>';
   if(mode==='angry')extra='<p class="muted">Продавец начинает раздражаться. Следующее слишком низкое предложение может закончить разговор.</p>';
@@ -67,8 +67,8 @@ function renderNegotiation(mode,counter=0){
   if(mode!=='accept'){
     const suggested=mode==='counter'?counter:(n.lastOffer?Math.round((n.lastOffer+n.asking)/2):Math.round(n.asking*.90));
     controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><button class="action green" onclick="makeOffer()">💬 Предложить цену</button>${mode==='counter'?`<button class="action" onclick="acceptCounter(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="market()">🚪 Закончить переговоры</button>`;
-  }else controls=`<button class="action green" onclick="buy(${n.id},${n.lastOffer})">🤝 Купить за ${money(n.lastOffer)}</button><button class="action" onclick="market()">Отказаться от сделки</button>`;
-  render(`<div class="app">${head('Переговоры')}<div class="note"><small>Продавец</small><h3>${p.icon} ${n.seller} · ${c.name}</h3><span class="muted">${p.type} · Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
+  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ПОДТВЕРЖДЕНИЕ ПОКУПКИ</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Ориентир ремонта</span><strong>~ ${money(c.repair)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="buy(${n.id},${n.lastOffer})">✅ Подтвердить покупку · ${money(n.lastOffer)}</button><button class="action" onclick="market()">Отказаться от сделки</button>`;}
+  render(`<div class="app">${head('Переговоры')}${purchaseFlowHtml(mode==='accept'?4:3)}<div class="note"><small>Продавец</small><h3>${p.icon} ${n.seller} · ${c.name}</h3><span class="muted">${p.type} · Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
 }
 function acceptCounter(counter){negotiation.lastOffer=counter;renderNegotiation('accept');}
 function makeOffer(){
