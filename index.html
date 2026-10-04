@@ -44,8 +44,8 @@ const sellerTypes=[
  {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.»'}
 ];
 function deal(id){
-  const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'],inspection=(state.marketInspections&&state.marketInspections[marketInspectionKey(c)])||null,inspectionBonus=inspection?Number(inspection.negotiationBonus||0):0;
-  negotiation={id,asking:c.price,minimum:Math.round(c.price*Math.max(.82,p.min-inspectionBonus)),seller:sellers[id%sellers.length],round:0,lastOffer:0,personality:p,counter:0,inspection:inspection};
+  const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'],inspection=(state.marketInspections&&state.marketInspections[marketInspectionKey(c)])||null,inspectionBonus=inspection?Number(inspection.negotiationBonus||0):0,sellerName=c.sellerName||sellers[id%sellers.length];
+  negotiation={id,asking:c.price,minimum:Math.round(c.price*Math.max(.82,p.min-inspectionBonus)),seller:sellerName,round:0,lastOffer:0,personality:p,counter:0,inspection:inspection};
   objective.textContent='Переговоры с продавцом';
   objectiveSub.textContent=inspection?`Осмотр дал аргумент для торга: ${inspection.risk}.`:`${p.icon} ${p.type}: можно торговаться и без осмотра, но позиция слабее.`;
   renderNegotiation('start');
