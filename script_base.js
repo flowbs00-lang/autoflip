@@ -76,13 +76,6 @@ function lockScreen(){render(`<div class="lock" onclick="unlock()">${status()}<d
 function unlock(){home()}
 let marketSearchTerm='';
 function marketSearch(){
- const input=document.getElementById('marketSearch');
- marketSearchTerm=(input?input.value:'').trim();
- market('all',0);
-}
-function clearMarketSearch(){marketSearchTerm='';market('all',0)}
-let marketSearchTerm='';
-function marketSearch(){
   const input=document.getElementById('marketSearch');
   marketSearchTerm=(input?input.value:'').trim();
   market('all',0);
