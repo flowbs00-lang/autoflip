@@ -339,21 +339,48 @@ function loadOrCreateGeneratedMarket(){
  }else generateInitialMarket();
 }
 function rotateGeneratedMarket(){return processScheduledMarketRefresh();}
+function consumedMarketListingIds(){
+ if(!Array.isArray(state.consumedMarketListingIds))state.consumedMarketListingIds=[];
+ var ids=state.consumedMarketListingIds;
+ function remember(car){
+   var id=car&&car.listingId?String(car.listingId):'';
+   if(id&&ids.indexOf(id)<0)ids.push(id);
+ }
+ if(Array.isArray(state.cars))state.cars.forEach(remember);
+ if(state.car)remember(state.car);
+ state.consumedMarketListingIds=ids.slice(-120);
+ return state.consumedMarketListingIds;
+}
+function pruneConsumedMarketListings(){
+ if(typeof makes==='undefined')return 0;
+ var consumed=new Set(consumedMarketListingIds().map(String)),before=makes.length;
+ for(var i=makes.length-1;i>=0;i--){
+   var id=makes[i]&&makes[i].listingId?String(makes[i].listingId):'';
+   if(id&&consumed.has(id))makes.splice(i,1);
+ }
+ if(before!==makes.length){
+   reindexMarketListings();
+   if(Array.isArray(state.marketFavorites))state.marketFavorites=state.marketFavorites.filter(function(id){return !consumed.has(String(id));});
+ }
+ return before-makes.length;
+}
 function removePurchasedListing(listingId,snapshot){
  if(typeof makes==='undefined')return 0;
- var before=makes.length,id=String(listingId||'');
+ var before=makes.length,id=String(listingId||(snapshot&&snapshot.listingId)||'');
+ if(!Array.isArray(state.consumedMarketListingIds))state.consumedMarketListingIds=[];
+ if(id&&state.consumedMarketListingIds.indexOf(id)<0)state.consumedMarketListingIds.push(id);
  for(var i=makes.length-1;i>=0;i--){
    var car=makes[i],sameId=id&&String(car.listingId||'')===id;
    var sameSnapshot=!id&&snapshot&&car&&car.name===snapshot.name&&Number(car.year||0)===Number(snapshot.year||0)&&Number(car.km||0)===Number(snapshot.km||0)&&Number(car.price||0)===Number(snapshot.price||0);
    if(sameId||sameSnapshot)makes.splice(i,1);
  }
- // Extra fallback for exchange snapshots if an older save lost listingId.
  if(before===makes.length&&snapshot){
    var fallback=makes.findIndex(function(car){
      return car&&car.name===snapshot.name&&Number(car.year||0)===Number(snapshot.year||0)&&Number(car.km||0)===Number(snapshot.km||0);
    });
    if(fallback>=0)makes.splice(fallback,1);
  }
+ pruneConsumedMarketListings();
  reindexMarketListings();
  if(Array.isArray(state.marketFavorites)&&id)state.marketFavorites=state.marketFavorites.filter(function(x){return String(x)!==id;});
  state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];
@@ -361,6 +388,9 @@ function removePurchasedListing(listingId,snapshot){
  return before-makes.length;
 }
 loadOrCreateGeneratedMarket();
+pruneConsumedMarketListings();
+reindexMarketListings();
+localStorage.setItem(KEY,JSON.stringify(state));
 if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion){
  if(typeof makes!=='undefined')makes.forEach(function(car,i){car.photoUrl=marketPhotoFor(car,i);});
  if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=marketPhotoFor(car,i);});

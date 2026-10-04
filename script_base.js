@@ -215,7 +215,8 @@ function clearMarketSearch(){
   market('all',0);
 }
 function market(filter='all',page=0){
- let arr=[...makes];
+ const consumedIds=new Set([...(Array.isArray(state.consumedMarketListingIds)?state.consumedMarketListingIds:[]),...(Array.isArray(state.cars)?state.cars.map(c=>c&&c.listingId).filter(Boolean):[]),...(state.car&&state.car.listingId?[state.car.listingId]:[])].map(String));
+ let arr=[...makes].filter(c=>!c.listingId||!consumedIds.has(String(c.listingId)));
  const q=String(marketSearchTerm||'').trim().toLowerCase();
  if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km),c.color,c.body,c.trim,c.listingId].join(' ').toLowerCase().includes(q));
  if(filter==='all')arr=shuffleMarketAll(arr,Number(page||0)===0);
