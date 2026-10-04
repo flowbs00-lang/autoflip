@@ -4,6 +4,8 @@ document.write('<script src="script_base.js"></'+'script>');
 document.write('<script src="v79_market.js"></'+'script>');
 (function(){function install(){if(typeof state==='undefined'||typeof KEY==='undefined'||typeof render!=='function'||typeof head!=='function'||typeof money!=='function'){setTimeout(install,50);return;}if(!Array.isArray(state.cars))state.cars=[];if(state.car&&!state.cars.some(function(x){return x===state.car||(x._garageId&&x._garageId===state.car._garageId);}))state.cars.push(state.car);state.cars=state.cars.filter(Boolean).slice(0,3);var seq=Date.now();state.cars.forEach(function(c){if(!c._garageId)c._garageId='car-'+(++seq);});if(!state.car&&state.cars.length)state.car=state.cars[0];if(!state.businessHistory)state.businessHistory=[];if(!Array.isArray(state.repHistory))state.repHistory=[];if(state.profitStreak===undefined)state.profitStreak=0;if(!state.liveMarket)state.liveMarket={cycle:0,visits:0};if(!state.liveMarket.priceFactors)state.liveMarket.priceFactors={};if(!Array.isArray(state.liveMarket.hiddenIds))state.liveMarket.hiddenIds=[];if(!Array.isArray(state.liveMarket.newIds))state.liveMarket.newIds=[];if(!Array.isArray(state.liveMarket.hotIds))state.liveMarket.hotIds=[];
 var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return Object.assign({},x);});
+var marketTargetSize=36;
+var legacyTemplateCount=30;
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
 var marketRisks=['кузов и пороги','двигатель','коробка','электрика','ходовая','сцепление','тормоза','охлаждение'];
@@ -125,12 +127,12 @@ function rotateMarketByCount(count,reason){
    removeMarketListingAt(i,n%3===0?'seller':'npc');
  });
  var now=(typeof gameTotal==='function'?gameTotal():marketNowStored());
- while(makes.length<28){
+ while(makes.length<marketTargetSize){
    var fresh=createMarketListing(pickMarketTemplate());fresh.postedAt=now;makes.push(fresh);
    added.push({name:fresh.name,price:Number(fresh.price||0),listingId:fresh.listingId||'',city:fresh.city});
  }
  reindexMarketListings();
- state.marketListingsVersion=2;
+ state.marketListingsVersion=3;
  return{removed:removed,added:added,count:removed.length};
 }
 function marketRefreshId(total){return 'mu-'+Math.floor(Number(total||0))+'-'+Math.floor(Math.random()*9999);}
@@ -174,19 +176,25 @@ function processScheduledMarketRefresh(){
  return updates;
 }
 function generateInitialMarket(){
- var list=[],seed=[0,0,0,0,1,1,1,2,2,3,4,4,5,6,7];
+ var list=[],seed=[0,1,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,30,31,32,33,34,35,36,37,38,39,40,41,42,43];
  seed.forEach(function(idx,i){if(marketTemplates[idx])list.push(createMarketListing(marketTemplates[idx],i));});
- while(list.length<28)list.push(createMarketListing(pickMarketTemplate()));
+ while(list.length<marketTargetSize)list.push(createMarketListing(pickMarketTemplate()));
  makes.splice.apply(makes,[0,makes.length].concat(list));
  reindexMarketListings();
- state.marketListingsVersion=2;
+ state.marketListingsVersion=3;
 }
 function loadOrCreateGeneratedMarket(){
  if(typeof makes==='undefined'||!marketTemplates.length)return;
- if(state.marketListingsVersion===2&&Array.isArray(state.marketListings)&&state.marketListings.length){
+ if(Number(state.marketListingsVersion||0)>=2&&Array.isArray(state.marketListings)&&state.marketListings.length){
    var saved=state.marketListings.map(function(x,i){return ensureMarketListingMeta(Object.assign({},x),i);});
+   if(Number(state.marketListingsVersion||0)<3){
+     var freshTemplates=marketTemplates.slice(legacyTemplateCount);
+     for(var i=0;i<freshTemplates.length&&saved.length<marketTargetSize;i++)saved.push(createMarketListing(freshTemplates[i],100+i));
+   }
+   while(saved.length<marketTargetSize)saved.push(createMarketListing(pickMarketTemplate()));
    makes.splice.apply(makes,[0,makes.length].concat(saved));
    reindexMarketListings();
+   state.marketListingsVersion=3;
  }else generateInitialMarket();
 }
 function rotateGeneratedMarket(){return processScheduledMarketRefresh();}

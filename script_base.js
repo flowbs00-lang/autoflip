@@ -2,7 +2,26 @@ const KEY='autoflip-v7-save';
 const cities=['Москва','Казань','Санкт-Петербург','Екатеринбург','Новосибирск'];
 const cityFactor={Москва:1.05,Казань:.94,'Санкт-Петербург':1.03,Екатеринбург:.91,Новосибирск:.88};
 const makes=[
-['ВАЗ 2106','Новосибирск',1998,238000,42000,68000,'кузов и пороги',12000],['ВАЗ 2107','Екатеринбург',2004,214000,55000,82000,'карбюратор',9000],['ВАЗ 2109','Казань',2002,201000,72000,105000,'коробка',14000],['ВАЗ 2110','Новосибирск',2005,189000,88000,125000,'электрика',11000],['Lada Priora','Екатеринбург',2009,176000,145000,195000,'двигатель',22000],['Lada Kalina','Казань',2011,154000,185000,235000,'ходовая',18000],['Daewoo Nexia','Новосибирск',2010,181000,175000,225000,'кузов',20000],['Renault Logan','Казань',2012,167000,275000,345000,'сцепление',26000],['Ford Focus II','Санкт-Петербург',2008,193000,320000,405000,'коробка',35000],['Hyundai Solaris','Екатеринбург',2014,149000,520000,625000,'двигатель',42000],['Kia Rio','Новосибирск',2015,137000,570000,690000,'кузов',38000],['Lada Vesta','Казань',2018,112000,690000,820000,'электрика',32000],['Skoda Rapid','Санкт-Петербург',2017,128000,760000,900000,'турбина',48000],['Volkswagen Polo','Москва',2018,119000,820000,960000,'коробка',55000],['Toyota Corolla','Казань',2015,142000,920000,1080000,'ходовая',45000],['BMW 320i','Москва',2017,126000,1480000,1690000,'двигатель',85000],['Toyota Camry 70','Казань',2019,98000,2050000,2290000,'кузов',55000],['Kia K5','Санкт-Петербург',2021,72000,1790000,1990000,'документы',35000],['BMW X5','Екатеринбург',2016,155000,2290000,2650000,'подвеска',140000],['Mercedes C180','Москва',2018,108000,2200000,2490000,'турбина',105000],['Audi A4','Казань',2019,93000,2100000,2390000,'коробка',125000],['Volkswagen Tiguan','Москва',2018,119000,2050000,2320000,'подвеска',65000],['Toyota RAV4','Казань',2020,76000,2550000,2890000,'вариатор',115000],['Geely Monjaro','Новосибирск',2023,42000,2350000,2580000,'мультимедиа',30000],['Haval F7','Казань',2022,52000,1650000,1840000,'турбина',50000],['Mercedes E200','Москва',2020,78000,3150000,3590000,'пневма',145000],['Audi Q5','Екатеринбург',2021,69000,3450000,3890000,'коробка',130000],['BMW X5 G05','Москва',2021,64000,5150000,5790000,'пневма',190000],['Mercedes GLE 300d','Санкт-Петербург',2022,48000,6250000,6990000,'электроника',210000],['Porsche Macan','Москва',2022,39000,7350000,8190000,'подвеска',230000]
+['ВАЗ 2106','Новосибирск',1998,238000,42000,68000,'кузов и пороги',12000],['ВАЗ 2107','Екатеринбург',2004,214000,55000,82000,'карбюратор',9000],['ВАЗ 2109','Казань',2002,201000,72000,105000,'коробка',14000],['ВАЗ 2110','Новосибирск',2005,189000,88000,125000,'электрика',11000],['Lada Priora','Екатеринбург',2009,176000,145000,195000,'двигатель',22000],['Lada Kalina','Казань',2011,154000,185000,235000,'ходовая',18000],['Daewoo Nexia','Новосибирск',2010,181000,175000,225000,'кузов',20000],['Renault Logan','Казань',2012,167000,275000,345000,'сцепление',26000],['Ford Focus II','Санкт-Петербург',2008,193000,320000,405000,'коробка',35000],['Hyundai Solaris','Екатеринбург',2014,149000,520000,625000,'двигатель',42000],['Kia Rio','Новосибирск',2015,137000,570000,690000,'кузов',38000],['Lada Vesta','Казань',2018,112000,690000,820000,'электрика',32000],['Skoda Rapid','Санкт-Петербург',2017,128000,760000,900000,'турбина',48000],['Volkswagen Polo','Москва',2018,119000,820000,960000,'коробка',55000],['Toyota Corolla','Казань',2015,142000,920000,1080000,'ходовая',45000],['BMW 320i','Москва',2017,126000,1480000,1690000,'двигатель',85000],['Toyota Camry 70','Казань',2019,98000,2050000,2290000,'кузов',55000],['Kia K5','Санкт-Петербург',2021,72000,1790000,1990000,'документы',35000],['BMW X5','Екатеринбург',2016,155000,2290000,2650000,'подвеска',140000],['Mercedes C180','Москва',2018,108000,2200000,2490000,'турбина',105000],['Audi A4','Казань',2019,93000,2100000,2390000,'коробка',125000],['Volkswagen Tiguan','Москва',2018,119000,2050000,2320000,'подвеска',65000],['Toyota RAV4','Казань',2020,76000,2550000,2890000,'вариатор',115000],['Geely Monjaro','Новосибирск',2023,42000,2350000,2580000,'мультимедиа',30000],['Haval F7','Казань',2022,52000,1650000,1840000,'турбина',50000],['Mercedes E200','Москва',2020,78000,3150000,3590000,'пневма',145000],['Audi Q5','Екатеринбург',2021,69000,3450000,3890000,'коробка',130000],['BMW X5 G05','Москва',2021,64000,5150000,5790000,'пневма',190000],['Mercedes GLE 300d','Санкт-Петербург',2022,48000,6250000,6990000,'электроника',210000],['Porsche Macan','Москва',2022,39000,7350000,8190000,'подвеска',230000],
+['Chevrolet Lacetti','Казань',2008,196000,260000,330000,'кузов',26000],
+['Chevrolet Cruze','Екатеринбург',2012,172000,440000,525000,'охлаждение',34000],
+['Opel Astra J','Москва',2012,164000,470000,565000,'коробка',42000],
+['Nissan Almera','Новосибирск',2015,151000,520000,620000,'подвеска',36000],
+['Mitsubishi Lancer X','Казань',2011,181000,560000,675000,'двигатель',47000],
+['Mazda 3','Санкт-Петербург',2013,148000,690000,820000,'кузов',46000],
+['Skoda Octavia','Москва',2016,132000,930000,1090000,'турбина',62000],
+['Hyundai Elantra','Екатеринбург',2018,118000,1050000,1230000,'электрика',48000],
+['Kia Ceed','Казань',2018,126000,1120000,1310000,'ходовая',52000],
+['Renault Duster','Новосибирск',2018,139000,1180000,1380000,'сцепление',61000],
+['Nissan Qashqai','Москва',2019,111000,1450000,1690000,'вариатор',85000],
+['Mazda 6','Санкт-Петербург',2019,105000,1680000,1940000,'двигатель',83000],
+['Honda Accord','Казань',2017,128000,1780000,2050000,'коробка',92000],
+['Subaru Forester','Екатеринбург',2019,117000,1980000,2290000,'двигатель',105000],
+['Chery Tiggo 7 Pro','Москва',2022,61000,1850000,2090000,'электроника',52000],
+['Geely Coolray','Новосибирск',2021,72000,1650000,1880000,'турбина',58000],
+['Volvo XC60','Санкт-Петербург',2019,104000,2650000,3020000,'электрика',120000],
+['Lexus RX 350','Москва',2018,116000,3450000,3920000,'подвеска',140000],
+['Toyota Land Cruiser Prado','Казань',2018,129000,4250000,4790000,'ходовая',165000]
 ].map((x,i)=>({id:i,name:x[0],city:x[1],year:x[2],km:x[3],price:x[4],market:x[5],risk:x[6],repair:x[7],sale:x[5]}));
 const photos=['photo-1555215695-3004980ad54e','photo-1621007947382-bb3c3994e3fb','photo-1619767886558-efdc259cde1a','photo-1556189250-72ba954cfc2b','photo-1503376780353-7e6692767b70'];
 function commons(file){return 'https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(file)+'?width=900'}
@@ -36,7 +55,26 @@ const exactPhotos={
 'Audi Q5':commons('Audi Q5 FY Facelift IMG 5684.jpg'),
 'BMW X5 G05':commons('BMW X5 xDrive45e M Sport (G05, 2022) (54537623230).jpg'),
 'Mercedes GLE 300d':commons('Mercedes-Benz W167 GLE 300d 4MATIC 2022.jpg'),
-'Porsche Macan':commons('2022 Porsche Macan 1X7A6048.jpg')
+'Porsche Macan':commons('2022 Porsche Macan 1X7A6048.jpg'),
+'Chevrolet Lacetti':commons('Chevrolet Lacetti front 20080118.jpg'),
+'Chevrolet Cruze':commons('Chevrolet Cruze J300 sedan.jpg'),
+'Opel Astra J':commons('Opel Astra J 1.4 Turbo Innovation – Frontansicht, 11. August 2013, Münster.jpg'),
+'Nissan Almera':commons('Nissan Almera III (G15) 2013.jpg'),
+'Mitsubishi Lancer X':commons('Mitsubishi Lancer X sedan.jpg'),
+'Mazda 3':commons('Mazda3 BM sedan 01 China 2014-04-16.jpg'),
+'Skoda Octavia':commons('Skoda Octavia III.jpg'),
+'Hyundai Elantra':commons('2017 Hyundai Elantra (AD) Active sedan (2017-11-28) 01.jpg'),
+'Kia Ceed':commons('Kia Ceed III IMG 3364.jpg'),
+'Renault Duster':commons('Renault Duster 1.5 dCi 4WD Laureate – Frontansicht, 10. August 2014, Ratingen.jpg'),
+'Nissan Qashqai':commons('Nissan Qashqai J11 1.6 dCi 2014 (15136359668).jpg'),
+'Mazda 6':commons('Mazda6 GJ 2.2 SKYACTIV-D Sports-Line – Frontansicht, 3. Januar 2014, Düsseldorf.jpg'),
+'Honda Accord':commons('2016 Honda Accord (CR6) VTi-L sedan (2018-10-01) 01.jpg'),
+'Subaru Forester':commons('2018 Subaru Forester 2.5i-S S4 (2018-08-27) 01.jpg'),
+'Chery Tiggo 7 Pro':commons('Chery Tiggo 7 Pro.jpg'),
+'Geely Coolray':commons('Geely Binyue 001.jpg'),
+'Volvo XC60':commons('Volvo XC60 II IMG 0628.jpg'),
+'Lexus RX 350':commons('2018 Lexus RX 350L AWD front 5.26.18.jpg'),
+'Toyota Land Cruiser Prado':commons('Toyota Land Cruiser Prado 150 IMG 1968.jpg')
 };
 function fallbackPhoto(c){return `https://images.unsplash.com/${photos[c.id%photos.length]}?auto=format&fit=crop&w=700&q=75`}
 function photo(c){return c&&c.photoUrl?c.photoUrl:(exactPhotos[c.name]||fallbackPhoto(c))}
@@ -76,6 +114,16 @@ function home(){
 function lockScreen(){render(`<div class="lock" onclick="unlock()">${status()}<div class="time">${now()}</div><div class="date">${dateText()}</div><div class="lock-card"><b>🔔 AutoFlip</b><small>Нажми, чтобы разблокировать телефон</small></div><div class="swipe">▲ НАЖМИТЕ ДЛЯ РАЗБЛОКИРОВКИ</div></div>`)}
 function unlock(){home()}
 let marketSearchTerm='';
+let marketAllOrder=[];
+function marketListingKey(c){return c&&c.listingId?c.listingId:('market-'+c.id+'-'+c.name)}
+function shuffleMarketAll(arr,renew){
+ if(renew||!Array.isArray(marketAllOrder)||!marketAllOrder.length){
+   marketAllOrder=arr.map(marketListingKey);
+   for(let i=marketAllOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[marketAllOrder[i],marketAllOrder[j]]=[marketAllOrder[j],marketAllOrder[i]]}
+ }
+ const pos=new Map(marketAllOrder.map((k,i)=>[k,i]));
+ return arr.sort((a,b)=>(pos.has(marketListingKey(a))?pos.get(marketListingKey(a)):99999)-(pos.has(marketListingKey(b))?pos.get(marketListingKey(b)):99999));
+}
 function marketSearch(){
   const input=document.getElementById('marketSearch');
   marketSearchTerm=(input?input.value:'').trim();
@@ -89,6 +137,7 @@ function market(filter='all',page=0){
  let arr=[...makes];
  const q=String(marketSearchTerm||'').trim().toLowerCase();
  if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km),c.color,c.body,c.trim,c.listingId].join(' ').toLowerCase().includes(q));
+ if(filter==='all')arr=shuffleMarketAll(arr,Number(page||0)===0);
  if(filter==='cheap')arr.sort((a,b)=>Number(a.price||0)-Number(b.price||0));
  if(filter==='expensive')arr.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
  if(filter==='city')arr=arr.filter(c=>c.city===state.city).sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
