@@ -2,7 +2,113 @@
 // Keeps the V7 core intact and adds a 3-car fleet plus live-market seller behavior.
 document.write('<script src="script_base.js"></'+'script>');
 document.write('<script src="v79_market.js"></'+'script>');
-(function(){function install(){if(typeof state==='undefined'||typeof KEY==='undefined'||typeof render!=='function'||typeof head!=='function'||typeof money!=='function'){setTimeout(install,50);return;}if(!Array.isArray(state.cars))state.cars=[];if(state.car&&!state.cars.some(function(x){return x===state.car||(x._garageId&&x._garageId===state.car._garageId);}))state.cars.push(state.car);state.cars=state.cars.filter(Boolean).slice(0,3);var seq=Date.now();state.cars.forEach(function(c){if(!c._garageId)c._garageId='car-'+(++seq);});if(!state.car&&state.cars.length)state.car=state.cars[0];if(!state.businessHistory)state.businessHistory=[];if(!Array.isArray(state.repHistory))state.repHistory=[];if(state.profitStreak===undefined)state.profitStreak=0;if(!state.liveMarket)state.liveMarket={cycle:0,visits:0};if(!state.liveMarket.priceFactors)state.liveMarket.priceFactors={};if(!Array.isArray(state.liveMarket.hiddenIds))state.liveMarket.hiddenIds=[];if(!Array.isArray(state.liveMarket.newIds))state.liveMarket.newIds=[];if(!Array.isArray(state.liveMarket.hotIds))state.liveMarket.hotIds=[];var liveBasePrices=(typeof makes!=='undefined'?makes:[]).map(function(x){return Number(x.price||0);});
+(function(){function install(){if(typeof state==='undefined'||typeof KEY==='undefined'||typeof render!=='function'||typeof head!=='function'||typeof money!=='function'){setTimeout(install,50);return;}if(!Array.isArray(state.cars))state.cars=[];if(state.car&&!state.cars.some(function(x){return x===state.car||(x._garageId&&x._garageId===state.car._garageId);}))state.cars.push(state.car);state.cars=state.cars.filter(Boolean).slice(0,3);var seq=Date.now();state.cars.forEach(function(c){if(!c._garageId)c._garageId='car-'+(++seq);});if(!state.car&&state.cars.length)state.car=state.cars[0];if(!state.businessHistory)state.businessHistory=[];if(!Array.isArray(state.repHistory))state.repHistory=[];if(state.profitStreak===undefined)state.profitStreak=0;if(!state.liveMarket)state.liveMarket={cycle:0,visits:0};if(!state.liveMarket.priceFactors)state.liveMarket.priceFactors={};if(!Array.isArray(state.liveMarket.hiddenIds))state.liveMarket.hiddenIds=[];if(!Array.isArray(state.liveMarket.newIds))state.liveMarket.newIds=[];if(!Array.isArray(state.liveMarket.hotIds))state.liveMarket.hotIds=[];
+var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return Object.assign({},x);});
+var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
+var marketRisks=['кузов и пороги','двигатель','коробка','электрика','ходовая','сцепление','тормоза','охлаждение'];
+var marketPhotoPools={
+ 'ВАЗ 2106':[commons('1992 Lada 2106.jpg'),commons('VAZ-2106.jpg'),commons('Lada 2106.jpg')],
+ 'ВАЗ 2107':[commons('Lada 2107 (VAZ-2107) 01.jpg'),commons('Vaz 2107.jpg'),commons('Lada VAZ 2107.jpg'),commons('Vaz-2107.JPG'),commons('Vaz2107.jpg')],
+ 'ВАЗ 2110':[commons('Lada 110-VAZ-2110 (4713570255).jpg'),commons('LADA-110.jpg')],
+ 'Lada Priora':[commons('Lada priora.jpg'),commons('Lada Priora.jpg')],
+ 'Lada Kalina':[commons('Lada Kalina 1.jpg'),commons('Lada Kalina.jpg'),commons('Lada Kalina.JPG')]
+};
+function marketRound(n,step){step=step||1000;return Math.max(step,Math.round(Number(n||0)/step)*step);}
+function marketBody(name){
+ if(/X5|GLE|Q5|RAV4|Tiguan|Monjaro|F7|Macan/i.test(name))return 'Кроссовер';
+ if(/2109|Kalina/i.test(name))return 'Хэтчбек';
+ return 'Седан';
+}
+function marketTrim(template,variant){
+ var old=Number(template.market||0)<300000;
+ var mids=Number(template.market||0)<1500000;
+ var pool=old?['Базовая','Стандарт','Люкс']:mids?['Стандарт','Комфорт','Комфорт+','Люкс']:['Base','Business','Premium','Sport'];
+ return pool[Math.abs(variant)%pool.length];
+}
+function marketConditionLabel(factor){
+ if(factor<.84)return 'Требует вложений';
+ if(factor<.94)return 'Есть недостатки';
+ if(factor<1.02)return 'Нормальное';
+ return 'Хорошее';
+}
+function pickMarketTemplate(){
+ var r=Math.random(),from=0,to=marketTemplates.length;
+ if(r<.46){from=0;to=Math.min(10,marketTemplates.length);}
+ else if(r<.77){from=Math.min(6,marketTemplates.length-1);to=Math.min(20,marketTemplates.length);}
+ else {from=Math.min(15,marketTemplates.length-1);to=marketTemplates.length;}
+ return marketTemplates[from+Math.floor(Math.random()*Math.max(1,to-from))]||marketTemplates[0];
+}
+function createMarketListing(template,forcedVariant){
+ var seq=Number(state.marketListingSeq||0)+1;state.marketListingSeq=seq;
+ var variant=forcedVariant===undefined?seq:forcedVariant;
+ var yearDelta=Math.floor(Math.random()*5)-2;
+ var year=Math.max(1980,Number(template.year||2000)+yearDelta);
+ var kmFactor=.76+Math.random()*.55;
+ var km=Math.max(12000,marketRound(Number(template.km||100000)*kmFactor,1000));
+ var condition=.78+Math.random()*.30;
+ var yearFactor=1+yearDelta*.018;
+ var kmPriceFactor=Math.max(.82,Math.min(1.12,1.05-(kmFactor-1)*.23));
+ var fair=marketRound(Number(template.market||template.price||50000)*yearFactor*kmPriceFactor);
+ var askFactor=.78+Math.random()*.29;
+ var price=marketRound(fair*askFactor);
+ var repair=marketRound(Number(template.repair||10000)*(1.18+(1-condition)*1.7)*(.82+Math.random()*.35));
+ var pool=marketPhotoPools[template.name]||[];
+ var photoUrl=pool.length?pool[Math.abs(variant)%pool.length]:(exactPhotos[template.name]||fallbackPhoto(template));
+ var risk=Math.random()<.56?template.risk:marketRisks[Math.floor(Math.random()*marketRisks.length)];
+ var listingId='AF-'+String(Date.now()).slice(-6)+'-'+String(seq).padStart(4,'0');
+ var city=cities[Math.floor(Math.random()*cities.length)]||template.city;
+ return Object.assign({},template,{
+   id:0,modelId:template.id,listingId:listingId,city:city,year:year,km:km,
+   basePrice:price,price:price,market:fair,sale:fair,repair:repair,risk:risk,
+   color:marketColors[Math.abs(variant)%marketColors.length],body:marketBody(template.name),
+   trim:marketTrim(template,variant),condition:condition,conditionLabel:marketConditionLabel(condition),
+   photoUrl:photoUrl,photoVariant:Math.abs(variant)%Math.max(1,pool.length)
+ });
+}
+function reindexMarketListings(){
+ if(typeof makes==='undefined')return;
+ makes.forEach(function(car,i){car.id=i;});
+ state.marketListings=makes;
+}
+function generateInitialMarket(){
+ var list=[],seed=[0,0,0,0,1,1,1,2,2,3,4,4,5,6,7];
+ seed.forEach(function(idx,i){if(marketTemplates[idx])list.push(createMarketListing(marketTemplates[idx],i));});
+ while(list.length<28)list.push(createMarketListing(pickMarketTemplate()));
+ makes.splice.apply(makes,[0,makes.length].concat(list));
+ reindexMarketListings();
+ state.marketListingsVersion=2;
+}
+function loadOrCreateGeneratedMarket(){
+ if(typeof makes==='undefined'||!marketTemplates.length)return;
+ if(state.marketListingsVersion===2&&Array.isArray(state.marketListings)&&state.marketListings.length){
+   var saved=state.marketListings.map(function(x){return Object.assign({},x);});
+   makes.splice.apply(makes,[0,makes.length].concat(saved));
+   reindexMarketListings();
+ }else generateInitialMarket();
+}
+function rotateGeneratedMarket(){
+ if(typeof makes==='undefined'||makes.length<8)return;
+ var replace=Math.max(5,Math.min(8,Math.round(makes.length*.27))),indexes=[];
+ while(indexes.length<replace){
+   var idx=Math.floor(Math.random()*makes.length);
+   if(indexes.indexOf(idx)<0)indexes.push(idx);
+ }
+ indexes.sort(function(a,b){return b-a;}).forEach(function(idx){makes.splice(idx,1);});
+ while(makes.length<28)makes.push(createMarketListing(pickMarketTemplate()));
+ reindexMarketListings();
+ state.marketListingsVersion=2;
+ state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];
+}
+function removePurchasedListing(listingId){
+ if(!listingId||typeof makes==='undefined')return;
+ var idx=makes.findIndex(function(x){return x.listingId===listingId;});
+ if(idx>=0)makes.splice(idx,1);
+ reindexMarketListings();
+ state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];
+}
+loadOrCreateGeneratedMarket();
+
+var liveBasePrices=(typeof makes!=='undefined'?makes:[]).map(function(x){return Number(x.price||0);});
 if(!state.gameClock||typeof state.gameClock!=='object')state.gameClock={total:450};
 if(!Number.isFinite(Number(state.gameClock.total)))state.gameClock.total=450;
 var clockAnchorReal=Date.now(),clockAnchorTotal=Number(state.gameClock.total||450);
@@ -10,10 +116,11 @@ function gameTotal(){return clockAnchorTotal+Math.floor((Date.now()-clockAnchorR
 function syncGameClock(){state.gameClock.total=gameTotal();}
 function gameTimeText(){var t=gameTotal(),m=((t%1440)+1440)%1440,h=Math.floor(m/60),mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
 function gameDateText(){var t=gameTotal(),d=Math.floor(t/1440),days=['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];return 'День '+(d+1)+' · '+days[d%7];}
-function persist(){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));try{if(typeof renderStats==='function')renderStats();}catch(e){}}function requiredRepForCar(car){var v=Number((car&&car.market)||0);if(v<500000)return 0;if(v<1000000)return 20;if(v<2000000)return 40;if(v<3500000)return 70;if(v<5500000)return 100;return 130;}function creditPlan(){var r=Number(state.rep||0);if(r<20)return{title:'Стартовый лимит',amount:25000,maxDebt:55000,rate:.10,next:'20 репутации → кредит 100 000 ₽'};if(r<50)return{title:'Базовый лимит',amount:100000,maxDebt:220000,rate:.10,next:'50 репутации → кредит 250 000 ₽'};if(r<100)return{title:'Бизнес-лимит',amount:250000,maxDebt:550000,rate:.10,next:'100 репутации → кредит 500 000 ₽'};return{title:'Дилерский лимит',amount:500000,maxDebt:1100000,rate:.10,next:'Максимальный кредитный уровень'};}var originalBuy=window.buy;if(typeof originalBuy==='function'&&!originalBuy.__v78){var wrappedBuy=function(id,price){var target=(typeof makes!=='undefined'&&makes[id])?makes[id]:null,need=requiredRepForCar(target);if(need>Number(state.rep||0)){alert('Недостаточно репутации. Для этой машины нужно '+need+' репутации. Сейчас: '+Number(state.rep||0)+'.');return;}if(state.cars.length>=3){alert('Гараж заполнен. Максимум 3 автомобиля. Сначала продай одну машину.');return;}var before=state.car,ask=target?Number(target.price||0):0;originalBuy(id,price);var added=state.car;if(added&&added!==before){if(!added._garageId)added._garageId='car-'+(++seq);if(!state.cars.some(function(x){return x._garageId===added._garageId;}))state.cars.push(added);state.car=added;var discount=ask>0?(ask-Number(price||0))/ask:0,bonus=discount>=.10?2:(discount>=.05?1:0);if(bonus>0){state.rep=Number(state.rep||0)+bonus;state.repHistory.unshift({delta:bonus,reason:'Сильный торг за '+added.name,day:state.day});state.repHistory=state.repHistory.slice(0,20);}persist();}};wrappedBuy.__v78=true;window.buy=wrappedBuy;}var originalRepair=window.repair;if(typeof originalRepair==='function'&&!originalRepair.__v78){var wrappedRepair=function(){var c=state.car,before=Number(state.money||0),result=originalRepair.apply(this,arguments);if(c&&state.money<before){c.repairSpent=Number(c.repairSpent||0)+(before-Number(state.money||0));persist();}return result;};wrappedRepair.__v78=true;window.repair=wrappedRepair;}var originalCloseSale=window.closeSale;if(typeof originalCloseSale==='function'&&!originalCloseSale.__v78){var wrappedCloseSale=function(mult){var sold=state.car,beforeRep=Number(state.rep||0),repDelta=0,streakBonus=0,profit=0,finalPrice=0,repairSpent=0;if(sold){finalPrice=Math.round(Number(sold.sale||0)*Number(mult||1));repairSpent=Number(sold.repairSpent||0);profit=finalPrice-Number(sold.buy||0)-repairSpent;var invested=Math.max(1,Number(sold.buy||0)+repairSpent),margin=profit/invested;if(profit<0){repDelta=-6;state.profitStreak=0;}else{state.profitStreak=Number(state.profitStreak||0)+1;if(margin<.05)repDelta=4;else if(margin<.12)repDelta=7;else if(margin<.20)repDelta=10;else repDelta=14;if(state.profitStreak>=3)streakBonus=Math.min(6,Math.floor(state.profitStreak/3)*2);repDelta+=streakBonus;}state.businessHistory.unshift({car:sold.name,buy:Number(sold.buy||0),repair:repairSpent,sale:finalPrice,profit:profit,rep:repDelta,day:state.day,city:sold.city,year:sold.year});state.businessHistory=state.businessHistory.slice(0,30);}var result=originalCloseSale.apply(this,arguments);if(sold){state.rep=Math.max(0,beforeRep+repDelta);var reason=profit<0?'Убыточная продажа '+sold.name:'Прибыль '+money(profit)+' на '+sold.name+(streakBonus?' · серия +'+streakBonus:'');state.repHistory.unshift({delta:repDelta,reason:reason,day:state.day-1});state.repHistory=state.repHistory.slice(0,20);state.cars=state.cars.filter(function(x){return x!==sold&&x._garageId!==sold._garageId;});}state.car=state.cars[0]||null;persist();return result;};wrappedCloseSale.__v78=true;window.closeSale=wrappedCloseSale;}window.selectGarageCar=function(index){var c=state.cars[index];if(!c)return;state.car=c;persist();window.garageCarDetails(index);};window.garageCarDetails=function(index){var c=state.cars[index];if(!c)return garage();state.car=c;var repairSpent=Number(c.repairSpent||0),key=c._garageId||('car-'+c.id+'-'+c.buy),listed=state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===key;render('<div class="app">'+head(c.name)+'<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div><h3>'+c.name+'</h3><p class="muted">'+c.city+' · '+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</p>'+(listed?'<div class="note"><b>🟢 Объявление активно</b><p class="muted">Цена: '+money(state.activeListing.ask)+'. Покупатели могут написать в «Сообщения» в любой момент.</p></div>':'')+'<div class="bar"><i style="width:'+(c.repaired?100:45)+'%"></i></div><p class="muted">Состояние '+(c.repaired?'100':'45')+'%</p><div class="deal-score"><span>ПОКУПКА<b>'+money(c.buy)+'</b></span><span>РЕМОНТ<b>'+money(repairSpent)+'</b></span><span>ПРОДАЖА<b class="profit">'+money(c.sale)+'</b></span></div><button class="action green" onclick="repair()">🔧 '+(c.repaired?'Авто отремонтировано':('Ремонт · '+money(c.repair)))+'</button><button class="action" onclick="service()">🛠️ Открыть СТО</button><button class="action" onclick="sellCar()">'+(listed?'💬 Моё объявление':'🏷️ Выставить на продажу')+'</button><button class="action" onclick="garage()">‹ Назад в гараж</button></div>');};window.garage=function(){var cars=Array.isArray(state.cars)?state.cars:[];if(!cars.length){render('<div class="app">'+head('Гараж')+'<div class="note"><b>Гараж пуст</b><p class="muted">Первая машина ждёт тебя на рынке.</p></div><button class="action green" onclick="market()">🚗 Открыть рынок</button></div>');return;}var cards=cars.map(function(c,i){var repairSpent=Number(c.repairSpent||0),buy=Number(c.buy||0),marketValue=Number(c.market||c.sale||0),status=c.repaired?'🟢 Готова к продаже':'🟠 Требует подготовки';return '<div class="note" style="margin-bottom:10px;cursor:pointer" onclick="selectGarageCar('+i+')"><div class="row"><span><b>🚗 '+c.name+'</b><small>'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</small></span><b>'+money(buy)+'</b></div><div class="muted">'+status+' · ремонт '+money(repairSpent)+'</div><div class="row"><span>Рыночная стоимость</span><b>'+money(marketValue)+'</b></div></div>';}).join('');render('<div class="app">'+head('Гараж')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/3</b><small>места заняты</small></div><div class="stat"><b>'+money(state.money)+'</b><small>капитал</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.buy||0);},0))+'</b><small>вложено</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button><p class="muted" style="text-align:center">Нажми на автомобиль, чтобы открыть его карточку.</p></div>');};
+function persist(){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));try{if(typeof renderStats==='function')renderStats();}catch(e){}}function requiredRepForCar(car){var v=Number((car&&car.market)||0);if(v<500000)return 0;if(v<1000000)return 20;if(v<2000000)return 40;if(v<3500000)return 70;if(v<5500000)return 100;return 130;}function creditPlan(){var r=Number(state.rep||0);if(r<20)return{title:'Стартовый лимит',amount:25000,maxDebt:55000,rate:.10,next:'20 репутации → кредит 100 000 ₽'};if(r<50)return{title:'Базовый лимит',amount:100000,maxDebt:220000,rate:.10,next:'50 репутации → кредит 250 000 ₽'};if(r<100)return{title:'Бизнес-лимит',amount:250000,maxDebt:550000,rate:.10,next:'100 репутации → кредит 500 000 ₽'};return{title:'Дилерский лимит',amount:500000,maxDebt:1100000,rate:.10,next:'Максимальный кредитный уровень'};}var originalBuy=window.buy;if(typeof originalBuy==='function'&&!originalBuy.__v78){var wrappedBuy=function(id,price){var target=(typeof makes!=='undefined'&&makes[id])?makes[id]:null,need=requiredRepForCar(target);if(need>Number(state.rep||0)){alert('Недостаточно репутации. Для этой машины нужно '+need+' репутации. Сейчас: '+Number(state.rep||0)+'.');return;}if(state.cars.length>=3){alert('Гараж заполнен. Максимум 3 автомобиля. Сначала продай одну машину.');return;}var before=state.car,ask=target?Number(target.price||0):0;originalBuy(id,price);var added=state.car;if(added&&added!==before){if(target&&target.listingId){added.sourceListingId=target.listingId;added.listingId=target.listingId;}if(!added._garageId)added._garageId='car-'+(++seq);if(!state.cars.some(function(x){return x._garageId===added._garageId;}))state.cars.push(added);state.car=added;if(target&&target.listingId)removePurchasedListing(target.listingId);var discount=ask>0?(ask-Number(price||0))/ask:0,bonus=discount>=.10?2:(discount>=.05?1:0);if(bonus>0){state.rep=Number(state.rep||0)+bonus;state.repHistory.unshift({delta:bonus,reason:'Сильный торг за '+added.name,day:state.day});state.repHistory=state.repHistory.slice(0,20);}persist();}};wrappedBuy.__v78=true;window.buy=wrappedBuy;}var originalRepair=window.repair;if(typeof originalRepair==='function'&&!originalRepair.__v78){var wrappedRepair=function(){var c=state.car,before=Number(state.money||0),result=originalRepair.apply(this,arguments);if(c&&state.money<before){c.repairSpent=Number(c.repairSpent||0)+(before-Number(state.money||0));persist();}return result;};wrappedRepair.__v78=true;window.repair=wrappedRepair;}var originalCloseSale=window.closeSale;if(typeof originalCloseSale==='function'&&!originalCloseSale.__v78){var wrappedCloseSale=function(mult){var sold=state.car,beforeRep=Number(state.rep||0),repDelta=0,streakBonus=0,profit=0,finalPrice=0,repairSpent=0;if(sold){finalPrice=Math.round(Number(sold.sale||0)*Number(mult||1));repairSpent=Number(sold.repairSpent||0);profit=finalPrice-Number(sold.buy||0)-repairSpent;var invested=Math.max(1,Number(sold.buy||0)+repairSpent),margin=profit/invested;if(profit<0){repDelta=-6;state.profitStreak=0;}else{state.profitStreak=Number(state.profitStreak||0)+1;if(margin<.05)repDelta=4;else if(margin<.12)repDelta=7;else if(margin<.20)repDelta=10;else repDelta=14;if(state.profitStreak>=3)streakBonus=Math.min(6,Math.floor(state.profitStreak/3)*2);repDelta+=streakBonus;}state.businessHistory.unshift({car:sold.name,buy:Number(sold.buy||0),repair:repairSpent,sale:finalPrice,profit:profit,rep:repDelta,day:state.day,city:sold.city,year:sold.year});state.businessHistory=state.businessHistory.slice(0,30);}var result=originalCloseSale.apply(this,arguments);if(sold){state.rep=Math.max(0,beforeRep+repDelta);var reason=profit<0?'Убыточная продажа '+sold.name:'Прибыль '+money(profit)+' на '+sold.name+(streakBonus?' · серия +'+streakBonus:'');state.repHistory.unshift({delta:repDelta,reason:reason,day:state.day-1});state.repHistory=state.repHistory.slice(0,20);state.cars=state.cars.filter(function(x){return x!==sold&&x._garageId!==sold._garageId;});}state.car=state.cars[0]||null;persist();return result;};wrappedCloseSale.__v78=true;window.closeSale=wrappedCloseSale;}window.selectGarageCar=function(index){var c=state.cars[index];if(!c)return;state.car=c;persist();window.garageCarDetails(index);};window.garageCarDetails=function(index){var c=state.cars[index];if(!c)return garage();state.car=c;var repairSpent=Number(c.repairSpent||0),key=c._garageId||('car-'+c.id+'-'+c.buy),listed=state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===key;render('<div class="app">'+head(c.name)+'<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div><h3>'+c.name+'</h3><p class="muted">'+c.city+' · '+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</p>'+(listed?'<div class="note"><b>🟢 Объявление активно</b><p class="muted">Цена: '+money(state.activeListing.ask)+'. Покупатели могут написать в «Сообщения» в любой момент.</p></div>':'')+'<div class="bar"><i style="width:'+(c.repaired?100:45)+'%"></i></div><p class="muted">Состояние '+(c.repaired?'100':'45')+'%</p><div class="deal-score"><span>ПОКУПКА<b>'+money(c.buy)+'</b></span><span>РЕМОНТ<b>'+money(repairSpent)+'</b></span><span>ПРОДАЖА<b class="profit">'+money(c.sale)+'</b></span></div><button class="action green" onclick="repair()">🔧 '+(c.repaired?'Авто отремонтировано':('Ремонт · '+money(c.repair)))+'</button><button class="action" onclick="service()">🛠️ Открыть СТО</button><button class="action" onclick="sellCar()">'+(listed?'💬 Моё объявление':'🏷️ Выставить на продажу')+'</button><button class="action" onclick="garage()">‹ Назад в гараж</button></div>');};window.garage=function(){var cars=Array.isArray(state.cars)?state.cars:[];if(!cars.length){render('<div class="app">'+head('Гараж')+'<div class="note"><b>Гараж пуст</b><p class="muted">Первая машина ждёт тебя на рынке.</p></div><button class="action green" onclick="market()">🚗 Открыть рынок</button></div>');return;}var cards=cars.map(function(c,i){var repairSpent=Number(c.repairSpent||0),buy=Number(c.buy||0),marketValue=Number(c.market||c.sale||0),status=c.repaired?'🟢 Готова к продаже':'🟠 Требует подготовки';return '<div class="note" style="margin-bottom:10px;cursor:pointer" onclick="selectGarageCar('+i+')"><div class="row"><span><b>🚗 '+c.name+'</b><small>'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</small></span><b>'+money(buy)+'</b></div><div class="muted">'+status+' · ремонт '+money(repairSpent)+'</div><div class="row"><span>Рыночная стоимость</span><b>'+money(marketValue)+'</b></div></div>';}).join('');render('<div class="app">'+head('Гараж')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/3</b><small>места заняты</small></div><div class="stat"><b>'+money(state.money)+'</b><small>капитал</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.buy||0);},0))+'</b><small>вложено</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button><p class="muted" style="text-align:center">Нажми на автомобиль, чтобы открыть его карточку.</p></div>');};
 window.profile=function(){var r=Number(state.rep||0),rank=r<20?'Начинающий перекуп':r<50?'Перекуп':r<100?'Опытный перекуп':r<130?'Дилер':'Автодилер',next=r<20?'20':r<50?'50':r<100?'100':r<130?'130':'MAX',hist=(state.repHistory||[]).slice(0,5).map(function(x){var d=Number(x.delta||0);return '<div class="row"><span><b>'+(d>=0?'+'+d:d)+' реп.</b><small>'+x.reason+' · день '+x.day+'</small></span></div>';}).join('');render('<div class="app">'+head('Профиль')+'<div class="profile-card"><div class="avatar">A</div><h3>'+rank+'</h3><p class="muted">'+state.city+' · день '+state.day+'</p><div class="statsbox"><div class="stat"><b>'+money(state.money)+'</b><small>капитал</small></div><div class="stat"><b>'+r+'</b><small>репутация</small></div><div class="stat"><b>'+Number(state.profitStreak||0)+'</b><small>серия прибыли</small></div></div></div><div class="note"><b>⭐ Прогресс репутации</b><p class="muted">Следующий уровень: '+next+(next==='MAX'?'':' репутации')+'. Репутация теперь зависит от качества сделок, а не просто от их количества.</p></div>'+(hist||'<div class="note">История репутации появится после первой сделки.</div>')+'<div class="row"><span>🚗 Машина</span><b>'+(state.car?state.car.name:'нет')+'</b></div><div class="row"><span>🏦 Долг</span><b>'+money(state.loan)+'</b></div></div>');};
 var basePayLoan=window.payLoan;window.bank=function(){var p=creditPlan(),available=Math.max(0,p.maxDebt-Number(state.loan||0)),canTake=available>=Math.round(p.amount*(1+p.rate)),due='';if(state.loan&&state.bankDueAt&&typeof gameTotal==='function'){var left=Math.max(0,Number(state.bankDueAt)-gameTotal()),hours=Math.ceil(left/60);due='<span class="muted">До платежа: '+hours+' игровых ч.</span>';}render('<div class="app">'+head('Банк')+'<div class="bank"><small>Свободные деньги</small><b>'+money(state.money)+'</b><span class="muted">Текущий долг: '+money(state.loan)+'</span>'+due+'</div><div class="note"><b>🏦 '+p.title+'</b><p class="muted">Репутация: '+Number(state.rep||0)+' · доступный транш: '+money(p.amount)+' · комиссия 10%</p><p class="muted">'+p.next+'</p></div><button class="action green" '+(canTake?'':'disabled')+' onclick="takeLoan()">Взять '+money(p.amount)+'</button>'+(state.loan?'<button class="action" onclick="payLoan()">Погасить '+money(state.loan)+'</button>':'')+'<div class="note" style="margin-top:10px">Кредитный лимит растёт вместе с репутацией. Банк напомнит о сроке платежа через уведомления.</div></div>');};window.takeLoan=function(){var p=creditPlan(),debt=Math.round(p.amount*(1+p.rate)),hadDebt=Number(state.loan||0)>0;if(Number(state.loan||0)+debt>p.maxDebt)return alert('Текущий кредитный лимит исчерпан. Повышай репутацию или погаси долг.');state.money+=p.amount;state.loan=Number(state.loan||0)+debt;if(!hadDebt&&typeof gameTotal==='function')state.bankDueAt=gameTotal()+2880;log('Банк выдал '+money(p.amount)+'. Долг вырос до '+money(state.loan)+'.');bank();};if(typeof basePayLoan==='function'){window.payLoan=function(){var r=basePayLoan.apply(this,arguments);if(Number(state.loan||0)<=0){state.bankDueAt=0;if(typeof persist==='function')persist();}return r;};}
-function rerollLiveMarket(){
+function rerollLiveMarket(rotateListings){
+  if(rotateListings)rotateGeneratedMarket();
   var list=typeof makes!=='undefined'?makes:[];
   if(!list.length)return;
   var factors={},hidden=[],fresh=[],hot=[];
@@ -48,7 +155,7 @@ function applyLiveMarket(){
   if(typeof makes==='undefined')return;
   if(!state.liveMarket.priceFactors||!Object.keys(state.liveMarket.priceFactors).length)rerollLiveMarket();
   makes.forEach(function(car,i){
-    var base=Number(liveBasePrices[i]||car.price||0),factor=Number(state.liveMarket.priceFactors[car.id]||1);
+    var base=Number(car.basePrice||liveBasePrices[i]||car.price||0),factor=Number(state.liveMarket.priceFactors[car.id]||1);
     car.price=Math.max(10000,Math.round(base*factor/1000)*1000);
   });
 }
@@ -87,7 +194,7 @@ if(typeof originalMarket==='function'&&!originalMarket.__v79){
   window.market=function(){
     state.liveMarket.visits=Number(state.liveMarket.visits||0)+1;
     if(!state.liveMarket.priceFactors||!Object.keys(state.liveMarket.priceFactors).length)rerollLiveMarket();
-    if(state.liveMarket.visits%6===0){state.liveMarket.cycle=Number(state.liveMarket.cycle||0)+1;rerollLiveMarket();}
+    if(state.liveMarket.visits%6===0){state.liveMarket.cycle=Number(state.liveMarket.cycle||0)+1;rerollLiveMarket(true);}
     applyLiveMarket();
     originalMarket.apply(this,arguments);
     setTimeout(decorateMarket,120);
@@ -97,14 +204,14 @@ if(typeof originalMarket==='function'&&!originalMarket.__v79){
 window.refreshLiveMarket=function(){
   state.liveMarket.cycle=Number(state.liveMarket.cycle||0)+1;
   state.liveMarket.visits=0;
-  rerollLiveMarket();
+  rerollLiveMarket(true);
   applyLiveMarket();
   market('all',0);
   setTimeout(function(){
     var app=document.querySelector('.app');
     if(app){
       var n=document.createElement('div');n.className='note';n.style.margin='8px 0';
-      n.innerHTML='<b>🔄 Рынок обновился</b><p class="muted">Цены действительно изменились, несколько объявлений снято, появились новые предложения.</p>';
+      n.innerHTML='<b>🔄 Рынок обновился</b><p class="muted">Часть старых машин ушла с рынка, появились новые объявления, комплектации и цены.</p>';
       var live=document.getElementById('v79MarketRefresh');
       if(live)live.insertAdjacentElement('afterend',n);
     }

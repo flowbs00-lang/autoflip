@@ -39,7 +39,7 @@ const exactPhotos={
 'Porsche Macan':commons('2022 Porsche Macan 1X7A6048.jpg')
 };
 function fallbackPhoto(c){return `https://images.unsplash.com/${photos[c.id%photos.length]}?auto=format&fit=crop&w=700&q=75`}
-function photo(c){return exactPhotos[c.name]||fallbackPhoto(c)}
+function photo(c){return c&&c.photoUrl?c.photoUrl:(exactPhotos[c.name]||fallbackPhoto(c))}
 const initial={money:50000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 50 000 ₽. Поднимись с самого низа.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
 let state=JSON.parse(localStorage.getItem(KEY)||'null')||structuredClone(initial);
 if(state.notifications===undefined)state.notifications=2;if(!state.notes)state.notes=[];if(!state.seen)state.seen={};
@@ -87,7 +87,7 @@ function clearMarketSearch(){
 function market(filter='all',page=0){
  let arr=[...makes];
  const q=String(marketSearchTerm||'').trim().toLowerCase();
- if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km)].join(' ').toLowerCase().includes(q));
+ if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km),c.color,c.body,c.trim,c.listingId].join(' ').toLowerCase().includes(q));
  if(filter==='profit')arr.sort((a,b)=>(b.market-b.price-b.repair)-(a.market-a.price-a.repair));
  if(filter==='city')arr=arr.filter(c=>c.city===state.city);
  const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
@@ -119,7 +119,7 @@ function market(filter='all',page=0){
      <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="auto-card-city">📍 ${c.city}</span></div>
      <div class="auto-market-info">
        <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
-       <div class="auto-market-specs"><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span></div>
+       <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🎨 ${c.color||'—'}</span><span>🚘 ${c.body||'—'}</span></div>
        <div class="auto-market-bottom">
          <span>Рынок <b>${money(c.market)}</b></span>
          <span class="${potential>=0?'auto-profit':'auto-loss'}">Потенциал ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
@@ -140,6 +140,7 @@ function carView(id){
  render(`<div class="app auto-car-view">${head(c.name)}
    <div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span><span class="car-year-badge">${c.year}</span></div>
    <div class="car-detail-heading"><div><small>ЦЕНА ПРОДАВЦА</small><div class="price">${money(c.price)}</div></div><span class="car-km">${c.km.toLocaleString('ru-RU')} км</span></div>
+   <div class="note" style="margin:8px 0"><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цвет</span><strong>${c.color||'—'}</strong></div><div class="hero-line"><span>Кузов</span><strong>${c.body||'—'}</strong></div><div class="hero-line"><span>Комплектация</span><strong>${c.trim||'—'}</strong></div><div class="hero-line"><span>Состояние</span><strong>${c.conditionLabel||'Неизвестно'}</strong></div></div>
    <div class="deal-score car-economics">
      <span>РЫНОК<b>${money(c.market)}</b></span>
      <span>РЕМОНТ ~<b>${money(c.repair)}</b></span>
