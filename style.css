@@ -2626,3 +2626,348 @@ button[disabled]{cursor:default}
   background:#dff3e9;color:#1f855f;font-size:20px;font-weight:900
 }
 .bank-primary{min-height:41px;background:#2f80ed!important;border-color:#2f80ed!important;color:#fff!important;font-weight:800}
+
+
+/* BANK HOME DASHBOARD V2.3 */
+.bank-home-dashboard .bank-card-v22{
+  min-height:126px;
+  margin-bottom:8px;
+}
+.bank-home-rating-hero{
+  display:grid;
+  grid-template-columns:108px 1fr;
+  gap:11px;
+  align-items:center;
+  margin-bottom:8px;
+  padding:12px;
+  border:1px solid #d6e5f2;
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 100% 0,rgba(47,128,237,.08),transparent 35%),
+    linear-gradient(145deg,#fff,#f8fbfe);
+  box-shadow:0 7px 18px rgba(42,77,108,.07);
+  cursor:pointer;
+}
+.bank-home-rating-score small{
+  display:block;
+  color:#718699;
+  font-size:6px;
+  font-weight:900;
+  letter-spacing:.7px;
+}
+.bank-home-rating-score>div{
+  display:flex;
+  align-items:flex-end;
+  margin:3px 0 2px;
+}
+.bank-home-rating-score b{
+  color:#176fc4;
+  font-size:27px;
+  line-height:.95;
+  letter-spacing:-.8px;
+}
+.bank-home-rating-score span{
+  margin-left:2px;
+  color:#92a1ad;
+  font-size:9px;
+}
+.bank-home-rating-score em{
+  color:#344e63;
+  font-size:6.8px;
+  font-style:normal;
+  font-weight:850;
+}
+.bank-home-rating-line i{
+  display:block;
+  height:8px;
+  overflow:hidden;
+  border-radius:10px;
+  background:#e8f0f6;
+}
+.bank-home-rating-line i b{
+  display:block;
+  height:100%;
+  border-radius:10px;
+  background:linear-gradient(90deg,#70b7f7,#2f80ed);
+}
+.bank-home-rating-info p{
+  margin:6px 0 4px;
+  color:#6c8091;
+  font-size:6.5px;
+  line-height:1.4;
+}
+.bank-home-rating-info>span{
+  color:#2479c9;
+  font-size:6.2px;
+  font-weight:850;
+}
+
+.bank-credit-cta{
+  width:100%;
+  display:grid;
+  grid-template-columns:42px 1fr 18px;
+  gap:9px;
+  align-items:center;
+  margin:0 0 9px;
+  padding:11px;
+  border:0;
+  border-radius:15px;
+  background:linear-gradient(135deg,#2f80ed,#1f6bbb);
+  color:#fff;
+  text-align:left;
+  box-shadow:0 10px 22px rgba(47,128,237,.22);
+  cursor:pointer;
+}
+.bank-credit-cta-icon{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;
+  background:rgba(255,255,255,.13);
+  font-size:18px;
+  font-weight:900;
+}
+.bank-credit-cta small,.bank-credit-cta b,.bank-credit-cta em{
+  display:block;
+}
+.bank-credit-cta small{
+  color:#dbeeff;
+  font-size:5.6px;
+  font-weight:900;
+  letter-spacing:.8px;
+}
+.bank-credit-cta b{
+  margin:2px 0;
+  font-size:8.5px;
+}
+.bank-credit-cta em{
+  color:#d6eaff;
+  font-size:6px;
+  font-style:normal;
+}
+.bank-credit-cta strong{
+  color:#fff;
+  font-size:20px;
+  font-weight:400;
+}
+
+.bank-services{
+  margin-bottom:8px;
+}
+.bank-section-kicker{
+  margin:0 2px 6px;
+  color:#8192a0;
+  font-size:5.8px;
+  font-weight:900;
+  letter-spacing:.8px;
+}
+.bank-services-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+.bank-services-grid button{
+  min-width:0;
+  display:grid;
+  grid-template-columns:32px 1fr 10px;
+  gap:7px;
+  align-items:center;
+  padding:9px;
+  border:1px solid #dfe8ef;
+  border-radius:13px;
+  background:#fff;
+  color:#203548;
+  text-align:left;
+  box-shadow:0 4px 12px rgba(44,69,90,.05);
+  cursor:pointer;
+}
+.bank-services-grid button:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+}
+.bank-service-icon{
+  width:31px;
+  height:31px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:900;
+}
+.bank-service-icon.blue{background:#eaf4ff;color:#2f80ed}
+.bank-service-icon.green{background:#eaf8f2;color:#21815f}
+.bank-service-icon.gold{background:#fff6df;color:#b47a16}
+.bank-service-icon.gray{background:#f0f3f5;color:#607587}
+.bank-services-grid b,.bank-services-grid small{
+  display:block;
+}
+.bank-services-grid b{
+  font-size:7.2px;
+}
+.bank-services-grid small{
+  margin-top:2px;
+  color:#8795a1;
+  font-size:5.4px;
+  line-height:1.3;
+}
+.bank-services-grid em{
+  color:#8e9aa4;
+  font-size:13px;
+  font-style:normal;
+}
+
+.bank-home-info-card{
+  margin:8px 0;
+  padding:11px;
+  border:1px solid #dfe8ef;
+  border-radius:14px;
+  background:#fff;
+}
+.bank-home-section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+.bank-home-section-title>b{
+  color:#293f52;
+  font-size:7.5px;
+}
+.bank-home-section-title button{
+  border:0;
+  background:transparent;
+  color:#2f80ed;
+  font-size:6px;
+  font-weight:800;
+  cursor:pointer;
+}
+.bank-profile-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+}
+.bank-profile-grid>div{
+  padding:8px;
+  border-radius:10px;
+  background:#f4f7f9;
+}
+.bank-profile-grid span,.bank-profile-grid b{
+  display:block;
+}
+.bank-profile-grid span{
+  color:#8796a2;
+  font-size:5.5px;
+}
+.bank-profile-grid b{
+  margin-top:3px;
+  color:#334b5f;
+  font-size:7.8px;
+}
+.bank-home-info-card>p{
+  margin:8px 0 0;
+  padding-top:8px;
+  border-top:1px solid #edf2f5;
+  color:#6f8292;
+  font-size:6.2px;
+  line-height:1.4;
+}
+
+.bank-home-limit-v23{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+  margin-bottom:8px;
+  padding:11px 12px;
+  border:1px solid #dce8f2;
+  border-radius:14px;
+  background:linear-gradient(145deg,#f7fbff,#fff);
+}
+.bank-home-limit-v23 small{
+  display:block;
+  color:#7e91a1;
+  font-size:5.8px;
+  font-weight:900;
+  letter-spacing:.7px;
+}
+.bank-home-limit-v23 h3{
+  margin:3px 0;
+  color:#1f6fb9;
+  font-size:13px;
+}
+.bank-home-limit-v23 p{
+  margin:0;
+  color:#7c8d9a;
+  font-size:6px;
+  line-height:1.35;
+}
+.bank-home-limit-v23 button{
+  flex:0 0 auto;
+  padding:7px 9px;
+  border:0;
+  border-radius:9px;
+  background:#e9f4ff;
+  color:#2575c3;
+  font-size:6px;
+  font-weight:850;
+  cursor:pointer;
+}
+
+.bank-home-history{
+  margin-top:8px;
+  padding:10px 11px;
+  border:1px solid #dfe8ef;
+  border-radius:14px;
+  background:#fff;
+}
+.bank-home-history-row{
+  display:grid;
+  grid-template-columns:25px 1fr auto;
+  gap:7px;
+  align-items:center;
+  padding:7px 0;
+  border-bottom:1px solid #edf2f5;
+}
+.bank-home-history-row:last-child{
+  border-bottom:0;
+}
+.bank-home-history-row>span{
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:#eef4f8;
+  color:#486b87;
+  font-size:8px;
+  font-weight:900;
+}
+.bank-home-history-row b,.bank-home-history-row small{
+  display:block;
+}
+.bank-home-history-row b{
+  color:#30475a;
+  font-size:6.5px;
+}
+.bank-home-history-row small{
+  margin-top:2px;
+  color:#8795a0;
+  font-size:5.5px;
+}
+.bank-home-history-row em{
+  font-size:6.5px;
+  font-style:normal;
+  font-weight:850;
+}
+.bank-home-history-row em.up{color:#22815f}
+.bank-home-history-row em.down{color:#bd5060}
+
+.bank-home-credit.empty{
+  background:#fbfcfd;
+}
+.bank-home-credit-copy{
+  min-width:0;
+}

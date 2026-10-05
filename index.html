@@ -1474,30 +1474,70 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     '</section>';
   }
   function quickActions(cr){
-    var has=!!(cr&&cr.active&&Number(state.loan||0)>0);
-    return '<div class="bank-actions">'+
-      '<button onclick="bankCredits()"><span>₽</span><b>Кредит</b><small>Выбрать сумму</small></button>'+
-      '<button '+(has?'onclick="bankLoan()"':'disabled')+'><span>✓</span><b>Погасить</b><small>'+(has?bm(state.loan):'Нет кредита')+'</small></button>'+
-      '<button onclick="bankRating()"><span>★</span><b>Рейтинг</b><small>'+ensureBank().rating+'/100</small></button>'+
-      '<button onclick="bankHistory()"><span>≡</span><b>История</b><small>Операции</small></button>'+
-    '</div>';
+    var c=ensureBank(),has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    return '<section class="bank-services">'+
+      '<div class="bank-section-kicker">СЕРВИСЫ</div>'+
+      '<div class="bank-services-grid">'+
+        '<button onclick="bankCredits()"><span class="bank-service-icon blue">₽</span><div><b>Кредиты</b><small>Выбрать доступную сумму</small></div><em>›</em></button>'+
+        '<button '+(has?'onclick="bankLoan()"':'disabled')+'><span class="bank-service-icon green">✓</span><div><b>'+(has?'Погасить кредит':'Погашение')+'</b><small>'+(has?('Долг '+bm(state.loan)):'Активного кредита нет')+'</small></div><em>›</em></button>'+
+        '<button onclick="bankRating()"><span class="bank-service-icon gold">★</span><div><b>Мой рейтинг</b><small>'+c.rating+'/100 · '+ratingName(c.rating)+'</small></div><em>›</em></button>'+
+        '<button onclick="bankHistory()"><span class="bank-service-icon gray">≡</span><div><b>История</b><small>Кредиты, выплаты и штрафы</small></div><em>›</em></button>'+
+      '</div>'+
+    '</section>';
   }
   function activeSummary(cr){
-    if(!cr||!cr.active||Number(state.loan||0)<=0)return '<section class="bank-home-credit"><div><small>КРЕДИТ</small><h3>Нет активного кредита</h3><p>Можно выбрать доступную сумму от '+bm(25000)+'.</p></div><button onclick="bankCredits()">Выбрать сумму</button></section>';
+    if(!cr||!cr.active||Number(state.loan||0)<=0){
+      return '<section class="bank-home-credit empty"><div class="bank-home-credit-copy"><small>МОЙ КРЕДИТ</small><h3>Кредита сейчас нет</h3><p>Выбери сумму, проверь условия и оформи кредит в пару нажатий.</p></div><button onclick="bankCredits()">Открыть кредиты</button></section>';
+    }
     var late=Math.max(0,Number(cr.penaltyDaysApplied||0));
-    return '<section class="bank-home-credit '+(late?'overdue':'')+'"><div><small>ТЕКУЩИЙ КРЕДИТ</small><h3>'+bm(state.loan)+'</h3><p>'+(late?('Просрочка '+late+' д. · +1% к долгу каждый день'):('До платежа '+timeLeft(cr.dueAt)))+'</p></div><button onclick="bankLoan()">Открыть</button></section>';
+    return '<section class="bank-home-credit '+(late?'overdue':'')+'">'+
+      '<div class="bank-home-credit-copy"><small>'+(late?'ПРОСРОЧЕННЫЙ КРЕДИТ':'МОЙ КРЕДИТ')+'</small><h3>'+bm(state.loan)+'</h3><p>'+(late?('Просрочка '+late+' д. · долг растёт на 1% каждый день'):('До платежа '+timeLeft(cr.dueAt)+' · до '+moment(cr.dueAt)))+'</p></div>'+
+      '<button onclick="bankLoan()">'+(late?'Погасить':'Открыть')+'</button>'+
+    '</section>';
   }
 
   window.bank=function(){
     processCredit(false);
-    var c=ensureBank(),cr=state.bankCredit,top=topOffer();
-    render('<div class="app bank-v22-app">'+head('Банк')+
+    var c=ensureBank(),cr=state.bankCredit,top=topOffer(),next=nextOffer(),hist=(c.history||[]).slice(0,2);
+    var has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    var nextText=next
+      ?('Следующий лимит '+bm(next.amount)+' · рейтинг '+next.rating+' · выплат в срок '+next.paid)
+      :'Открыт максимальный кредитный лимит';
+    var recent=hist.length
+      ?'<section class="bank-home-history"><div class="bank-home-section-title"><b>Последние операции</b><button onclick="bankHistory()">Все →</button></div>'+hist.map(function(x){
+          var d=Number(x.delta||0),ico=x.type==='loan'?'↗':x.type==='paid'?'✓':x.type==='overdue'?'!':'↙';
+          return '<div class="bank-home-history-row"><span>'+ico+'</span><div><b>'+x.title+'</b><small>'+x.text+'</small></div><em class="'+(d>0?'up':d<0?'down':'')+'">'+(d?(d>0?'+':'')+d:'')+'</em></div>';
+        }).join('')+'</section>'
+      :'';
+    render('<div class="app bank-v22-app bank-home-dashboard">'+head('Банк')+
       cardHtml()+
-      ratingBar(c)+
+      '<section class="bank-home-rating-hero" onclick="bankRating()">'+
+        '<div class="bank-home-rating-score"><small>КРЕДИТНЫЙ РЕЙТИНГ</small><div><b>'+c.rating+'</b><span>/100</span></div><em>'+ratingName(c.rating)+'</em></div>'+
+        '<div class="bank-home-rating-info"><div class="bank-home-rating-line"><i><b style="width:'+c.rating+'%"></b></i></div><p>'+ratingGoal(c)+'</p><span>Как растёт рейтинг →</span></div>'+
+      '</section>'+
+      '<button class="bank-credit-cta" onclick="bankCredits()">'+
+        '<span class="bank-credit-cta-icon">₽</span>'+
+        '<div><small>ДОСТУПНЫЕ КРЕДИТЫ</small><b>Посмотреть доступные кредиты</b><em>Сейчас доступно до '+bm(top.amount)+'</em></div>'+
+        '<strong>›</strong>'+
+      '</button>'+
       quickActions(cr)+
       activeSummary(cr)+
-      '<section class="bank-home-limit"><div><small>ДОСТУПНЫЙ ЛИМИТ</small><h3>'+bm(top.amount)+'</h3><p>Ставка 10% · срок 7 игровых дней</p></div><button onclick="bankCredits()">Все суммы →</button></section>'+
-      '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>за день просрочки</span></div></section>'+
+      '<section class="bank-home-info-card">'+
+        '<div class="bank-home-section-title"><b>Кредитный профиль</b><button onclick="bankRating()">Подробнее →</button></div>'+
+        '<div class="bank-profile-grid">'+
+          '<div><span>Рейтинг</span><b>'+c.rating+'/100</b></div>'+
+          '<div><span>Выплат в срок</span><b>'+c.onTimePayments+'</b></div>'+
+          '<div><span>Серия</span><b>'+c.streak+'</b></div>'+
+          '<div><span>Просрочек</span><b>'+c.latePayments+'</b></div>'+
+        '</div>'+
+        '<p>'+nextText+'</p>'+
+      '</section>'+
+      '<section class="bank-home-limit-v23">'+
+        '<div><small>ТВОЙ ЛИМИТ</small><h3>'+bm(top.amount)+'</h3><p>Можно оформить после погашения текущего кредита'+(has?'. Сейчас новый кредит недоступен.':'.')+'</p></div>'+
+        '<button onclick="bankCredits()">Суммы</button>'+
+      '</section>'+
+      '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>каждый день просрочки</span></div></section>'+
+      recent+
     '</div>');
     saveBank();
   };
