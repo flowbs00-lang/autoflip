@@ -6,10 +6,12 @@ const path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
 const modules=['// V7.9 — обмен автомобилей','// V7.9 — входящие покупатели','// V7.9 — новая механика'].map(prefix=>scripts.find(s=>s.trim().startsWith(prefix)));
+const base=fs.readFileSync(path.join(__dirname,'../script_base.js'),'utf8');
+const compatibility=fs.readFileSync(path.join(__dirname,'../script.js'),'utf8');
 const car=(id,extra={})=>({id,name:'Car '+id,market:100000,sale:100000,buy:80000,year:2000,km:10000,city:'Киров',...extra});
 function game(){
   let output='',input='90000',random=.2,saved;
-  const c={state:{cars:[],money:200000,rep:100,day:1,buyerInbox:[]},makes:[],
+  const c={state:{cars:[],money:200000,rep:100,day:1,deals:0,notifications:0,repHistory:[],buyerInbox:[]},makes:[],
     Math:Object.create(Math),money:String,photo:()=>'',fallbackPhoto:()=>'',head:()=>'',
     objective:{},objectiveSub:{},render:v=>{output=v;},alert:()=>{},log:()=>{},
     save:()=>{saved=JSON.parse(JSON.stringify(c.state));},persist:()=>c.save(),
@@ -18,6 +20,11 @@ function game(){
     removePurchasedListing:id=>{c.makes=c.makes.filter(v=>v.listingId!==id);}
   };
   c.Math.random=()=>random;c.window=c;vm.createContext(c);
+  // Execute the actual purchase chain, including the fleet and legacy wrappers.
+  vm.runInContext(base.slice(base.indexOf('function buy(id,price)'),base.indexOf('\n',base.indexOf('function buy(id,price)'))),c);
+  vm.runInContext('var seq=0;'+compatibility.slice(compatibility.indexOf('var originalBuy=window.buy;'),compatibility.indexOf('var originalRepair=window.repair;')),c);
+  vm.runInContext(scripts.find(s=>s.trim().startsWith('// V7.9 — скрытые дефекты')),c);
+  vm.runInContext(base.slice(base.indexOf('function marketInspectionKey('),base.indexOf('function carView(')),c);
   modules.forEach(s=>vm.runInContext(s,c));
   return {c,html:()=>output,input:v=>{input=v;},random:v=>{random=v;},saved:()=>saved};
 }
@@ -120,4 +127,66 @@ test('seller pays the difference when own valuation exceeds purchase price; diag
   assert.equal(c.state.money,220000);
   assert.equal(c.state.car.flipCondition.name,diagnosed.name);
   assert.equal(c.state.car.flipCondition.healthy,false);
+});
+
+
+test('purchase without diagnosis rolls healthy or broken, displays and saves the result',()=>{
+  for(const roll of [.599,.60,.9]){
+    const g=game(),c=g.c;g.random(roll);
+    c.makes=[car(4,{listingId:'M1',price:100000})];
+    c.buy(0,100000);
+    assert.equal(c.state.car.flipCondition.healthy,roll<.60);
+    assert.equal(c.state.car.repaired,roll<.60);
+    assert.equal(c.state.money,100000);
+    assert.equal(c.makes.length,0);
+    assert.equal(c.state.cars.length,1);
+    assert.equal(g.saved().car.flipCondition.healthy,roll<.60);
+    assert.match(g.html(),roll<.60?/Автомобиль исправен/:/ОБНАРУЖЕНА ПОЛОМКА/);
+    const outcome=JSON.stringify(c.state.car.flipCondition);
+    g.random(roll<.60?.9:.2);
+    c.state=JSON.parse(JSON.stringify(g.saved()));
+    vm.runInContext(modules[2],c);c.garage();c.garageCarDetails(0);
+    assert.equal(JSON.stringify(c.state.car.flipCondition),outcome);
+  }
+});
+
+test('full diagnosis reveals the same condition subsequently received by purchase or exchange',()=>{
+  for(const mode of ['purchase','exchange'])for(const roll of [.2,.9]){
+    const g=game(),c=g.c;g.random(roll);
+    c.makes=[car(4,{listingId:'M1',price:100000})];
+    c.completeMarketInspection(0,'full');
+    const preview=JSON.parse(JSON.stringify(c.makes[0].marketFlipCondition));
+    assert.equal(c.makes[0].prePurchaseDiagnostic.found,!preview.healthy);
+    assert.equal(c.makes[0].prePurchaseDiagnostic.healthyConfirmed,preview.healthy);
+    g.random(roll<.60?.9:.2);
+    if(mode==='purchase')c.buy(0,100000);
+    else{
+      c.state.cars=[car(1)];c.state.car=c.state.cars[0];
+      c.startSellerTradeIn(0,0);g.input('90000');c.makeSellerTradeOffer();c.completeSellerTrade();
+    }
+    assert.equal(c.state.car.flipCondition.healthy,preview.healthy);
+    assert.equal(c.state.car.flipCondition.name,preview.name);
+    assert.equal(c.state.car.flipCondition.cost,preview.cost);
+  }
+});
+
+test('missed fault in standard diagnosis remains broken after purchase or exchange',()=>{
+  for(const mode of ['purchase','exchange']){
+    const g=game(),c=g.c;g.random(.9);
+    c.makes=[car(4,{listingId:'M1',price:100000})];
+    c.completeMarketInspection(0,'standard');
+    assert.equal(c.makes[0].prePurchaseDiagnostic.found,false);
+    assert.equal(c.makes[0].marketFlipCondition.healthy,false);
+    const fault=c.makes[0].marketFlipCondition.name;
+    g.random(.2);
+    if(mode==='purchase')c.buy(0,100000);
+    else{
+      c.state.cars=[car(1)];c.state.car=c.state.cars[0];
+      c.startSellerTradeIn(0,0);g.input('90000');c.makeSellerTradeOffer();c.completeSellerTrade();
+    }
+    assert.equal(c.state.car.flipCondition.name,fault);
+    assert.equal(c.state.car.repaired,false);
+    assert.equal(c.state.car.flipCondition.discovered,true);
+    assert.ok(c.state.car.market<c.state.car.healthyMarket);
+  }
 });
