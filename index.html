@@ -1041,13 +1041,21 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var buyV2=function(){
       var before=state.car,result=previousBuy.apply(this,arguments),car=state.car;
       if(car&&car!==before){
+        if(!Array.isArray(state.cars))state.cars=[];
+        if(!car._garageId)car._garageId='car-buy-'+Date.now()+'-'+Math.floor(Math.random()*999);
+        if(!state.cars.some(function(x){return x===car||x._garageId===car._garageId;}))state.cars.push(car);
+        state.car=car;
+        if(car.listingId&&typeof removePurchasedListing==='function')removePurchasedListing(car.listingId,car);
         applyMarketConditionToOwned(car);
         if(car.flipCondition&&!car.flipCondition.healthy)car.flipCondition.discovered=true;
         car.diagnosed=true;
         objective.textContent=car.flipCondition&&car.flipCondition.healthy?'Автомобиль исправен':'Обнаружена поломка';
         objectiveSub.textContent=car.flipCondition&&car.flipCondition.healthy?'Ремонт не требуется.':(car.flipCondition.name+' · ремонт '+money(car.flipCondition.cost)+'.');
         if(typeof persist==='function')persist();else if(typeof save==='function')save();
-        garageDetails();
+        var ownedIndex=state.cars.indexOf(car);
+        if(ownedIndex<0)ownedIndex=state.cars.findIndex(function(x){return x&&x._garageId===car._garageId;});
+        if(ownedIndex>=0)return garageCarDetails(ownedIndex);
+        return garage();
       }
       return result;
     };
