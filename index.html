@@ -1496,7 +1496,20 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     '</section>';
   }
 
-  window.bank=function(){
+  function homeCreditLevels(c){
+    var top=topOffer();
+    return '<section class="bank-home-credit-levels">'+
+      '<div class="bank-home-section-title"><b>Кредитные лимиты</b><button onclick="bankCredits()">Подробнее →</button></div>'+
+      '<div class="bank-home-credit-level-grid">'+BANK_OFFERS.map(function(o){
+        var ok=unlocked(o,c),current=top.amount===o.amount;
+        return '<button class="'+(ok?'open ':'locked ')+(current?'current':'')+'" '+(ok?'onclick="bankCredits()"':'onclick="bankRating()"')+'>'+
+          '<span>'+(ok?'✓':'🔒')+'</span><b>'+Math.round(o.amount/1000)+'К</b><small>'+(ok?'доступно':('рейтинг '+o.rating))+'</small>'+
+        '</button>';
+      }).join('')+'</div>'+
+    '</section>';
+  }
+
+  window.autoBankHome=function(){
     processCredit(false);
     var c=ensureBank(),cr=state.bankCredit,top=topOffer(),next=nextOffer(),hist=(c.history||[]).slice(0,2);
     var has=!!(cr&&cr.active&&Number(state.loan||0)>0);
@@ -1520,6 +1533,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
         '<div><small>ДОСТУПНЫЕ КРЕДИТЫ</small><b>Посмотреть доступные кредиты</b><em>Сейчас доступно до '+bm(top.amount)+'</em></div>'+
         '<strong>›</strong>'+
       '</button>'+
+      homeCreditLevels(c)+
       quickActions(cr)+
       activeSummary(cr)+
       '<section class="bank-home-info-card">'+
@@ -1714,6 +1728,9 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     return {title:ratingName(c.rating),amount:top.amount,maxDebt:Math.round(top.amount*1.10),rate:.10,next:next?('Следующая сумма '+bm(next.amount)):'Максимальный уровень'};
   };
 
+  // Final in-module binding: all old bank() calls now open this dashboard.
+  window.bank=window.autoBankHome;
+
   ensureBank();processCredit(false);saveBank();
   setInterval(function(){processCredit(true);},1000);
 })();
@@ -1738,6 +1755,13 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   ['profile'].forEach(function(name){wrapAutoTab(name,'profile');});
   ['sellCar','editListingPrice','saveListingPrice','publishCarListing'].forEach(function(name){wrapAutoTab(name,'sell');});
 })();
+</script>
+
+<script>
+// Final bank binding — intentionally last so legacy bank code cannot take priority.
+if(typeof window.autoBankHome==='function'){
+  window.bank=window.autoBankHome;
+}
 </script>
 
 </body>

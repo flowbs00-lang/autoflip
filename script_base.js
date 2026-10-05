@@ -100,7 +100,7 @@ function home(){
  <button onclick="market()"><div class="icon green">🚗</div><small>Авто</small></button>
  <button onclick="messages()"><div class="icon blue">💬</div><small>Сообщения${unread?' •':''}</small></button>
  <button onclick="garage()"><div class="icon orange">🔧</div><small>Гараж</small></button>
- <button onclick="bank()"><div class="icon">🏦</div><small>Банк</small></button>
+ <button onclick="window.autoBankHome?autoBankHome():bank()"><div class="icon">🏦</div><small>Банк</small></button>
  <button onclick="mapApp()"><div class="icon blue">🗺️</div><small>Карты</small></button>
  <button onclick="realty()"><div class="icon">🏠</div><small>Дом</small></button>
  <button onclick="contacts()"><div class="icon blue">📞</div><small>Телефон</small></button>
@@ -109,7 +109,7 @@ function home(){
  <button onclick="newsApp()"><div class="icon red">📰</div><small>Новости</small></button>
  <button onclick="gamesApp()"><div class="icon purple">🎮</div><small>Games</small></button>
  <button onclick="settings()"><div class="icon">⚙️</div><small>Настройки</small></button>
- </div><div class="dock"><button onclick="messages()"><div class="icon blue">💬</div></button><button onclick="market()"><div class="icon green">🚗</div></button><button onclick="contacts()"><div class="icon">📞</div></button><button onclick="bank()"><div class="icon">🏦</div></button></div></div></div>`)
+ </div><div class="dock"><button onclick="messages()"><div class="icon blue">💬</div></button><button onclick="market()"><div class="icon green">🚗</div></button><button onclick="contacts()"><div class="icon">📞</div></button><button onclick="window.autoBankHome?autoBankHome():bank()"><div class="icon">🏦</div></button></div></div></div>`)
 }
 function lockScreen(){render(`<div class="lock" onclick="unlock()">${status()}<div class="time">${now()}</div><div class="date">${dateText()}</div><div class="lock-card"><b>🔔 AutoFlip</b><small>Нажми, чтобы разблокировать телефон</small></div><div class="swipe">▲ НАЖМИТЕ ДЛЯ РАЗБЛОКИРОВКИ</div></div>`)}
 function unlock(){home()}

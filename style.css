@@ -2971,3 +2971,64 @@ button[disabled]{cursor:default}
 .bank-home-credit-copy{
   min-width:0;
 }
+
+
+/* BANK CREDIT LADDER HOME */
+.bank-home-credit-levels{
+  margin:0 0 9px;
+  padding:10px;
+  border:1px solid #dfe8ef;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(45,69,90,.04);
+}
+.bank-home-credit-level-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:4px;
+}
+.bank-home-credit-level-grid button{
+  min-width:0;
+  padding:7px 2px;
+  border:1px solid #e2e9ef;
+  border-radius:9px;
+  background:#f7f9fb;
+  text-align:center;
+  cursor:pointer;
+}
+.bank-home-credit-level-grid span,
+.bank-home-credit-level-grid b,
+.bank-home-credit-level-grid small{
+  display:block;
+}
+.bank-home-credit-level-grid span{
+  font-size:6px;
+}
+.bank-home-credit-level-grid b{
+  margin:2px 0;
+  color:#4b6072;
+  font-size:7px;
+}
+.bank-home-credit-level-grid small{
+  color:#96a2ab;
+  font-size:4.7px;
+  white-space:nowrap;
+}
+.bank-home-credit-level-grid .open{
+  border-color:#cfe8dc;
+  background:#f0faf6;
+}
+.bank-home-credit-level-grid .open b{
+  color:#237c5d;
+}
+.bank-home-credit-level-grid .current{
+  border-color:#8ec1ef;
+  box-shadow:0 0 0 2px rgba(47,128,237,.10);
+  background:#eef7ff;
+}
+.bank-home-credit-level-grid .current b{
+  color:#2477c5;
+}
+.bank-home-credit-level-grid .locked{
+  opacity:.68;
+}
