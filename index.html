@@ -71,7 +71,7 @@ function renderNegotiation(mode,counter=0){
   if(mode==='accept')sellerText=`«Хорошо, ${money(n.lastOffer)} меня устраивает. Договорились.»`;
   if(mode==='angry')sellerText=`«Я же сказал, что слишком низко. Если хотите купить — давайте серьёзнее.»`;
   let extra='';
-  if(mode==='start')extra=`${inspection?'<div class="note negotiation-evidence"><b>🔎 Аргумент после осмотра</b><p class="muted">'+inspection.risk+(inspection.mode==='expert'?' · эксперт дал более сильную позицию по цене.':'.')+'</p></div>':'<div class="warning">⚠ Ты начал торг без осмотра. Можно вернуться к машине и сначала проверить её.</div>'}<p class="muted">${p.icon} ${p.type}. Можно сразу торговаться деньгами или начать разговор с обмена своей машины.</p>`;
+  if(mode==='start')extra=`${inspection?(inspection.found?'<div class="note negotiation-evidence"><b>🔎 Аргумент после диагностики</b><p class="muted">Обнаружено: '+inspection.faultName+' · ремонт '+money(inspection.faultCost)+'. Используй это в торге.</p></div>':'<div class="note negotiation-evidence"><b>🔎 Диагностика проведена</b><p class="muted">'+(inspection.healthyConfirmed?'Автомобиль подтверждён как исправный.':'Поломок не обнаружено, но стандартная диагностика не даёт полной гарантии.')+'</p></div>'):'<div class="warning">⚠ Ты начал торг без диагностики. Техническое состояние машины неизвестно.</div>'}<p class="muted">${p.icon} ${p.type}. Можно сразу торговаться деньгами или начать разговор с обмена своей машины.</p>`;
   if(mode==='reject')extra='<p class="muted">Предложение отвергнуто. Попробуй поднять цену или закончить разговор.</p>';
   if(mode==='counter')extra='<p class="muted">Продавец сделал встречное предложение. Теперь можно принять его или попробовать улучшить цену.</p>';
   if(mode==='angry')extra='<p class="muted">Продавец начинает раздражаться. Следующее слишком низкое предложение может закончить разговор.</p>';
@@ -857,6 +857,56 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     return car.flipCondition;
   };
 
+  window.ensureMarketFlipCondition=function(car){
+    if(!car)return null;
+    if(Number(car.marketConditionVersion||0)>=CONDITION_VERSION&&car.marketFlipCondition)return car.marketFlipCondition;
+    var healthyMarket=Math.max(10000,rubles(car.market||car.sale||car.price||50000));
+    var fault=faultRoll();
+    car.marketHealthyValue=healthyMarket;
+    car.marketFlipCondition=fault
+      ?{healthy:false,name:fault.name,loss:fault.loss,cost:rubles(healthyMarket*fault.loss),healthyMarket:healthyMarket}
+      :{healthy:true,name:'Исправный автомобиль',loss:0,cost:0,healthyMarket:healthyMarket};
+    car.marketConditionVersion=CONDITION_VERSION;
+    if(typeof state!=='undefined'&&typeof makes!=='undefined')state.marketListings=makes;
+    return car.marketFlipCondition;
+  };
+
+  window.applyMarketConditionToOwned=function(car){
+    if(!car)return null;
+    var preview=car.marketFlipCondition||null,preDiag=car.prePurchaseDiagnostic||null;
+    if(!preview){
+      car.flipConditionVersion=0;
+      return ensureFlipCondition(car);
+    }
+    var healthyMarket=Math.max(10000,rubles(preview.healthyMarket||car.marketHealthyValue||car.market||car.sale||car.buy||50000));
+    car.healthyMarket=healthyMarket;
+    car.diagnosticSpent=Number(preDiag&&preDiag.totalSpent||car.diagnosticSpent||0);
+    car.hiddenDefects=[];car.hiddenSaleChecks=0;car.hiddenScanCount=0;car.diagnostics=[];car.totalRepair=0;
+    if(preview.healthy){
+      car.flipCondition={healthy:true,name:'Исправный автомобиль',loss:0,cost:0,discovered:false,repaired:true};
+      car.market=healthyMarket;car.sale=healthyMarket;car.repaired=true;
+    }else{
+      car.flipCondition={healthy:false,name:preview.name,loss:Number(preview.loss||0),cost:Number(preview.cost||0),discovered:!!(preDiag&&preDiag.found),repaired:false};
+      car.market=rubles(healthyMarket*(1-Number(preview.loss||0)));car.sale=car.market;car.repaired=false;
+    }
+    if(preDiag){
+      car.diagnosed=true;
+      car.lastDiagnostic={
+        mode:preDiag.mode,
+        cost:Number(preDiag.cost||0),
+        found:!!preDiag.found,
+        healthyConfirmed:!!preDiag.healthyConfirmed,
+        at:(typeof gameTotal==='function'?gameTotal():0),
+        beforePurchase:true
+      };
+    }else{
+      car.diagnosed=false;
+      car.lastDiagnostic=null;
+    }
+    car.flipConditionVersion=CONDITION_VERSION;
+    return car.flipCondition;
+  };
+
   window.standardDiagnosticCost=function(car){
     ensureFlipCondition(car);
     return rubles(Number(car.market||0)*.10);
@@ -1002,10 +1052,9 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var buyV2=function(){
       var before=state.car,result=previousBuy.apply(this,arguments),car=state.car;
       if(car&&car!==before){
-        car.flipConditionVersion=0;
-        ensureFlipCondition(car);
-        objective.textContent='Проверить автомобиль';
-        objectiveSub.textContent='Техническое состояние неизвестно. Можно продать как есть или провести диагностику.';
+        applyMarketConditionToOwned(car);
+        objective.textContent=car.flipCondition&&car.flipCondition.discovered?'Поломка известна':'Проверить автомобиль';
+        objectiveSub.textContent=car.flipCondition&&car.flipCondition.discovered?(car.flipCondition.name+' · ремонт '+money(car.flipCondition.cost)+'.'):'Можно продавать как есть или провести диагностику.';
         if(typeof persist==='function')persist();else if(typeof save==='function')save();
         garageDetails();
       }
@@ -1021,8 +1070,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var wrapped=function(){
       var before=state.car,result=original.apply(this,arguments),car=state.car;
       if(car&&car!==before){
-        car.flipConditionVersion=0;
-        ensureFlipCondition(car);
+        applyMarketConditionToOwned(car);
         if(typeof persist==='function')persist();else if(typeof save==='function')save();
       }
       return result;
