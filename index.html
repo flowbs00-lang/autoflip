@@ -1098,8 +1098,10 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 </script>
 
 <script>
-// V7.9 — Games: five lightweight mini-games using only in-game money.
+// V7.9 — Games: polished arcade UI + animated mini-games.
 (function(){
+  var gamesBusy=false;
+
   function ensureGames(){
     if(!state.games||typeof state.games!=='object')state.games={};
     if(!state.games.stats)state.games.stats={played:0,wins:0,losses:0,wagered:0,net:0};
@@ -1112,13 +1114,20 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     else if(typeof save==='function')save();
   }
   function gamesHead(title){
-    return status()+'<div class="head"><button onclick="gamesApp()">‹</button><b>'+title+'</b><span>🎮</span></div>';
+    return status()+'<div class="head games-head"><button onclick="gamesApp()">‹</button><b>'+title+'</b><span>✦</span></div>';
   }
   function gamesInput(id,value){
     var v=Math.max(1000,Math.floor(Number(value||5000)/1000)*1000);
-    return '<div class="games-bet"><span>Ставка</span><div><input id="'+id+'" type="number" min="1000" step="1000" value="'+v+'"><small>₽</small></div><em>На руках '+money(state.money)+'</em></div>';
+    return '<div class="games-bet"><div class="games-bet-top"><span>Ставка</span><em>Баланс '+money(state.money)+'</em></div><div class="games-bet-field"><input id="'+id+'" type="number" min="1000" step="1000" value="'+v+'"><small>₽</small></div><div class="games-quick"><button onclick="gamesSetBet(\''+id+'\',1000)">1К</button><button onclick="gamesSetBet(\''+id+'\',5000)">5К</button><button onclick="gamesSetBet(\''+id+'\',10000)">10К</button><button onclick="gamesHalfBet(\''+id+'\')">½</button></div></div>';
   }
+  window.gamesSetBet=function(id,value){
+    var el=document.getElementById(id);if(el)el.value=Math.min(Number(state.money||0),Math.max(1000,Number(value||1000)));
+  };
+  window.gamesHalfBet=function(id){
+    var el=document.getElementById(id);if(el)el.value=Math.max(1000,Math.floor(Number(state.money||0)/2/1000)*1000);
+  };
   function readBet(id){
+    if(gamesBusy)return 0;
     var el=document.getElementById(id),bet=Math.floor(Number(el&&el.value||0));
     if(!Number.isFinite(bet)||bet<1000){alert('Минимальная ставка — 1 000 ₽.');return 0;}
     if(bet>Number(state.money||0)){alert('Не хватает '+money(bet-Number(state.money||0))+'.');return 0;}
@@ -1134,97 +1143,138 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     return net;
   }
   function resultHtml(title,icon,text,net){
-    return '<div class="games-result '+(net>0?'win':net<0?'lose':'push')+'"><div>'+icon+'</div><small>'+title+'</small><h3>'+(net>0?'+':'')+money(net)+'</h3><p>'+text+'</p></div>';
+    return '<div class="games-result '+(net>0?'win':net<0?'lose':'push')+'"><div class="games-result-icon">'+icon+'</div><small>'+title+'</small><h3>'+(net>0?'+':'')+money(net)+'</h3><p>'+text+'</p></div>';
   }
-  function gameCard(icon,title,desc,tag,fn){
-    return '<button class="game-tile" onclick="'+fn+'"><div class="game-tile-icon">'+icon+'</div><div><small>'+tag+'</small><b>'+title+'</b><span>'+desc+'</span></div><em>›</em></button>';
+  function gameCard(icon,title,desc,tag,fn,accent){
+    return '<button class="game-tile '+(accent||'')+'" onclick="'+fn+'"><div class="game-tile-icon">'+icon+'</div><div class="game-tile-copy"><small>'+tag+'</small><b>'+title+'</b><span>'+desc+'</span></div><em>›</em></button>';
   }
+  function stage(title,body,caption){
+    render('<div class="app games-app">'+gamesHead(title)+'<div class="games-live-stage">'+body+'<div class="games-live-caption">'+caption+'</div><div class="games-live-dots"><i></i><i></i><i></i></div></div></div>');
+  }
+  function beginBet(bet){
+    gamesBusy=true;
+    state.money=Number(state.money||0)-bet;
+    gsave();
+  }
+  function finishBusy(){gamesBusy=false;}
 
   window.gamesApp=function(){
-    var g=ensureGames(),s=g.stats,h=g.history;
-    render('<div class="app games-app">'+head('Games')+
-      '<section class="games-hero"><div><small>AUTOFLIP ARCADE</small><h3>Перерыв между сделками</h3><p>Пять быстрых мини-игр на внутриигровые деньги.</p></div><div class="games-wallet"><span>Баланс</span><b>'+money(state.money)+'</b></div></section>'+
-      '<div class="games-stats"><div><b>'+s.played+'</b><span>игр</span></div><div><b>'+s.wins+'</b><span>побед</span></div><div><b class="'+(s.net>=0?'profit':'market-bad')+'">'+(s.net>=0?'+':'')+money(s.net)+'</b><span>результат</span></div></div>'+
+    gamesBusy=false;
+    var g=ensureGames(),s=g.stats,h=g.history,rate=s.played?Math.round(s.wins/s.played*100):0;
+    render('<div class="app games-app games-lobby">'+head('Games')+
+      '<section class="games-hero"><div class="games-hero-orb">🎮</div><div class="games-hero-copy"><small>AUTOFLIP ARCADE</small><h3>Игровая пауза</h3><p>Быстрые мини-игры между сделками.</p></div><div class="games-wallet"><span>Баланс</span><b>'+money(state.money)+'</b></div></section>'+
+      '<div class="games-stats"><div><small>ИГР</small><b>'+s.played+'</b></div><div><small>ПОБЕД</small><b>'+rate+'%</b></div><div><small>ИТОГ</small><b class="'+(s.net>=0?'profit':'market-bad')+'">'+(s.net>=0?'+':'')+money(s.net)+'</b></div></div>'+
+      '<div class="games-section-title"><span>Мини-игры</span><small>5 режимов</small></div>'+
       '<div class="games-list">'+
-        gameCard('🪙','Coinflip','Орёл или решка · x2','50 / 50','coinflipGame()')+
-        gameCard('💣','Мины','3×3 · две мины · забирай вовремя','РИСК','minesGame()')+
-        gameCard('🎲','Кости','Меньше или больше 50','1–100','diceGame()')+
-        gameCard('🃏','Выше / ниже','Угадай следующую карту','КАРТЫ','higherLowerGame()')+
-        gameCard('🎰','Слоты','Три символа · пары и джекпот','УДАЧА','slotsGame()')+
+        gameCard('🪙','Coinflip','Орёл или решка · выигрыш ×2','50 / 50','coinflipGame()','gold')+
+        gameCard('💣','Мины','Открывай клетки и забирай вовремя','РИСК','minesGame()','red')+
+        gameCard('🎲','Кости','Угадай сторону от отметки 50','1–100','diceGame()','blue')+
+        gameCard('🃏','Выше / ниже','Предскажи следующую карту','КАРТЫ','higherLowerGame()','violet')+
+        gameCard('🎰','Слоты','Поймай пару или джекпот','УДАЧА','slotsGame()','pink')+
       '</div>'+
-      (h.length?'<div class="games-history"><small>ПОСЛЕДНИЕ ИГРЫ</small>'+h.slice(0,4).map(function(x){return '<div><span>'+x.name+'</span><b class="'+(x.net>=0?'profit':'market-bad')+'">'+(x.net>=0?'+':'')+money(x.net)+'</b></div>';}).join('')+'</div>':'')+
-      '<p class="games-footnote">Только внутриигровая механика AutoFlip. Реальные деньги не используются.</p></div>');
+      (h.length?'<div class="games-history"><div class="games-section-title"><span>Последние игры</span><small>'+h.length+'</small></div>'+h.slice(0,4).map(function(x){return '<div class="games-history-row"><span>'+x.name+'</span><b class="'+(x.net>=0?'profit':'market-bad')+'">'+(x.net>=0?'+':'')+money(x.net)+'</b></div>';}).join('')+'</div>':'')+
+      '<p class="games-footnote">Внутриигровые деньги AutoFlip · без реальных ставок</p></div>');
   };
 
   // Coinflip
   window.coinflipGame=function(result){
-    ensureGames();
+    gamesBusy=false;ensureGames();
     render('<div class="app games-app">'+gamesHead('Coinflip')+
-      '<div class="game-focus"><div class="big-game-icon">🪙</div><small>ОРЁЛ ИЛИ РЕШКА</small><h3>Угадай сторону монеты</h3><p>Победа возвращает ставку ×2.</p></div>'+
+      '<div class="game-focus coin-focus"><div class="coin-static">₽</div><small>COINFLIP</small><h3>Выбери сторону</h3><p>Верный прогноз возвращает ставку ×2.</p></div>'+
       (result||'')+gamesInput('coinBet',5000)+
-      '<div class="games-two"><button class="action" onclick="playCoinflip(\'Орёл\')">🦅 Орёл</button><button class="action green" onclick="playCoinflip(\'Решка\')">🪙 Решка</button></div></div>');
+      '<div class="games-two"><button class="action games-choice" onclick="playCoinflip(\'Орёл\')"><span>🦅</span> Орёл</button><button class="action green games-choice" onclick="playCoinflip(\'Решка\')"><span>🪙</span> Решка</button></div></div>');
   };
   window.playCoinflip=function(choice){
     var bet=readBet('coinBet');if(!bet)return;
-    state.money-=bet;
-    var landed=Math.random()<.5?'Орёл':'Решка',win=landed===choice,payout=win?bet*2:0;
-    state.money+=payout;
-    var net=gameRecord('Coinflip',bet,payout,'');
-    coinflipGame(resultHtml('ВЫПАЛ '+landed.toUpperCase(),landed==='Орёл'?'🦅':'🪙',win?'Ты угадал сторону монеты.':'В этот раз не угадал.',net));
+    beginBet(bet);
+    var landed=Math.random()<.5?'Орёл':'Решка';
+    stage('Coinflip','<div class="coin-anim"><div class="coin-face">₽</div></div>','Монета в воздухе…');
+    setTimeout(function(){
+      var win=landed===choice,payout=win?bet*2:0;
+      state.money+=payout;
+      var net=gameRecord('Coinflip',bet,payout,'');
+      finishBusy();
+      coinflipGame(resultHtml('ВЫПАЛ '+landed.toUpperCase(),landed==='Орёл'?'🦅':'🪙',win?'Твой выбор сыграл.':'Монета выбрала другую сторону.',net));
+    },1050);
   };
 
   // Dice
   window.diceGame=function(result){
-    ensureGames();
+    gamesBusy=false;ensureGames();
     render('<div class="app games-app">'+gamesHead('Кости')+
-      '<div class="game-focus"><div class="big-game-icon">🎲</div><small>ЧИСЛО ОТ 1 ДО 100</small><h3>Меньше или больше 50?</h3><p>Число 50 — проигрыш. Победа возвращает ставку ×1,95.</p></div>'+
+      '<div class="game-focus dice-focus"><div class="dice-static">🎲</div><small>1 — 100</small><h3>Где остановится число?</h3><p>Меньше или больше 50 · выигрыш ×1,95.</p></div>'+
       (result||'')+gamesInput('diceBet',5000)+
-      '<div class="games-two"><button class="action" onclick="playDice(\'under\')">⬇ Меньше 50</button><button class="action green" onclick="playDice(\'over\')">⬆ Больше 50</button></div></div>');
+      '<div class="games-two"><button class="action games-choice" onclick="playDice(\'under\')">↓ Меньше 50</button><button class="action green games-choice" onclick="playDice(\'over\')">↑ Больше 50</button></div></div>');
   };
   window.playDice=function(choice){
     var bet=readBet('diceBet');if(!bet)return;
-    state.money-=bet;
-    var roll=1+Math.floor(Math.random()*100),win=(choice==='under'&&roll<50)||(choice==='over'&&roll>50),payout=win?Math.floor(bet*1.95):0;
-    state.money+=payout;
-    var net=gameRecord('Кости',bet,payout,'');
-    diceGame(resultHtml('ВЫПАЛО '+roll,'🎲',win?'Прогноз сыграл.':roll===50?'Выпало ровно 50.':'Прогноз не сыграл.',net));
+    beginBet(bet);
+    var roll=1+Math.floor(Math.random()*100);
+    stage('Кости','<div class="dice-anim"><span id="diceLive">?</span></div>','Бросаем кости…');
+    var ticks=0,timer=setInterval(function(){
+      var el=document.getElementById('diceLive');if(el)el.textContent=1+Math.floor(Math.random()*100);
+      if(++ticks>=8)clearInterval(timer);
+    },95);
+    setTimeout(function(){
+      clearInterval(timer);
+      var win=(choice==='under'&&roll<50)||(choice==='over'&&roll>50),payout=win?Math.floor(bet*1.95):0;
+      state.money+=payout;
+      var net=gameRecord('Кости',bet,payout,'');
+      finishBusy();
+      diceGame(resultHtml('ВЫПАЛО '+roll,'🎲',win?'Прогноз оказался верным.':roll===50?'Ровно 50 — ставка проиграла.':'Число ушло в другую сторону.',net));
+    },1000);
   };
 
   // Higher / Lower
   function cardText(v){return v===14?'A':v===13?'K':v===12?'Q':v===11?'J':String(v);}
   window.higherLowerGame=function(result){
+    gamesBusy=false;
     var g=ensureGames(),card=Number(g.highCard||7);
     render('<div class="app games-app">'+gamesHead('Выше / ниже')+
-      '<div class="game-focus"><div class="playing-card">'+cardText(card)+'</div><small>ТЕКУЩАЯ КАРТА</small><h3>Следующая будет выше или ниже?</h3><p>Совпадение возвращает ставку. Победа ×1,9.</p></div>'+
+      '<div class="game-focus card-focus"><div class="playing-card"><span>'+cardText(card)+'</span><small>♠</small></div><small>ТЕКУЩАЯ КАРТА</small><h3>Что будет дальше?</h3><p>Совпадение возвращает ставку · победа ×1,9.</p></div>'+
       (result||'')+gamesInput('highBet',5000)+
-      '<div class="games-two"><button class="action" onclick="playHigherLower(\'lower\')">↓ Ниже</button><button class="action green" onclick="playHigherLower(\'higher\')">↑ Выше</button></div></div>');
+      '<div class="games-two"><button class="action games-choice" onclick="playHigherLower(\'lower\')">↓ Ниже</button><button class="action green games-choice" onclick="playHigherLower(\'higher\')">↑ Выше</button></div></div>');
   };
   window.playHigherLower=function(choice){
     var bet=readBet('highBet');if(!bet)return;
     var g=ensureGames(),old=Number(g.highCard||7),next=2+Math.floor(Math.random()*13);
-    state.money-=bet;
-    var tie=next===old,win=(choice==='higher'&&next>old)||(choice==='lower'&&next<old),payout=tie?bet:(win?Math.floor(bet*1.9):0);
-    state.money+=payout;g.highCard=next;
-    var net=gameRecord('Выше / ниже',bet,payout,'');
-    higherLowerGame(resultHtml('НОВАЯ КАРТА · '+cardText(next),'🃏',tie?'Одинаковая карта — ставка возвращена.':win?'Направление угадано.':'Направление не угадано.',net));
+    beginBet(bet);
+    stage('Выше / ниже','<div class="card-flip-wrap"><div class="card-flip"><div class="card-back">A</div><div class="card-front">'+cardText(next)+'</div></div></div>','Открываем карту…');
+    setTimeout(function(){
+      var tie=next===old,win=(choice==='higher'&&next>old)||(choice==='lower'&&next<old),payout=tie?bet:(win?Math.floor(bet*1.9):0);
+      state.money+=payout;g.highCard=next;
+      var net=gameRecord('Выше / ниже',bet,payout,'');
+      finishBusy();
+      higherLowerGame(resultHtml('НОВАЯ КАРТА · '+cardText(next),'🃏',tie?'Та же карта — ставка возвращена.':win?'Направление угадано.':'Направление не угадано.',net));
+    },950);
   };
 
   // Slots
   window.slotsGame=function(result){
-    ensureGames();
+    gamesBusy=false;ensureGames();
     render('<div class="app games-app">'+gamesHead('Слоты')+
-      '<div class="game-focus"><div class="slot-preview">🍒 7️⃣ 💎</div><small>ТРИ БАРАБАНА</small><h3>Собери комбинацию</h3><p>Два одинаковых — ×1,5. Три одинаковых — ×5.</p></div>'+
+      '<div class="game-focus slot-focus"><div class="slot-machine"><div>🍒</div><div>7️⃣</div><div>💎</div></div><small>ТРИ БАРАБАНА</small><h3>Собери комбинацию</h3><p>Пара ×1,5 · три одинаковых ×5.</p></div>'+
       (result||'')+gamesInput('slotBet',5000)+
-      '<button class="action green games-main-action" onclick="playSlots()">🎰 Крутить</button></div>');
+      '<button class="action green games-main-action" onclick="playSlots()">🎰 Крутить барабаны</button></div>');
   };
   window.playSlots=function(){
     var bet=readBet('slotBet');if(!bet)return;
-    var icons=['🍒','🍋','💎','7️⃣','🔔'],a=icons[Math.floor(Math.random()*icons.length)],b=icons[Math.floor(Math.random()*icons.length)],c=icons[Math.floor(Math.random()*icons.length)];
-    state.money-=bet;
-    var triple=a===b&&b===c,pair=!triple&&(a===b||a===c||b===c),payout=triple?bet*5:(pair?Math.floor(bet*1.5):0);
-    state.money+=payout;
-    var net=gameRecord('Слоты',bet,payout,'');
-    slotsGame(resultHtml(triple?'ДЖЕКПОТ':pair?'ЕСТЬ ПАРА':'БЕЗ КОМБИНАЦИИ',a+' '+b+' '+c,triple?'Три одинаковых символа.':pair?'Два одинаковых символа.':'Попробуй ещё раз.',net));
+    var icons=['🍒','🍋','💎','7️⃣','🔔'],a=pickSlot(icons),b=pickSlot(icons),c=pickSlot(icons);
+    function pickSlot(arr){return arr[Math.floor(Math.random()*arr.length)];}
+    beginBet(bet);
+    stage('Слоты','<div class="slot-live"><div id="reelA">🍒</div><div id="reelB">7️⃣</div><div id="reelC">💎</div></div>','Барабаны крутятся…');
+    var ticks=0,timer=setInterval(function(){
+      ['reelA','reelB','reelC'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=pickSlot(icons);});
+      if(++ticks>=10)clearInterval(timer);
+    },85);
+    setTimeout(function(){
+      clearInterval(timer);
+      var triple=a===b&&b===c,pair=!triple&&(a===b||a===c||b===c),payout=triple?bet*5:(pair?Math.floor(bet*1.5):0);
+      state.money+=payout;
+      var net=gameRecord('Слоты',bet,payout,'');
+      finishBusy();
+      slotsGame(resultHtml(triple?'ДЖЕКПОТ':pair?'ЕСТЬ ПАРА':'БЕЗ КОМБИНАЦИИ',a+' '+b+' '+c,triple?'Три одинаковых символа.':pair?'Два символа совпали.':'Барабаны не собрали комбинацию.',net));
+    },1150);
   };
 
   // Mines
@@ -1232,20 +1282,24 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   function minesNewState(bet){
     var cells=[0,1,2,3,4,5,6,7,8],mines=[];
     while(mines.length<2){var p=Math.floor(Math.random()*cells.length),v=cells.splice(p,1)[0];mines.push(v);}
-    return {active:true,bet:bet,mines:mines,revealed:[],ended:false,won:false};
+    return {active:true,bet:bet,mines:mines,revealed:[],ended:false,won:false,lastReveal:-1,lastMine:-1};
   }
   window.minesGame=function(message){
+    gamesBusy=false;
     var g=ensureGames(),m=g.mines||null,mults=minesMultipliers(),safe=m&&Array.isArray(m.revealed)?m.revealed.length:0,mult=mults[Math.min(safe,mults.length-1)];
     var grid='';
     for(var i=0;i<9;i++){
-      var opened=m&&m.revealed&&m.revealed.indexOf(i)>=0,showMine=m&&m.ended&&m.mines.indexOf(i)>=0,cls=opened?' safe':showMine?' mine':'';
-      grid+='<button class="mine-cell'+cls+'" '+(m&&m.active&&!opened?'onclick="gamesMinesReveal('+i+')"':'disabled')+'>'+(showMine?'💣':opened?'💎':'?')+'</button>';
+      var opened=m&&m.revealed&&m.revealed.indexOf(i)>=0,showMine=m&&m.ended&&m.mines.indexOf(i)>=0;
+      var cls=opened?' safe':showMine?' mine':'';
+      if(m&&m.lastReveal===i)cls+=' reveal-pop';
+      if(m&&m.lastMine===i)cls+=' explode';
+      grid+='<button class="mine-cell'+cls+'" '+(m&&m.active&&!opened?'onclick="gamesMinesReveal('+i+')"':'disabled')+'>'+(showMine?'💣':opened?'💎':'<span>?</span>')+'</button>';
     }
     render('<div class="app games-app">'+gamesHead('Мины')+
-      '<div class="game-focus"><div class="big-game-icon">💣</div><small>ПОЛЕ 3 × 3</small><h3>Найди безопасные клетки</h3><p>На поле две мины. Чем дальше идёшь, тем выше множитель.</p></div>'+
+      '<div class="game-focus mines-focus"><div class="mines-logo">💣</div><small>2 МИНЫ · 7 БЕЗОПАСНЫХ</small><h3>Открывай клетки</h3><p>Каждая безопасная клетка повышает множитель.</p></div>'+
       (message||'')+
-      (m?'<div class="mines-board">'+grid+'</div><div class="mines-info"><span>Ставка <b>'+money(m.bet)+'</b></span><span>Открыто <b>'+safe+'/7</b></span><span>Множитель <b>×'+mult.toFixed(2)+'</b></span></div>':'')+
-      ((!m||m.ended)?gamesInput('minesBet',5000)+'<button class="action green games-main-action" onclick="gamesMinesStart()">💣 Новая игра</button>':'<button class="action green games-main-action" '+(safe<1?'disabled':'')+' onclick="gamesMinesCashout()">💰 Забрать '+money(Math.floor(m.bet*mult))+'</button>')+
+      (m?'<div class="mines-board">'+grid+'</div><div class="mines-info"><span>СТАВКА<b>'+money(m.bet)+'</b></span><span>ОТКРЫТО<b>'+safe+'/7</b></span><span>МНОЖИТЕЛЬ<b>×'+mult.toFixed(2)+'</b></span></div>':'')+
+      ((!m||m.ended)?gamesInput('minesBet',5000)+'<button class="action green games-main-action" onclick="gamesMinesStart()">💣 Начать раунд</button>':'<button class="action green games-main-action" '+(safe<1?'disabled':'')+' onclick="gamesMinesCashout()">💰 Забрать '+money(Math.floor(m.bet*mult))+'</button>')+
       '</div>');
   };
   window.gamesMinesStart=function(){
@@ -1253,22 +1307,27 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var g=ensureGames();state.money-=bet;g.mines=minesNewState(bet);gsave();minesGame();
   };
   window.gamesMinesReveal=function(index){
+    if(gamesBusy)return;
     var g=ensureGames(),m=g.mines;if(!m||!m.active||m.revealed.indexOf(index)>=0)return;
+    gamesBusy=true;
     if(m.mines.indexOf(index)>=0){
-      m.active=false;m.ended=true;m.won=false;
+      m.active=false;m.ended=true;m.won=false;m.lastMine=index;
       var net=gameRecord('Мины',m.bet,0,'');
-      return minesGame(resultHtml('МИНА','💥','Ставка сгорела. Мины показаны на поле.',net));
+      setTimeout(function(){finishBusy();minesGame(resultHtml('МИНА','💥','Раунд завершён — две мины показаны на поле.',net));},180);
+      return;
     }
-    m.revealed.push(index);
-    if(m.revealed.length>=7)return gamesMinesCashout(true);
-    gsave();minesGame();
+    m.revealed.push(index);m.lastReveal=index;gsave();
+    if(m.revealed.length>=7){finishBusy();return gamesMinesCashout(true);}
+    minesGame();
+    setTimeout(function(){var gg=ensureGames();if(gg.mines)gg.mines.lastReveal=-1;gamesBusy=false;gsave();},420);
   };
   window.gamesMinesCashout=function(auto){
     var g=ensureGames(),m=g.mines;if(!m||!m.active||!m.revealed.length)return;
     var mult=minesMultipliers()[Math.min(m.revealed.length,7)],payout=Math.floor(m.bet*mult);
     state.money+=payout;m.active=false;m.ended=true;m.won=true;
     var net=gameRecord('Мины',m.bet,payout,'');
-    minesGame(resultHtml(auto?'ПОЛЕ ПРОЙДЕНО':'ЗАБРАЛ ВОВРЕМЯ','💎',(auto?'Все безопасные клетки открыты.':'Выигрыш зафиксирован на множителе ×'+mult.toFixed(2)+'.'),net));
+    finishBusy();
+    minesGame(resultHtml(auto?'ПОЛЕ ПРОЙДЕНО':'ВЫИГРЫШ ЗАФИКСИРОВАН','💎',auto?'Все безопасные клетки открыты.':'Ты вовремя остановился на ×'+mult.toFixed(2)+'.',net));
   };
 
   ensureGames();
