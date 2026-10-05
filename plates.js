@@ -28,7 +28,8 @@
   function region(){let r=pick(REGIONS);return {code:r[0],city:r[1],country:r[2]};}
   function digitsNoPair(){let s='';while(new Set(s).size<3||s[0]===s[2])s=''+rnd(10)+rnd(10)+rnd(10);return s;}
   function ensure(){
-    if(!window.state)return null;
+    // The game declares `let state`: it is shared across scripts, not on window.
+    if(typeof state==='undefined'||!state)throw new Error('Игровое состояние ещё не загружено');
     if(!state.plates||typeof state.plates!=='object')state.plates={items:[],nextId:1};
     if(!Array.isArray(state.plates.items))state.plates.items=[];
     if(!Number.isFinite(Number(state.plates.nextId)))state.plates.nextId=1;
