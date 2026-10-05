@@ -12,6 +12,18 @@ function game(saved){
  for(const m of html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)){const source=m[1]&&m[1].split('?')[0];vm.runInContext(source?fs.readFileSync(path.join(root,source),'utf8'):m[2],c,{filename:source||'inline'});}
  return {c,advance:ms=>wallTime+=ms,run:s=>vm.runInContext(s,c),saved:()=>JSON.parse(storage.get('autoflip-v7-save'))};
 }
+test('plates launcher opens with the real lexical game state, buys, sells and reloads',()=>{
+ const g=game();assert.equal(g.c.state,undefined);
+ g.c.openPlatesApp();assert.equal(g.run('state.plates.items.length'),0);
+ const balance=g.run('state.money');g.c.openPlateCase('standard');
+ assert.equal(g.run('state.money'),balance-3000);assert.equal(g.run('state.plates.items.length'),1);
+ const restored=game(g.saved());restored.c.openPlatesApp();
+ assert.equal(restored.run('state.plates.items.length'),1);
+ const price=restored.run('state.plates.items[0].value');
+ restored.c.sellPlate(restored.run('state.plates.items[0].id'));
+ assert.equal(restored.run('state.money'),balance-3000+price);
+ assert.equal(restored.run('state.plates.items.length'),0);
+});
 test('expanded catalogue has 100+ new models with unique local photographs and attribution',()=>{
  const g=game(),cars=g.c.carCatalogExtra;assert.ok(cars.length>=100);
  assert.equal(new Set(cars.map(c=>c.name)).size,cars.length);
