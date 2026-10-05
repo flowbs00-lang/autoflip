@@ -220,6 +220,6 @@ test('old healthy status cannot hide a diagnosed fault; repair charges once and 
 
 test('startup loads dependencies explicitly before compatibility and condition overrides',()=>{
   const sources=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-  assert.deepEqual(sources,['script_base.js','car-catalog.js','v79_market.js','script.js','ui.js','plates.js']);
+  assert.deepEqual(sources,['script_base.js','car-catalog.js','v79_market.js','script.js','ui.js','plates.js?v=20261005-2']);
   assert.doesNotMatch(compatibility,/document\.write\(/);
 });
