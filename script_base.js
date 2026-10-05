@@ -107,6 +107,7 @@ function home(){
  <button onclick="notes()"><div class="icon">📝</div><small>Заметки</small></button>
  <button onclick="profile()"><div class="icon">👤</div><small>Профиль</small></button>
  <button onclick="newsApp()"><div class="icon red">📰</div><small>Новости</small></button>
+ <button onclick="gamesApp()"><div class="icon purple">🎮</div><small>Games</small></button>
  <button onclick="settings()"><div class="icon">⚙️</div><small>Настройки</small></button>
  </div><div class="dock"><button onclick="messages()"><div class="icon blue">💬</div></button><button onclick="market()"><div class="icon green">🚗</div></button><button onclick="contacts()"><div class="icon">📞</div></button><button onclick="bank()"><div class="icon">🏦</div></button></div></div></div>`)
 }
