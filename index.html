@@ -32,6 +32,8 @@
 </div></section>
 </main>
 <footer>AutoFlip · браузерный игровой прототип · V7 · 2026</footer>
+<script src="script_base.js"></script>
+<script src="v79_market.js"></script>
 <script src="script.js"></script>
 <script>
 // V7.2 — у каждого продавца свой характер и поведение в торге.
@@ -849,6 +851,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
   window.ensureFlipCondition=function(car){
     if(!car)return null;
+    if(car.marketFlipCondition||car.prePurchaseDiagnostic)return applyMarketConditionToOwned(car);
     if(Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&car.flipCondition)return car.flipCondition;
     var healthyMarket=Math.max(10000,rubles(car.healthyMarket||car.market||car.sale||car.buy||50000));
     var fault=faultRoll();
@@ -892,15 +895,20 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
   window.applyMarketConditionToOwned=function(car){
     if(!car)return null;
-    if(Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&car.flipCondition)return car.flipCondition;
     var preview=car.marketFlipCondition||null,preDiag=car.prePurchaseDiagnostic||null;
+    // Recover diagnostic evidence from saves that lost the market preview.
+    if(!preview&&preDiag&&preDiag.found){
+      preview={healthy:false,name:preDiag.faultName,loss:Number(preDiag.loss||0),cost:Number(preDiag.faultCost||0),healthyMarket:car.marketHealthyValue||car.healthyMarket||car.market};
+      car.marketFlipCondition=preview;
+    }
+    var existing=car.flipCondition;
+    // An old healthy roll must never erase a diagnosed fault. Preserve real repairs.
+    var conflict=preview&&!preview.healthy&&existing&&existing.healthy;
+    if(Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&existing&&!conflict)return existing;
     if(!preview){
       car.flipConditionVersion=0;
-      var generated=ensureFlipCondition(car);
-      if(generated&&!generated.healthy)generated.discovered=true;
-      car.diagnosed=true;
-      car.lastDiagnostic=null;
-      return generated;
+      ensureMarketFlipCondition(car);
+      return applyMarketConditionToOwned(car);
     }
     var healthyMarket=Math.max(10000,rubles(preview.healthyMarket||car.marketHealthyValue||car.market||car.sale||car.buy||50000));
     car.healthyMarket=healthyMarket;

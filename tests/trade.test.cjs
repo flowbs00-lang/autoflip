@@ -190,3 +190,36 @@ test('missed fault in standard diagnosis remains broken after purchase or exchan
     assert.ok(c.state.car.market<c.state.car.healthyMarket);
   }
 });
+
+test('early condition lookup respects diagnosis instead of rolling a second healthy outcome',()=>{
+  const g=game(),c=g.c;g.random(.9);
+  const target=car(4);c.ensureMarketFlipCondition(target);g.random(.2);
+  const issue=c.ensureFlipCondition(target);
+  assert.equal(issue.healthy,false);
+  assert.equal(issue.name,target.marketFlipCondition.name);
+});
+
+test('old healthy status cannot hide a diagnosed fault; repair charges once and survives reload',()=>{
+  for(const lostPreview of [false,true]){
+    const g=game(),c=g.c;g.random(.9);
+    c.makes=[car(4,{listingId:'M1',price:100000})];c.completeMarketInspection(0,'full');
+    const owned=JSON.parse(JSON.stringify(c.makes[0]));
+    owned.flipConditionVersion=2;owned.flipCondition={healthy:true,repaired:true};owned.repaired=true;
+    if(lostPreview)delete owned.marketFlipCondition;
+    c.state.cars=[owned];c.state.car=owned;g.random(.2);c.garageCarDetails(0);
+    assert.equal(owned.flipCondition.healthy,false);assert.equal(owned.repaired,false);
+    assert.match(g.html(),/repairDetectedIssue/);
+    const cost=owned.flipCondition.cost,balance=c.state.money;
+    c.repairDetectedIssue();assert.equal(c.state.money,balance-cost);
+    assert.equal(owned.market,owned.healthyMarket);
+    c.state=JSON.parse(JSON.stringify(g.saved()));vm.runInContext(modules[2],c);
+    c.garageCarDetails(0);c.repairDetectedIssue();
+    assert.equal(c.state.money,balance-cost);assert.equal(c.state.car.flipCondition.repaired,true);
+  }
+});
+
+test('startup loads dependencies explicitly before compatibility and condition overrides',()=>{
+  const sources=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
+  assert.deepEqual(sources,['script_base.js','v79_market.js','script.js']);
+  assert.doesNotMatch(compatibility,/document\.write\(/);
+});
