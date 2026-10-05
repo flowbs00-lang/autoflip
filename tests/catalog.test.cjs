@@ -9,7 +9,7 @@ function game(saved){
  const c={structuredClone,console,Date:GameDate,Math:Object.create(Math),localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{documentElement:element(),getElementById:id=>elements[id]??=element(),querySelector:()=>null,querySelectorAll:()=>[],createElement:element,addEventListener(){}},setTimeout(){},setInterval(){},clearInterval(){},alert(){},confirm:()=>true,addEventListener(){}};
  c.window=c;vm.createContext(c);
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
- for(const m of html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g))vm.runInContext(m[1]?fs.readFileSync(path.join(root,m[1]),'utf8'):m[2],c,{filename:m[1]||'inline'});
+ for(const m of html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)){const source=m[1]&&m[1].split('?')[0];vm.runInContext(source?fs.readFileSync(path.join(root,source),'utf8'):m[2],c,{filename:source||'inline'});}
  return {c,advance:ms=>wallTime+=ms,run:s=>vm.runInContext(s,c),saved:()=>JSON.parse(storage.get('autoflip-v7-save'))};
 }
 test('expanded catalogue has 100+ new models with unique local photographs and attribution',()=>{
