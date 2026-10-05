@@ -1335,46 +1335,44 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 </script>
 
 <script>
-// V7.9 — AutoBank V2.1: visible credit progression, amount choice and modern mobile UI.
+// V7.9 — AutoBank V2.2: clear mobile dashboard, visible rating and complete credit navigation.
 (function(){
   var BANK_DAY=1440,BANK_WEEK=BANK_DAY*7,BANK_RATE=.10,BANK_OVERDUE_RATE=.01;
   var BANK_OFFERS=[
     {amount:25000,rating:0,paid:0,label:'Старт'},
     {amount:50000,rating:58,paid:1,label:'Базовый'},
-    {amount:100000,rating:68,paid:2,label:'Уверенный'},
+    {amount:100000,rating:67,paid:2,label:'Уверенный'},
     {amount:250000,rating:80,paid:4,label:'Бизнес'},
     {amount:500000,rating:92,paid:6,label:'Премиум'}
   ];
 
-  function bClamp(n,a,b){return Math.max(a,Math.min(b,n));}
-  function bNow(){return typeof gameTotal==='function'?gameTotal():Math.max(0,(Number(state.day||1)-1)*BANK_DAY);}
-  function bSave(){
-    if(typeof persist==='function')persist();
-    else localStorage.setItem(KEY,JSON.stringify(state));
-  }
-  function bNotify(icon,text,key){
-    if(typeof pushPhoneNotification==='function')pushPhoneNotification('Банк',icon,text,'bank',key);
-  }
-  function bMoney(n){return money(Math.max(0,Math.round(Number(n)||0)));}
-  function bMoment(total){
+  function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+  function nowGame(){return typeof gameTotal==='function'?gameTotal():Math.max(0,(Number(state.day||1)-1)*BANK_DAY);}
+  function saveBank(){if(typeof persist==='function')persist();else localStorage.setItem(KEY,JSON.stringify(state));}
+  function notifyBank(icon,text,key){if(typeof pushPhoneNotification==='function')pushPhoneNotification('Банк',icon,text,'bank',key);}
+  function bm(n){return money(Math.max(0,Math.round(Number(n)||0)));}
+  function moment(total){
     total=Math.max(0,Math.floor(Number(total)||0));
     var d=Math.floor(total/BANK_DAY)+1,m=total%BANK_DAY,h=Math.floor(m/60),mm=m%60;
     return 'День '+d+' · '+String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
   }
-  function bRatingTitle(r){
+  function ratingName(r){
     if(r>=92)return 'Премиальный';
     if(r>=80)return 'Надёжный';
-    if(r>=68)return 'Хороший';
+    if(r>=67)return 'Хороший';
     if(r>=58)return 'Проверенный';
     if(r>=40)return 'Начальный';
     return 'Низкий';
+  }
+  function bankHead(title,back){
+    return status()+'<div class="head bank-head"><button onclick="'+(back||'bank()')+'">‹</button><b>'+title+'</b><span>•••</span></div>';
   }
   function ensureBank(){
     if(!state.bankCustomer||typeof state.bankCustomer!=='object'){
       state.bankCustomer={rating:50,onTimePayments:0,latePayments:0,streak:0,totalIssued:0,history:[]};
     }
     var c=state.bankCustomer,r=Number(c.rating);
-    c.rating=bClamp(Number.isFinite(r)?Math.round(r):50,0,100);
+    c.rating=clamp(Number.isFinite(r)?Math.round(r):50,0,100);
     c.onTimePayments=Math.max(0,Math.floor(Number(c.onTimePayments)||0));
     c.latePayments=Math.max(0,Math.floor(Number(c.latePayments)||0));
     c.streak=Math.max(0,Math.floor(Number(c.streak)||0));
@@ -1384,59 +1382,44 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
     if(Number(state.loan||0)>0){
       if(!state.bankCredit||!state.bankCredit.active){
-        var now=bNow(),debt=Math.round(Number(state.loan||0));
+        var n=nowGame(),debt=Math.round(Number(state.loan||0));
         state.bankCredit={
-          active:true,
-          principal:Math.max(1000,Math.round(debt/1.10)),
-          startedAt:now,
-          dueAt:now+BANK_WEEK,
-          baseDebt:debt,
-          penaltyDaysApplied:0,
-          overdue:false,
-          ratingPenaltyApplied:false,
-          lateCounted:false,
-          migrated:true
+          active:true,principal:Math.max(1000,Math.round(debt/1.10)),baseDebt:debt,
+          startedAt:n,dueAt:n+BANK_WEEK,penaltyDaysApplied:0,overdue:false,
+          ratingPenaltyApplied:false,lateCounted:false,migrated:true
         };
       }
       state.bankCredit.active=true;
-      state.bankDueAt=Number(state.bankCredit.dueAt||bNow()+BANK_WEEK);
+      state.bankDueAt=Number(state.bankCredit.dueAt||nowGame()+BANK_WEEK);
     }else{
-      state.loan=0;
-      state.bankCredit=null;
-      state.bankDueAt=0;
+      state.loan=0;state.bankCredit=null;state.bankDueAt=0;
     }
     return c;
   }
-  function bUnlocked(o,c){
-    return Number(c.rating||0)>=o.rating&&Number(c.onTimePayments||0)>=o.paid;
-  }
-  function bOffers(){
+  function unlocked(o,c){return Number(c.rating||0)>=o.rating&&Number(c.onTimePayments||0)>=o.paid;}
+  function offers(){
     var c=ensureBank();
     return BANK_OFFERS.map(function(o){
-      return {
-        amount:o.amount,rating:o.rating,paid:o.paid,label:o.label,
-        unlocked:bUnlocked(o,c),
-        repay:Math.round(o.amount*(1+BANK_RATE))
-      };
+      return {amount:o.amount,rating:o.rating,paid:o.paid,label:o.label,unlocked:unlocked(o,c),repay:Math.round(o.amount*(1+BANK_RATE))};
     });
   }
-  function bUnlockedTop(){
-    var list=bOffers().filter(function(o){return o.unlocked;});
-    return list[list.length-1]||bOffers()[0];
+  function topOffer(){
+    var list=offers().filter(function(o){return o.unlocked;});
+    return list[list.length-1]||offers()[0];
   }
-  function bNext(){
-    var list=bOffers();
+  function nextOffer(){
+    var list=offers();
     for(var i=0;i<list.length;i++)if(!list[i].unlocked)return list[i];
     return null;
   }
-  function bHistory(type,title,text,delta){
+  function history(type,title,text,delta){
     var c=ensureBank();
-    c.history.unshift({type:type,title:title,text:text,delta:Number(delta||0),at:bNow()});
-    c.history=c.history.slice(0,14);
+    c.history.unshift({type:type,title:title,text:text,delta:Number(delta||0),at:nowGame()});
+    c.history=c.history.slice(0,16);
   }
-  function bTimeLeft(due){
-    var left=Number(due||0)-bNow();
-    if(left<=0)return 'Просрочка '+Math.max(1,Math.ceil(Math.abs(left)/BANK_DAY))+' д.';
+  function timeLeft(due){
+    var left=Number(due||0)-nowGame();
+    if(left<=0)return 'Просрочка '+Math.max(1,Math.floor(Math.abs(left)/BANK_DAY)+1)+' д.';
     var d=Math.floor(left/BANK_DAY),h=Math.ceil((left%BANK_DAY)/60);
     return d?(d+' д.'+(h?' '+h+' ч.':'')):Math.max(1,h)+' ч.';
   }
@@ -1444,206 +1427,254 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   function processCredit(redraw){
     var c=ensureBank(),cr=state.bankCredit;
     if(!cr||!cr.active||Number(state.loan||0)<=0)return false;
-    var now=bNow(),due=Number(cr.dueAt||0);
-    if(now<=due)return false;
+    var n=nowGame(),due=Number(cr.dueAt||0);
+    if(n<=due)return false;
 
-    var days=Math.max(1,Math.floor((now-due)/BANK_DAY)+1);
-    var applied=Math.max(0,Math.floor(Number(cr.penaltyDaysApplied)||0));
+    var days=Math.max(1,Math.floor((n-due)/BANK_DAY)+1),applied=Math.max(0,Math.floor(Number(cr.penaltyDaysApplied)||0));
     if(days<=applied)return false;
 
     var oldDebt=Number(state.loan||0),oldRating=Number(c.rating||0);
     for(var i=applied+1;i<=days;i++){
       state.loan=Math.round(Number(state.loan||0)*(1+BANK_OVERDUE_RATE));
       if(i===1&&!cr.ratingPenaltyApplied){
-        c.rating=bClamp(c.rating-10,0,100);
-        c.streak=0;
-        cr.ratingPenaltyApplied=true;
+        c.rating=clamp(c.rating-10,0,100);
+        c.streak=0;cr.ratingPenaltyApplied=true;
         if(!cr.lateCounted){c.latePayments++;cr.lateCounted=true;}
       }else{
-        c.rating=bClamp(c.rating-2,0,100);
+        c.rating=clamp(c.rating-2,0,100);
       }
     }
-    cr.penaltyDaysApplied=days;
-    cr.overdue=true;
-
-    var add=Number(state.loan||0)-oldDebt,drop=oldRating-Number(c.rating||0);
-    bHistory('overdue','Просрочка · '+days+' д.','Долг +'+bMoney(add)+' · рейтинг −'+drop,-drop);
-    bNotify('⚠️','Просрочка '+days+' д.: долг '+bMoney(state.loan)+'. За каждый игровой день начисляется +1%. Рейтинг '+c.rating+'/100.','bank21-overdue-'+cr.startedAt+'-'+days);
-    bSave();
-    if(redraw&&document.querySelector('.bank-v21-app'))setTimeout(function(){bank();},25);
+    cr.penaltyDaysApplied=days;cr.overdue=true;
+    var added=Number(state.loan||0)-oldDebt,drop=oldRating-Number(c.rating||0);
+    history('overdue','Просрочка · '+days+' д.','Долг +'+bm(added)+' · рейтинг −'+drop,-drop);
+    notifyBank('⚠️','Просрочка '+days+' д. Долг: '+bm(state.loan)+'. Рейтинг: '+c.rating+'/100.','bank22-overdue-'+cr.startedAt+'-'+days);
+    saveBank();
+    if(redraw&&document.querySelector('.bank-v22-app'))setTimeout(function(){bank();},25);
     return true;
   }
 
+  function ratingGoal(c){
+    var next=nextOffer(),r=Number(c.rating||0);
+    if(!next)return 'Все суммы уже открыты.';
+    var needR=Math.max(0,next.rating-r),needP=Math.max(0,next.paid-Number(c.onTimePayments||0));
+    return 'До '+bm(next.amount)+': '+(needR?('+'+needR+' рейтинга'):'рейтинг готов')+' · '+(needP?(needP+' выплат(ы) в срок'):'выплаты готовы');
+  }
+  function ratingBar(c){
+    var r=Number(c.rating||0);
+    return '<div class="bank-rating-visible">'+
+      '<div class="bank-rating-number"><small>КРЕДИТНЫЙ РЕЙТИНГ</small><div><b>'+r+'</b><span>/100</span></div><em>'+ratingName(r)+'</em></div>'+
+      '<div class="bank-rating-progress"><i><b style="width:'+r+'%"></b></i><p>'+ratingGoal(c)+'</p></div>'+
+    '</div>';
+  }
+  function cardHtml(){
+    return '<section class="bank-card-v22">'+
+      '<div class="bank-card-row"><div class="bank-logo-v22"><i>AF</i><b>AutoBank</b></div><span>VIRTUAL</span></div>'+
+      '<div class="bank-balance-v22"><small>Доступно</small><h2>'+bm(state.money)+'</h2></div>'+
+      '<div class="bank-card-footer"><span>•••• '+state.bankCardLast4+'</span><b>)))</b></div>'+
+    '</section>';
+  }
+  function quickActions(cr){
+    var has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    return '<div class="bank-actions">'+
+      '<button onclick="bankCredits()"><span>₽</span><b>Кредит</b><small>Выбрать сумму</small></button>'+
+      '<button '+(has?'onclick="bankLoan()"':'disabled')+'><span>✓</span><b>Погасить</b><small>'+(has?bm(state.loan):'Нет кредита')+'</small></button>'+
+      '<button onclick="bankRating()"><span>★</span><b>Рейтинг</b><small>'+ensureBank().rating+'/100</small></button>'+
+      '<button onclick="bankHistory()"><span>≡</span><b>История</b><small>Операции</small></button>'+
+    '</div>';
+  }
+  function activeSummary(cr){
+    if(!cr||!cr.active||Number(state.loan||0)<=0)return '<section class="bank-home-credit"><div><small>КРЕДИТ</small><h3>Нет активного кредита</h3><p>Можно выбрать доступную сумму от '+bm(25000)+'.</p></div><button onclick="bankCredits()">Выбрать сумму</button></section>';
+    var late=Math.max(0,Number(cr.penaltyDaysApplied||0));
+    return '<section class="bank-home-credit '+(late?'overdue':'')+'"><div><small>ТЕКУЩИЙ КРЕДИТ</small><h3>'+bm(state.loan)+'</h3><p>'+(late?('Просрочка '+late+' д. · +1% к долгу каждый день'):('До платежа '+timeLeft(cr.dueAt)))+'</p></div><button onclick="bankLoan()">Открыть</button></section>';
+  }
+
+  window.bank=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit,top=topOffer();
+    render('<div class="app bank-v22-app">'+head('Банк')+
+      cardHtml()+
+      ratingBar(c)+
+      quickActions(cr)+
+      activeSummary(cr)+
+      '<section class="bank-home-limit"><div><small>ДОСТУПНЫЙ ЛИМИТ</small><h3>'+bm(top.amount)+'</h3><p>Ставка 10% · срок 7 игровых дней</p></div><button onclick="bankCredits()">Все суммы →</button></section>'+
+      '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>за день просрочки</span></div></section>'+
+    '</div>');
+    saveBank();
+  };
+
+  window.bankCredits=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit,has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    var list=offers().map(function(o){
+      var locked=!o.unlocked,disabled=locked||has;
+      var req=locked?('Нужно: рейтинг '+o.rating+' и '+o.paid+' выплат(ы) в срок'):(has?'Сначала погаси текущий кредит':'Вернуть '+bm(o.repay));
+      return '<button class="bank-credit-option '+(locked?'locked':'')+'" '+(disabled?'disabled':'onclick="bankLoanPreview('+o.amount+')"')+'>'+
+        '<div><small>'+o.label.toUpperCase()+'</small><h3>'+bm(o.amount)+'</h3><p>'+req+'</p></div>'+
+        '<span>'+(locked?'🔒':has?'—':'›')+'</span>'+
+      '</button>';
+    }).join('');
+    render('<div class="app bank-v22-app">'+bankHead('Кредиты','bank()')+
+      '<section class="bank-page-title"><small>КРЕДИТЫ</small><h2>Выбери сумму</h2><p>Все доступные и будущие лимиты видны сразу.</p></section>'+
+      ratingBar(c)+
+      (has?'<div class="bank-warning-box">Сейчас уже есть активный кредит. Новый можно оформить только после погашения.</div>':'')+
+      '<div class="bank-credit-list">'+list+'</div>'+
+      '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>просрочка / день</span></div></section>'+
+    '</div>');
+  };
+
   window.bankLoanPreview=function(amount){
     processCredit(false);
-    var c=ensureBank(),o=bOffers().find(function(x){return x.amount===Number(amount);});
-    if(!o)return bank();
-    if(Number(state.loan||0)>0)return alert('Сначала погаси текущий кредит.');
-    if(!o.unlocked)return alert('Эта сумма пока закрыта. Посмотри требования под суммой.');
-
-    var due=bNow()+BANK_WEEK;
-    render('<div class="app bank-v21-app">'+
-      (status()+'<div class="head"><button onclick="bank()">‹</button><b>Оформление кредита</b><span>•••</span></div>')+
-      '<section class="bank-confirm-card"><div class="bank-confirm-icon">₽</div><small>СУММА КРЕДИТА</small><h2>'+bMoney(o.amount)+'</h2><p>Перед подтверждением проверь условия.</p></section>'+
-      '<section class="bank-confirm-rows">'+
-        '<div><span>Получишь на карту</span><b>'+bMoney(o.amount)+'</b></div>'+
+    var o=offers().find(function(x){return x.amount===Number(amount);});
+    if(!o||!o.unlocked)return bankCredits();
+    if(Number(state.loan||0)>0)return bankLoan();
+    var due=nowGame()+BANK_WEEK;
+    render('<div class="app bank-v22-app">'+bankHead('Оформление','bankCredits()')+
+      '<section class="bank-preview-hero"><small>ТЫ ПОЛУЧИШЬ</small><h2>'+bm(o.amount)+'</h2><p>'+o.label+' кредит</p></section>'+
+      '<section class="bank-preview-table">'+
+        '<div><span>Зачисление на карту</span><b>'+bm(o.amount)+'</b></div>'+
         '<div><span>Ставка</span><b>10%</b></div>'+
-        '<div><span>Вернуть</span><b>'+bMoney(o.repay)+'</b></div>'+
+        '<div><span>К возврату</span><b>'+bm(o.repay)+'</b></div>'+
         '<div><span>Срок</span><b>7 игровых дней</b></div>'+
-        '<div><span>Оплатить до</span><b>'+bMoment(due)+'</b></div>'+
-        '<div><span>После срока</span><b>+1% к долгу / день</b></div>'+
+        '<div><span>Оплатить до</span><b>'+moment(due)+'</b></div>'+
+        '<div><span>Просрочка</span><b>+1% к долгу каждый день</b></div>'+
       '</section>'+
-      '<div class="bank-confirm-rating"><span>Если погасишь вовремя</span><b>Рейтинг +8…12</b><small>Чем длиннее серия выплат без просрочек, тем быстрее растёт рейтинг.</small></div>'+
-      '<button class="action green bank-primary" onclick="bankIssueLoan('+o.amount+')">Получить '+bMoney(o.amount)+'</button>'+
-      '<button class="action" onclick="bank()">Отмена</button>'+
+      '<div class="bank-reward-box"><b>Погасишь вовремя → рейтинг +8…12</b><span>Серия своевременных выплат ускоряет рост.</span></div>'+
+      '<button class="action green bank-primary" onclick="bankIssueLoan('+o.amount+')">Получить '+bm(o.amount)+'</button>'+
+      '<button class="action" onclick="bankCredits()">Назад</button>'+
     '</div>');
   };
 
   window.bankIssueLoan=function(amount){
     processCredit(false);
-    var c=ensureBank(),o=bOffers().find(function(x){return x.amount===Number(amount);});
-    if(!o||!o.unlocked)return bank();
-    if(Number(state.loan||0)>0)return alert('Сначала погаси текущий кредит.');
+    var c=ensureBank(),o=offers().find(function(x){return x.amount===Number(amount);});
+    if(!o||!o.unlocked)return bankCredits();
+    if(Number(state.loan||0)>0)return bankLoan();
 
-    var now=bNow();
+    var n=nowGame();
     state.money=Number(state.money||0)+o.amount;
     state.loan=o.repay;
     state.bankCredit={
-      active:true,principal:o.amount,baseDebt:o.repay,startedAt:now,dueAt:now+BANK_WEEK,
+      active:true,principal:o.amount,baseDebt:o.repay,startedAt:n,dueAt:n+BANK_WEEK,
       penaltyDaysApplied:0,overdue:false,ratingPenaltyApplied:false,lateCounted:false,migrated:false
     };
     state.bankDueAt=state.bankCredit.dueAt;
     c.totalIssued++;
     if(state.phoneEventMeta){state.phoneEventMeta.bankWarnedForDue=0;state.phoneEventMeta.bankOverdueDay=-1;}
-    bHistory('loan','Получен кредит '+bMoney(o.amount),'К возврату '+bMoney(o.repay)+' · 7 игровых дней',0);
-    bNotify('💳','На карту зачислено '+bMoney(o.amount)+'. Вернуть '+bMoney(o.repay)+' до '+bMoment(state.bankCredit.dueAt)+'.','bank21-loan-'+now);
-    if(typeof log==='function')log('Банк: получено '+bMoney(o.amount)+'. К возврату '+bMoney(o.repay)+'.');
-    bSave();
-    bank();
+    history('loan','Кредит '+bm(o.amount),'Вернуть '+bm(o.repay)+' до '+moment(state.bankCredit.dueAt),0);
+    notifyBank('💳','Зачислено '+bm(o.amount)+'. Вернуть '+bm(o.repay)+' до '+moment(state.bankCredit.dueAt)+'.','bank22-loan-'+n);
+    if(typeof log==='function')log('Банк: получено '+bm(o.amount)+'. К возврату '+bm(o.repay)+'.');
+    saveBank();
+    bankLoan();
+  };
+
+  window.bankLoan=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit;
+    if(!cr||!cr.active||Number(state.loan||0)<=0)return bankCredits();
+    var late=Math.max(0,Number(cr.penaltyDaysApplied||0)),bonus=8+Math.min(4,Math.max(0,Number(c.streak||0)));
+    render('<div class="app bank-v22-app">'+bankHead('Мой кредит','bank()')+
+      '<section class="bank-loan-big '+(late?'overdue':'')+'">'+
+        '<small>'+(late?'ПРОСРОЧЕННЫЙ КРЕДИТ':'ОСТАЛОСЬ ВЕРНУТЬ')+'</small><h2>'+bm(state.loan)+'</h2>'+
+        '<span>'+(late?('Просрочка '+late+' д.'):'До платежа '+timeLeft(cr.dueAt))+'</span>'+
+      '</section>'+
+      '<section class="bank-loan-details">'+
+        '<div><span>Получено</span><b>'+bm(cr.principal)+'</b></div>'+
+        '<div><span>Ставка</span><b>10%</b></div>'+
+        '<div><span>Срок</span><b>7 дней</b></div>'+
+        '<div><span>Оплатить до</span><b>'+moment(cr.dueAt)+'</b></div>'+
+      '</section>'+
+      (late
+        ?'<div class="bank-danger-box"><b>Просрочка активна</b><span>Каждый следующий игровой день долг увеличится ещё на 1%, а рейтинг продолжит снижаться.</span></div>'
+        :'<div class="bank-reward-box"><b>Погаси сейчас → рейтинг +'+bonus+'</b><span>Своевременная выплата приближает новый лимит.</span></div>')+
+      '<button class="action green bank-primary" onclick="bankPayLoan()">Погасить полностью · '+bm(state.loan)+'</button>'+
+      '<button class="action" onclick="bankRating()">Посмотреть рейтинг</button>'+
+      '<button class="action" onclick="bank()">На главную банка</button>'+
+    '</div>');
   };
 
   window.bankPayLoan=function(){
     processCredit(false);
     var c=ensureBank(),cr=state.bankCredit;
     if(!cr||!cr.active||Number(state.loan||0)<=0)return bank();
-
     var debt=Math.round(Number(state.loan||0));
-    if(Number(state.money||0)<debt)return alert('Не хватает '+bMoney(debt-Number(state.money||0))+' для полного погашения.');
+    if(Number(state.money||0)<debt)return alert('Не хватает '+bm(debt-Number(state.money||0))+' для полного погашения.');
 
-    var onTime=bNow()<=Number(cr.dueAt||0)&&Number(cr.penaltyDaysApplied||0)===0;
+    var onTime=nowGame()<=Number(cr.dueAt||0)&&Number(cr.penaltyDaysApplied||0)===0;
     state.money=Number(state.money||0)-debt;
     var delta=0;
     if(onTime){
-      c.onTimePayments++;
-      c.streak++;
+      c.onTimePayments++;c.streak++;
       delta=8+Math.min(4,Math.max(0,c.streak-1));
-      c.rating=bClamp(c.rating+delta,0,100);
+      c.rating=clamp(c.rating+delta,0,100);
     }else{
       c.streak=0;
       if(!cr.lateCounted){c.latePayments++;cr.lateCounted=true;}
     }
-
-    bHistory(onTime?'paid':'late-paid',onTime?'Погашено вовремя':'Кредит закрыт с просрочкой',
-      bMoney(debt)+(onTime?' · рейтинг +'+delta:' · восстановление начнётся со следующей выплаты в срок'),onTime?delta:0);
-
+    history(onTime?'paid':'late-paid',onTime?'Погашено вовремя':'Погашено с просрочкой',
+      bm(debt)+(onTime?' · рейтинг +'+delta:' · рейтинг восстанавливается следующими выплатами в срок'),onTime?delta:0);
     state.loan=0;state.bankCredit=null;state.bankDueAt=0;
     if(state.phoneEventMeta){state.phoneEventMeta.bankWarnedForDue=0;state.phoneEventMeta.bankOverdueDay=-1;}
-    bNotify(onTime?'✅':'🏦',onTime?'Кредит погашен вовремя. Рейтинг вырос до '+c.rating+'/100.':'Кредит закрыт. Следующая своевременная выплата начнёт восстанавливать рейтинг.','bank21-paid-'+bNow());
-    if(typeof log==='function')log(onTime?'Банк: кредит погашен вовремя, рейтинг +'+delta+'.':'Банк: кредит закрыт после просрочки.');
-    bSave();
-    bank();
+    notifyBank(onTime?'✅':'🏦',onTime?'Кредит погашен. Рейтинг вырос до '+c.rating+'/100.':'Кредит закрыт. Следующая своевременная выплата поможет восстановить рейтинг.','bank22-paid-'+nowGame());
+    if(typeof log==='function')log(onTime?'Банк: кредит погашен вовремя. Рейтинг +'+delta+'.':'Банк: кредит закрыт после просрочки.');
+    saveBank();
+
+    render('<div class="app bank-v22-app">'+bankHead('Готово','bank()')+
+      '<section class="bank-success-screen"><div>✓</div><small>КРЕДИТ ЗАКРЫТ</small><h2>'+bm(debt)+'</h2><p>'+(onTime?('Рейтинг вырос на '+delta+' и теперь составляет '+c.rating+'/100.'):'Кредит закрыт после просрочки. Рейтинг можно восстановить следующими своевременными выплатами.')+'</p></section>'+
+      '<button class="action green bank-primary" onclick="bank()">Вернуться в банк</button>'+
+      '<button class="action" onclick="bankCredits()">Посмотреть доступные кредиты</button>'+
+    '</div>');
   };
 
-  function ratingProgressHtml(c){
-    var next=bNext(),top=bUnlockedTop(),rating=Number(c.rating||0);
-    var target=next?next.rating:100;
-    var needRating=next?Math.max(0,next.rating-rating):0;
-    var needPaid=next?Math.max(0,next.paid-Number(c.onTimePayments||0)):0;
-    var detail=next
-      ?'Следующая сумма <b>'+bMoney(next.amount)+'</b>: '+(needRating?('ещё '+needRating+' рейтинга'):'рейтинг выполнен')+' · '+(needPaid?('ещё '+needPaid+' выплат(ы) в срок'):'выплаты выполнены')
-      :'Доступен максимальный кредитный уровень.';
-    return '<section class="bank-score-card">'+
-      '<div class="bank-score-main"><div class="bank-score-ring" style="--score:'+rating+'"><div><b>'+rating+'</b><small>/100</small></div></div>'+
-        '<div class="bank-score-copy"><small>КРЕДИТНЫЙ РЕЙТИНГ</small><h3>'+bRatingTitle(rating)+'</h3><p>Текущий доступный кредит: <b>'+bMoney(top.amount)+'</b></p></div></div>'+
-      '<div class="bank-score-scale"><span>0</span><i><b style="width:'+rating+'%"></b></i><span>100</span></div>'+
-      '<div class="bank-score-effects"><div class="good"><span>Платёж вовремя</span><b>+8…12</b></div><div class="bad"><span>1-й день просрочки</span><b>−10</b></div><div class="bad"><span>Дальше каждый день</span><b>−2</b></div></div>'+
-      '<div class="bank-next-goal">'+detail+'</div>'+
-      '<div class="bank-levels">'+BANK_OFFERS.map(function(o){
-        var unlocked=bUnlocked(o,c),current=top.amount===o.amount;
-        return '<div class="'+(unlocked?'unlocked ':'locked ')+(current?'current':'')+'"><span>'+(unlocked?'✓':'🔒')+'</span><b>'+Math.round(o.amount/1000)+'К</b><small>'+o.rating+' рейтинга</small></div>';
-      }).join('')+'</div>'+
-    '</section>';
-  }
-
-  function offersHtml(c,credit){
-    var hasLoan=!!(credit&&credit.active&&Number(state.loan||0)>0);
-    return '<section class="bank-credit-section">'+
-      '<div class="bank-section-title"><div><small>КРЕДИТЫ</small><h3>Выбери сумму</h3></div><span>10% · 7 дней</span></div>'+
-      '<p class="bank-credit-help">'+(hasLoan?'Новый кредит можно выбрать после погашения текущего. Все уровни показаны ниже.':'Нажми на доступную сумму — перед оформлением увидишь все условия.')+'</p>'+
-      '<div class="bank-offer-grid">'+bOffers().map(function(o){
-        var locked=!o.unlocked,disabled=locked||hasLoan;
-        var sub=locked
-          ?('Нужно: рейтинг '+o.rating+' · выплат в срок '+o.paid)
-          :(hasLoan?'Сначала погаси текущий кредит':'Вернуть '+bMoney(o.repay));
-        return '<button class="bank-amount '+(locked?'locked ':'')+(o.unlocked?'unlocked ':'')+'" '+(disabled?'disabled':'onclick="bankLoanPreview('+o.amount+')"')+'>'+
-          '<div class="bank-amount-top"><small>'+o.label.toUpperCase()+'</small><span>'+(locked?'🔒':'ДОСТУПНО')+'</span></div>'+
-          '<b>'+bMoney(o.amount)+'</b><p>'+sub+'</p>'+
-        '</button>';
-      }).join('')+'</div>'+
-      '<div class="bank-rule-row"><div><span>Ставка</span><b>10%</b></div><div><span>Срок</span><b>7 дней</b></div><div><span>Просрочка</span><b>+1% / день</b></div></div>'+
-    '</section>';
-  }
-
-  function activeLoanHtml(cr){
-    if(!cr||!cr.active||Number(state.loan||0)<=0)return '';
-    var overdue=Math.max(0,Number(cr.penaltyDaysApplied||0));
-    var status=overdue?('Просрочка '+overdue+' д.'):'До платежа '+bTimeLeft(cr.dueAt);
-    var potentialRating=8+Math.min(4,Math.max(0,Number(ensureBank().streak||0)));
-    return '<section class="bank-active-loan '+(overdue?'overdue':'')+'">'+
-      '<div class="bank-active-top"><div><small>ТЕКУЩИЙ КРЕДИТ</small><h3>'+bMoney(state.loan)+'</h3></div><span>'+status+'</span></div>'+
-      '<div class="bank-active-progress"><div><span>Получено</span><b>'+bMoney(cr.principal)+'</b></div><div><span>Ставка</span><b>10%</b></div><div><span>Срок</span><b>7 дней</b></div><div><span>Оплатить до</span><b>'+bMoment(cr.dueAt)+'</b></div></div>'+
-      (overdue
-        ?'<div class="bank-alert danger"><b>Просрочка активна</b><span>Каждый игровой день долг увеличивается ещё на 1%. Рейтинг уже снижается.</span></div>'
-        :'<div class="bank-alert success"><b>Погаси вовремя → рейтинг +'+potentialRating+'</b><span>Своевременная выплата приближает следующую доступную сумму.</span></div>')+
-      '<button class="action green bank-primary" onclick="bankPayLoan()">Погасить '+bMoney(state.loan)+'</button>'+
-    '</section>';
-  }
-
-  window.bank=function(){
+  window.bankRating=function(){
     processCredit(false);
-    var c=ensureBank(),cr=state.bankCredit,history=(c.history||[]).slice(0,5);
-    var hist=history.map(function(x){
-      var d=Number(x.delta||0);
-      return '<div class="bank-history-row"><div class="bank-history-icon">'+(x.type==='loan'?'↗':x.type==='paid'?'✓':x.type==='overdue'?'!':'↙')+'</div><div><b>'+x.title+'</b><small>'+x.text+'</small></div><span class="'+(d>0?'up':d<0?'down':'')+'">'+(d?(d>0?'+':'')+d:'')+'</span></div>';
+    var c=ensureBank(),next=nextOffer(),top=topOffer(),r=Number(c.rating||0);
+    var levels=BANK_OFFERS.map(function(o){
+      var ok=unlocked(o,c),current=top.amount===o.amount;
+      return '<div class="bank-rating-level '+(ok?'open':'locked')+' '+(current?'current':'')+'">'+
+        '<div><span>'+(ok?'✓':'🔒')+'</span><b>'+bm(o.amount)+'</b></div>'+
+        '<small>Рейтинг '+o.rating+' · выплат в срок '+o.paid+'</small>'+
+      '</div>';
     }).join('');
-
-    render('<div class="app bank-v21-app">'+head('Банк')+
-      '<section class="bank-card-modern">'+
-        '<div class="bank-card-modern-top"><div class="bank-brand"><i>AF</i><b>AutoBank</b></div><span>VIRTUAL</span></div>'+
-        '<div class="bank-card-modern-balance"><small>Баланс карты</small><h2>'+bMoney(state.money)+'</h2></div>'+
-        '<div class="bank-card-modern-number">••••&nbsp;&nbsp;••••&nbsp;&nbsp;••••&nbsp;&nbsp;'+state.bankCardLast4+'</div>'+
-        '<div class="bank-card-modern-bottom"><span>AUTOFLIP</span><b>)))</b></div>'+
+    render('<div class="app bank-v22-app">'+bankHead('Рейтинг','bank()')+
+      '<section class="bank-rating-page">'+
+        '<small>ТВОЙ РЕЙТИНГ</small><div class="bank-rating-page-number"><b>'+r+'</b><span>/100</span></div><h3>'+ratingName(r)+'</h3>'+
+        '<div class="bank-rating-page-bar"><i style="width:'+r+'%"></i></div>'+
+        '<p>'+ratingGoal(c)+'</p>'+
       '</section>'+
-      '<div class="bank-quick-stats"><div><span>Рейтинг</span><b>'+c.rating+'/100</b></div><div><span>Долг</span><b>'+bMoney(state.loan||0)+'</b></div><div><span>В срок</span><b>'+c.onTimePayments+'</b></div></div>'+
-      ratingProgressHtml(c)+
-      activeLoanHtml(cr)+
-      offersHtml(c,cr)+
-      '<section class="bank-history"><div class="bank-section-title"><div><small>ИСТОРИЯ</small><h3>Последние операции</h3></div></div>'+(hist||'<div class="bank-empty-history">Кредитных операций пока нет.</div>')+'</section>'+
+      '<section class="bank-rating-rules">'+
+        '<div class="good"><span>✓</span><div><b>Погашение в срок</b><small>+8…12 рейтинга</small></div></div>'+
+        '<div class="bad"><span>!</span><div><b>Первый день просрочки</b><small>−10 рейтинга</small></div></div>'+
+        '<div class="bad"><span>!</span><div><b>Каждый следующий день</b><small>−2 рейтинга</small></div></div>'+
+      '</section>'+
+      '<div class="bank-rating-stats"><div><span>Выплат в срок</span><b>'+c.onTimePayments+'</b></div><div><span>Серия</span><b>'+c.streak+'</b></div><div><span>Просрочек</span><b>'+c.latePayments+'</b></div></div>'+
+      '<section class="bank-rating-levels"><div class="bank-section-label">КРЕДИТНЫЕ УРОВНИ</div>'+levels+'</section>'+
+      '<button class="action green bank-primary" onclick="bankCredits()">Перейти к кредитам</button>'+
+      '<button class="action" onclick="bank()">На главную банка</button>'+
     '</div>');
-    bSave();
+  };
+
+  window.bankHistory=function(){
+    processCredit(false);
+    var c=ensureBank(),rows=(c.history||[]).map(function(x){
+      var d=Number(x.delta||0),ico=x.type==='loan'?'↗':x.type==='paid'?'✓':x.type==='overdue'?'!':'↙';
+      return '<div class="bank-history-v22-row"><span class="ico">'+ico+'</span><div><b>'+x.title+'</b><small>'+x.text+' · '+moment(x.at)+'</small></div><em class="'+(d>0?'up':d<0?'down':'')+'">'+(d?(d>0?'+':'')+d:'')+'</em></div>';
+    }).join('');
+    render('<div class="app bank-v22-app">'+bankHead('История','bank()')+
+      '<section class="bank-page-title"><small>ОПЕРАЦИИ</small><h2>История банка</h2><p>Кредиты, выплаты и изменения рейтинга.</p></section>'+
+      '<section class="bank-history-v22">'+(rows||'<div class="bank-empty-v22">Пока нет кредитных операций.</div>')+'</section>'+
+      '<button class="action" onclick="bank()">На главную банка</button>'+
+    '</div>');
   };
 
   // Compatibility with old game code.
-  window.takeLoan=function(){var o=bUnlockedTop();return Number(state.loan||0)>0?bank():bankLoanPreview(o.amount);};
+  window.takeLoan=function(){return Number(state.loan||0)>0?bankLoan():bankCredits();};
   window.payLoan=window.bankPayLoan;
   window.creditPlan=function(){
-    var c=ensureBank(),top=bUnlockedTop(),next=bNext();
-    return {title:bRatingTitle(c.rating),amount:top.amount,maxDebt:Math.round(top.amount*1.10),rate:.10,next:next?('Следующая сумма '+bMoney(next.amount)):'Максимальный уровень'};
+    var c=ensureBank(),top=topOffer(),next=nextOffer();
+    return {title:ratingName(c.rating),amount:top.amount,maxDebt:Math.round(top.amount*1.10),rate:.10,next:next?('Следующая сумма '+bm(next.amount)):'Максимальный уровень'};
   };
 
-  ensureBank();
-  processCredit(false);
-  bSave();
+  ensureBank();processCredit(false);saveBank();
   setInterval(function(){processCredit(true);},1000);
 })();
 </script>
