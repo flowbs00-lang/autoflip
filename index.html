@@ -1337,7 +1337,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 <script>
 // V7.9 — AutoBank V2.2: clear mobile dashboard, visible rating and complete credit navigation.
 (function(){
-  var BANK_DAY=1440,BANK_WEEK=BANK_DAY*7,BANK_RATE=.10,BANK_OVERDUE_RATE=.01;
+  var BANK_DAY=1440,BANK_WEEK=BANK_DAY*7,BANK_COOLDOWN=48*60,BANK_RATE=.10,BANK_OVERDUE_RATE=.01;
   var BANK_OFFERS=[
     {amount:25000,rating:0,paid:0,label:'Старт'},
     {amount:50000,rating:58,paid:1,label:'Базовый'},
@@ -1378,6 +1378,12 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     c.streak=Math.max(0,Math.floor(Number(c.streak)||0));
     c.totalIssued=Math.max(0,Math.floor(Number(c.totalIssued)||0));
     if(!Array.isArray(c.history))c.history=[];
+    // Migrate existing saves from their most recent completed repayment.
+    if(c.nextLoanAt===undefined){
+      var paid=c.history.find(function(x){return x.type==='paid'||x.type==='late-paid';});
+      c.nextLoanAt=paid&&Number.isFinite(Number(paid.at))?Number(paid.at)+BANK_COOLDOWN:0;
+    }
+    c.nextLoanAt=Math.max(0,Number(c.nextLoanAt)||0);
     if(!state.bankCardLast4)state.bankCardLast4=String(1000+Math.floor(Math.random()*9000));
 
     if(Number(state.loan||0)>0){
@@ -1395,6 +1401,15 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       state.loan=0;state.bankCredit=null;state.bankDueAt=0;
     }
     return c;
+  }
+  function cooldownLeft(){return Math.max(0,ensureBank().nextLoanAt-nowGame());}
+  function cooldownText(){
+    var minutes=Math.ceil(cooldownLeft()),h=Math.floor(minutes/60),m=minutes%60;
+    return h+' ч. '+String(m).padStart(2,'0')+' мин.';
+  }
+  function cooldownNotice(view){
+    if(!cooldownLeft())return '';
+    return '<div class="bank-warning-box" data-bank-cooldown="'+view+'">После погашения нужно подождать 48 игровых часов. Новый кредит через <b data-bank-countdown>'+cooldownText()+'</b> · '+moment(ensureBank().nextLoanAt)+'.</div>';
   }
   function unlocked(o,c){return Number(c.rating||0)>=o.rating&&Number(c.onTimePayments||0)>=o.paid;}
   function offers(){
@@ -1487,7 +1502,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   }
   function activeSummary(cr){
     if(!cr||!cr.active||Number(state.loan||0)<=0){
-      return '<section class="bank-home-credit empty"><div class="bank-home-credit-copy"><small>МОЙ КРЕДИТ</small><h3>Кредита сейчас нет</h3><p>Выбери сумму, проверь условия и оформи кредит в пару нажатий.</p></div><button onclick="bankCredits()">Открыть кредиты</button></section>';
+      return '<section class="bank-home-credit empty"><div class="bank-home-credit-copy"><small>МОЙ КРЕДИТ</small><h3>Кредита сейчас нет</h3><p>'+(cooldownLeft()?'Банк временно приостановил выдачу нового кредита.':'Выбери сумму, проверь условия и оформи кредит в пару нажатий.')+'</p></div><button onclick="bankCredits()">Открыть кредиты</button></section>';
     }
     var late=Math.max(0,Number(cr.penaltyDaysApplied||0));
     return '<section class="bank-home-credit '+(late?'overdue':'')+'">'+
@@ -1503,7 +1518,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       '<div class="bank-home-credit-level-grid">'+BANK_OFFERS.map(function(o){
         var ok=unlocked(o,c),current=top.amount===o.amount;
         return '<button class="'+(ok?'open ':'locked ')+(current?'current':'')+'" '+(ok?'onclick="bankCredits()"':'onclick="bankRating()"')+'>'+
-          '<span>'+(ok?'✓':'🔒')+'</span><b>'+Math.round(o.amount/1000)+'К</b><small>'+(ok?'доступно':('рейтинг '+o.rating))+'</small>'+
+          '<span>'+(ok?'✓':'🔒')+'</span><b>'+Math.round(o.amount/1000)+'К</b><small>'+(ok?(cooldownLeft()?'пауза':'доступно'):('рейтинг '+o.rating))+'</small>'+
         '</button>';
       }).join('')+'</div>'+
     '</section>';
@@ -1530,9 +1545,10 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       '</section>'+
       '<button class="bank-credit-cta" onclick="bankCredits()">'+
         '<span class="bank-credit-cta-icon">₽</span>'+
-        '<div><small>ДОСТУПНЫЕ КРЕДИТЫ</small><b>Посмотреть доступные кредиты</b><em>Сейчас доступно до '+bm(top.amount)+'</em></div>'+
+        '<div><small>ДОСТУПНЫЕ КРЕДИТЫ</small><b>Посмотреть доступные кредиты</b><em>'+(cooldownLeft()?'Выдача временно недоступна':has?'Есть активный кредит':'Сейчас доступно до '+bm(top.amount))+'</em></div>'+
         '<strong>›</strong>'+
       '</button>'+
+      cooldownNotice('home')+
       homeCreditLevels(c)+
       quickActions(cr)+
       activeSummary(cr)+
@@ -1547,7 +1563,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
         '<p>'+nextText+'</p>'+
       '</section>'+
       '<section class="bank-home-limit-v23">'+
-        '<div><small>ТВОЙ ЛИМИТ</small><h3>'+bm(top.amount)+'</h3><p>Можно оформить после погашения текущего кредита'+(has?'. Сейчас новый кредит недоступен.':'.')+'</p></div>'+
+        '<div><small>ТВОЙ ЛИМИТ</small><h3>'+bm(top.amount)+'</h3><p>Новый кредит можно оформить через 48 игровых часов после полного погашения предыдущего.</p></div>'+
         '<button onclick="bankCredits()">Суммы</button>'+
       '</section>'+
       '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>каждый день просрочки</span></div></section>'+
@@ -1559,18 +1575,20 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   window.bankCredits=function(){
     processCredit(false);
     var c=ensureBank(),cr=state.bankCredit,has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    var waiting=cooldownLeft()>0;
     var list=offers().map(function(o){
-      var locked=!o.unlocked,disabled=locked||has;
-      var req=locked?('Нужно: рейтинг '+o.rating+' и '+o.paid+' выплат(ы) в срок'):(has?'Сначала погаси текущий кредит':'Вернуть '+bm(o.repay));
+      var locked=!o.unlocked,disabled=locked||has||waiting;
+      var req=locked?('Нужно: рейтинг '+o.rating+' и '+o.paid+' выплат(ы) в срок'):(has?'Сначала погаси текущий кредит':waiting?'Ожидание после погашения':'Вернуть '+bm(o.repay));
       return '<button class="bank-credit-option '+(locked?'locked':'')+'" '+(disabled?'disabled':'onclick="bankLoanPreview('+o.amount+')"')+'>'+
         '<div><small>'+o.label.toUpperCase()+'</small><h3>'+bm(o.amount)+'</h3><p>'+req+'</p></div>'+
-        '<span>'+(locked?'🔒':has?'—':'›')+'</span>'+
+        '<span>'+(locked?'🔒':has||waiting?'—':'›')+'</span>'+
       '</button>';
     }).join('');
     render('<div class="app bank-v22-app">'+bankHead('Кредиты','autoBankHome()')+
       '<section class="bank-page-title"><small>КРЕДИТЫ</small><h2>Выбери сумму</h2><p>Все доступные и будущие лимиты видны сразу.</p></section>'+
       ratingBar(c)+
-      (has?'<div class="bank-warning-box">Сейчас уже есть активный кредит. Новый можно оформить только после погашения.</div>':'')+
+      (has?'<div class="bank-warning-box">Сейчас уже есть активный кредит. Новый можно оформить через 48 игровых часов после погашения.</div>':'')+
+      cooldownNotice('credits')+
       '<div class="bank-credit-list">'+list+'</div>'+
       '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>просрочка / день</span></div></section>'+
     '</div>');
@@ -1581,6 +1599,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var o=offers().find(function(x){return x.amount===Number(amount);});
     if(!o||!o.unlocked)return bankCredits();
     if(Number(state.loan||0)>0)return bankLoan();
+    if(cooldownLeft()>0)return bankCredits();
     var due=nowGame()+BANK_WEEK;
     render('<div class="app bank-v22-app">'+bankHead('Оформление','bankCredits()')+
       '<section class="bank-preview-hero"><small>ТЫ ПОЛУЧИШЬ</small><h2>'+bm(o.amount)+'</h2><p>'+o.label+' кредит</p></section>'+
@@ -1589,6 +1608,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
         '<div><span>Ставка</span><b>10%</b></div>'+
         '<div><span>К возврату</span><b>'+bm(o.repay)+'</b></div>'+
         '<div><span>Срок</span><b>7 игровых дней</b></div>'+
+        '<div><span>Следующий кредит</span><b>Через 48 игровых часов после погашения</b></div>'+
         '<div><span>Оплатить до</span><b>'+moment(due)+'</b></div>'+
         '<div><span>Просрочка</span><b>+1% к долгу каждый день</b></div>'+
       '</section>'+
@@ -1603,6 +1623,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var c=ensureBank(),o=offers().find(function(x){return x.amount===Number(amount);});
     if(!o||!o.unlocked)return bankCredits();
     if(Number(state.loan||0)>0)return bankLoan();
+    if(cooldownLeft()>0)return bankCredits();
 
     var n=nowGame();
     state.money=Number(state.money||0)+o.amount;
@@ -1667,6 +1688,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     history(onTime?'paid':'late-paid',onTime?'Погашено вовремя':'Погашено с просрочкой',
       bm(debt)+(onTime?' · рейтинг +'+delta:' · рейтинг восстанавливается следующими выплатами в срок'),onTime?delta:0);
     state.loan=0;state.bankCredit=null;state.bankDueAt=0;
+    c.nextLoanAt=nowGame()+BANK_COOLDOWN;
     if(state.phoneEventMeta){state.phoneEventMeta.bankWarnedForDue=0;state.phoneEventMeta.bankOverdueDay=-1;}
     notifyBank(onTime?'✅':'🏦',onTime?'Кредит погашен. Рейтинг вырос до '+c.rating+'/100.':'Кредит закрыт. Следующая своевременная выплата поможет восстановить рейтинг.','bank22-paid-'+nowGame());
     if(typeof log==='function')log(onTime?'Банк: кредит погашен вовремя. Рейтинг +'+delta+'.':'Банк: кредит закрыт после просрочки.');
@@ -1674,6 +1696,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
     render('<div class="app bank-v22-app">'+bankHead('Готово','autoBankHome()')+
       '<section class="bank-success-screen"><div>✓</div><small>КРЕДИТ ЗАКРЫТ</small><h2>'+bm(debt)+'</h2><p>'+(onTime?('Рейтинг вырос на '+delta+' и теперь составляет '+c.rating+'/100.'):'Кредит закрыт после просрочки. Рейтинг можно восстановить следующими своевременными выплатами.')+'</p></section>'+
+      cooldownNotice('success')+
       '<button class="action green bank-primary" onclick="autoBankHome()">Вернуться в банк</button>'+
       '<button class="action" onclick="bankCredits()">Посмотреть доступные кредиты</button>'+
     '</div>');
@@ -1732,7 +1755,19 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   window.bank=window.autoBankHome;
 
   ensureBank();processCredit(false);saveBank();
-  setInterval(function(){processCredit(true);},1000);
+  setInterval(function(){
+    processCredit(true);
+    var notice=document.querySelector('[data-bank-cooldown]');
+    if(!notice)return;
+    if(cooldownLeft()>0){
+      var countdown=notice.querySelector('[data-bank-countdown]');
+      if(countdown)countdown.textContent=cooldownText();
+    }else if(notice.getAttribute('data-bank-cooldown')==='credits'){
+      bankCredits();
+    }else{
+      autoBankHome();
+    }
+  },1000);
 })();
 </script>
 
