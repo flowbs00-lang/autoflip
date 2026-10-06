@@ -265,7 +265,8 @@ function market(filter='all',page=0){
      <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}'),url('${fallbackPhoto(c)}');background-position:${c.photoPosition||'50% 50%'}"><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${isMarketFavorite(c)?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${isMarketFavorite(c)?'Убрать из избранного':'Добавить в избранное'}">${isMarketFavorite(c)?'♥':'♡'}</button></div>
      <div class="auto-market-info">
        <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
-       <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.starterOffer?'<span>💸 Стартовый авто</span>':''}</div>
+       <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.starterOffer?'<span>🛠️ Под восстановление</span>':''}</div>
+       ${c.damageSummary?`<div class="auto-restoration-warning">⚠️ ${c.damageSummary}</div>`:''}
        <div class="auto-market-bottom">
          <span>Рынок <b>${money(c.market)}</b></span>
          <span class="${potential>=0?'auto-profit':'auto-loss'}">Разница ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
@@ -359,6 +360,7 @@ function carView(id){
    <div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span><span class="car-year-badge">${c.year}</span></div>
    <div class="car-detail-heading"><div><small>ЦЕНА ПРОДАВЦА</small><div class="price">${money(c.price)}</div></div><span class="car-km">${c.km.toLocaleString('ru-RU')} км</span></div>
    <div class="note" style="margin:8px 0"><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Кузов</span><strong>${c.body||'—'}</strong></div><div class="hero-line"><span>Комплектация</span><strong>${c.trim||'—'}</strong></div><div class="hero-line"><span>Тех. состояние</span><strong>${conditionText}</strong></div></div>
+   ${c.damageSummary?`<div class="condition-card broken"><small>ВИДИМЫЕ ДЕФЕКТЫ</small><h3>🛠️ Автомобиль под восстановление</h3><p>${c.damageSummary}. Заявленный ремонт: ${money(c.repair)}. Неисправность закреплена за объявлением и не исчезнет после покупки.</p></div>`:''}
    <div class="deal-score car-economics">
      <span>РЫНОК<b>${money(c.market)}</b></span>
      <span>ЦЕНА<b>${money(c.price)}</b></span>
