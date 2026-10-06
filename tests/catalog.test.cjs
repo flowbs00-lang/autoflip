@@ -47,6 +47,23 @@ test('cheap feed starts with different models and different photographs',()=>{
  const budget=new Map(g.c.carCatalogExtra.map(c=>[c.name,c.market]));
  for(const name of ['Fiat Punto I','Fiat Punto II','Renault Clio II','Opel Vectra B','Opel Corsa C','Opel Astra G'])assert.ok(budget.get(name)<=170000,name+' must stay in the starter price tier');
 });
+test('every city always has ten distinct starter cars for 40,000 to 80,000 rubles',()=>{
+ const g=game();
+ for(const city of g.run('cities')){
+   const starter=g.run(`makes.filter(c=>c.city===${JSON.stringify(city)}&&c.marketActive!==false&&c.starterOffer)`);
+   assert.equal(starter.length,10,city);
+   assert.equal(new Set(starter.map(c=>c.name)).size,10,city+' models');
+   assert.equal(new Set(starter.map(c=>c.photoUrl)).size,10,city+' photos');
+   assert.ok(starter.every(c=>c.price>=40000&&c.price<=80000),city+' prices');
+ }
+});
+test('buying a starter car replenishes the affordable city stock',()=>{
+ const g=game();const city='Москва';
+ const id=g.run(`makes.find(c=>c.city==='Москва'&&c.starterOffer).listingId`);
+ g.c.removePurchasedListing(id);
+ assert.equal(g.run(`makes.filter(c=>c.city==='Москва'&&c.marketActive!==false&&c.starterOffer).length`),10);
+ assert.equal(g.run(`makes.some(c=>c.listingId===${JSON.stringify(id)})`),false);
+});
 test('migration keeps money, owned cars, favourite identity and diagnostics while growing the market',()=>{
  const first=game();const saved=first.saved();saved.marketListings=saved.marketListings.slice(0,36);saved.marketListingsVersion=3;
  saved.marketFavorites=[saved.marketListings[0].listingId];saved.marketListings[0].marketFlipCondition={healthy:false,name:'Двигатель',loss:.35,cost:20000};saved.marketListings[0].marketConditionVersion=2;saved.money=123456;
