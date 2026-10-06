@@ -31,14 +31,18 @@ test('expanded catalogue has 100+ new models with unique local photographs and a
  assert.equal(hashes.size,cars.length);
  for(const [lo,hi] of [[0,500000],[500000,1500000],[1500000,4000000],[4000000,Infinity]])assert.ok(cars.some(c=>c.market>=lo&&c.market<hi));
 });
-test('fresh market has 140 unique listings and all new models can generate valid cars',()=>{
- const g=game();assert.equal(g.run('makes.length'),140);assert.equal(g.run('new Set(makes.map(c=>c.name)).size'),140);assert.equal(g.run('new Set(makes.map(c=>c.listingId)).size'),140);
+test('fresh market has 50 active and 50 reserve listings in every supported city',()=>{
+ const g=game();assert.equal(g.run('makes.length'),2000);assert.equal(g.run('new Set(makes.map(c=>c.listingId)).size'),2000);
+ assert.equal(g.run('cities.length'),20);
+ assert.equal(g.run('cities.every(city=>makes.filter(c=>c.city===city&&c.marketActive!==false).length===50)'),true);
+ assert.equal(g.run('cities.every(city=>makes.filter(c=>c.city===city&&c.marketActive===false).length===50)'),true);
+ assert.ok(JSON.stringify(g.saved()).length<4500000,'market save must fit normal browser storage limits');
  for(const t of g.c.carCatalogExtra){const car=g.c.createMarketListing(t);assert.equal(car.photoUrl,t.photoUrl);assert.equal(car.body,t.body);assert.ok(car.year>=t.yearMin&&car.year<=t.yearMax);assert.ok(Number.isFinite(car.price));}
 });
 test('migration keeps money, owned cars, favourite identity and diagnostics while growing the market',()=>{
  const first=game();const saved=first.saved();saved.marketListings=saved.marketListings.slice(0,36);saved.marketListingsVersion=3;
  saved.marketFavorites=[saved.marketListings[0].listingId];saved.marketListings[0].marketFlipCondition={healthy:false,name:'Двигатель',loss:.35,cost:20000};saved.marketListings[0].marketConditionVersion=2;saved.money=123456;
- const second=game(saved);assert.equal(second.run('makes.length'),140);assert.equal(second.run('state.money'),123456);assert.equal(second.run('makes[0].listingId'),saved.marketFavorites[0]);assert.equal(second.run('makes[0].marketFlipCondition.name'),'Двигатель');
+ const second=game(saved);assert.equal(second.run('makes.length'),2000);assert.equal(second.run('state.money'),123456);assert.equal(second.run('makes[0].listingId'),saved.marketFavorites[0]);assert.equal(second.run('makes[0].marketFlipCondition.name'),'Двигатель');
  assert.equal(second.run('state.marketFavorites[0]'),saved.marketFavorites[0]);
 });
 test('exchange generator works with the actual loaded catalogue and purchase removal is idempotent',()=>{
@@ -51,13 +55,13 @@ test('each added model keeps a forced fault through acquisition and paid repair'
 });
 
 
-test('scheduled refresh keeps 140 entries, unique identities and excludes the purchased listing',()=>{
+test('scheduled refresh swaps active city stock and excludes the purchased listing',()=>{
  const g=game();g.c.market();const bought=g.run('makes[0].listingId');g.c.removePurchasedListing(bought);
- const initial=g.run('new Set(makes.map(c=>c.listingId))');g.advance(361000);g.c.refreshLiveMarket();
- assert.equal(g.run('makes.length'),140);assert.equal(g.run('new Set(makes.map(c=>c.listingId)).size'),140);
- assert.equal(g.run('new Set(makes.map(c=>c.name)).size'),140);
+ const initial=g.run('new Set(makes.filter(c=>c.marketActive!==false).map(c=>c.listingId))');g.advance(361000);g.c.refreshLiveMarket();
+ assert.equal(g.run('makes.length'),2000);assert.equal(g.run('new Set(makes.map(c=>c.listingId)).size'),2000);
+ assert.equal(g.run('cities.every(city=>makes.filter(c=>c.city===city&&c.marketActive!==false).length===50)'),true);
  assert.equal(g.run('makes.some(c=>c.listingId==='+JSON.stringify(bought)+')'),false);
- assert.ok(g.run('makes.filter(c=>c.price>0&&Number.isFinite(c.price)).length')===140);
- assert.ok(g.run('state.marketUpdateHistory[0].added.length')>=14);
- const after=g.run('makes.map(c=>c.listingId)');assert.ok(after.some(id=>!initial.has(id)));
+ assert.ok(g.run('makes.filter(c=>c.price>0&&Number.isFinite(c.price)).length')===2000);
+ assert.ok(g.run('state.marketUpdateHistory[0].added.length')>=200);
+ const after=g.run('makes.filter(c=>c.marketActive!==false).map(c=>c.listingId)');assert.ok(after.some(id=>!initial.has(id)));
 });
