@@ -93,16 +93,49 @@
       '<button class="action" onclick="messages(\'meetings\')">Открыть запланированные встречи</button></div>');
   }
   window.openMeetingRoute=function(id){var m=meetingById(id),c=m&&cityData(m.city);if(!m||!c)return messages('meetings');state.routeMeetingId=id;if(typeof openCityRoute==='function')openCityRoute(c.id);else mapApp();};
+  function meetingCar(m){
+    if(m&&m.payload&&m.payload.car)return m.payload.car;
+    if(m&&m.payload&&m.payload.tradeDeal&&m.payload.tradeDeal.target)return m.payload.tradeDeal.target;
+    return listingCar();
+  }
+  function diagnosticCost(car,mode){if(typeof marketDiagnosticCost==='function')return marketDiagnosticCost(car,mode);var value=Math.max(10000,Number(car&&car.market||0));return mode==='full'?Math.floor(value/3):Math.floor(value*.10);}
+  function diagnosticResultHtml(m){
+    var d=m.diagnostic;if(!d)return '<div class="meeting-unknown"><span>?</span><div><b>Состояние неизвестно</b><small>Можешь рискнуть и купить сразу либо проверить машину на месте.</small></div></div>';
+    if(d.found)return '<div class="condition-card broken"><small>'+(d.mode==='full'?'ПОЛНАЯ':'СТАНДАРТНАЯ')+' ДИАГНОСТИКА</small><h3>⚠️ '+esc(d.faultName)+'</h3><p>Найдена неисправность. Ремонт оценивается в '+money(d.faultCost)+'. Теперь можно потребовать скидку или отказаться от сделки.</p></div>';
+    if(d.healthyConfirmed)return '<div class="condition-card healthy"><small>ПОЛНАЯ ДИАГНОСТИКА</small><h3>✅ Автомобиль исправен</h3><p>Технических неисправностей не обнаружено.</p></div>';
+    return '<div class="condition-card unknown"><small>СТАНДАРТНАЯ ДИАГНОСТИКА</small><h3>Явных поломок не найдено</h3><p>Стандартная проверка не даёт полной гарантии. Можно провести полную диагностику.</p></div>';
+  }
+  function sellerMeetingRoom(m){
+    var c=meetingCar(m);if(!c)return '<div class="meeting-answer no"><b>Автомобиль недоступен</b><span>Объявление изменилось. Откажись от встречи без штрафа.</span></div>';
+    var standard=diagnosticCost(c,'standard'),full=diagnosticCost(c,'full'),d=m.diagnostic||null;
+    var diagButtons=!d?'<div class="meeting-diagnostic-grid"><button onclick="runMeetingDiagnostic(\''+m.id+'\',\'standard\')"><small>СТАНДАРТНАЯ</small><b>'+money(standard)+'</b><span>30% шанс найти скрытую поломку</span></button><button class="full" onclick="runMeetingDiagnostic(\''+m.id+'\',\'full\')"><small>ПОЛНАЯ</small><b>'+money(full)+'</b><span>Показывает точное состояние</span></button></div>':(d.mode==='standard'&&!d.found?'<button class="action" onclick="runMeetingDiagnostic(\''+m.id+'\',\'full\')">🧰 Провести полную диагностику · '+money(full)+'</button>':'');
+    return '<section class="meeting-car"><div class="meeting-car-photo" style="background-image:linear-gradient(180deg,#0000,#000a),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span>📍 '+esc(m.city)+'</span><b>'+esc(c.name)+'</b></div><div class="meeting-car-specs"><span><small>ГОД</small><b>'+Number(c.year||0)+'</b></span><span><small>ПРОБЕГ</small><b>'+Number(c.km||0).toLocaleString('ru-RU')+' км</b></span><span><small>ЦЕНА</small><b>'+money(m.price)+'</b></span></div></section><div class="bubble seller">'+esc(m.person)+': «Машина перед тобой. Смотри спокойно. Если всё устраивает — оформляем.»</div>'+diagnosticResultHtml(m)+diagButtons+(d&&d.found&&!m.counterTried?'<button class="action" onclick="meetingCounterOffer(\''+m.id+'\')">💬 Попросить скидку после диагностики</button>':'')+(m.counterText?'<div class="bubble seller">'+esc(m.person)+': «'+esc(m.counterText)+'»</div>':'')+'<button class="action green meeting-buy-confirm" onclick="completeMeeting(\''+m.id+'\')">✅ Подтвердить покупку · '+money(m.price)+'</button><button class="action meeting-decline" onclick="declineMeetingDeal(\''+m.id+'\')">Отказаться от автомобиля</button>';
+  }
   window.openMeeting=function(id){
     processMeetings(false);var m=meetingById(id);if(!m)return messages('meetings');var now=total(),left=m.at-now,ready=isReady(m),place=state.city===m.city;
     var action='';
     if(m.status==='scheduled'&&now<m.at)action='<div class="meeting-countdown"><small>ДО ВСТРЕЧИ</small><b>'+durationShort(left)+'</b></div>'+(place?'<div class="meeting-travel-ok">✓ Ты уже в городе встречи</div>':'<button class="action green" onclick="openMeetingRoute(\''+m.id+'\')">🧭 Проложить маршрут в '+esc(m.city)+'</button>')+'<button class="action" onclick="cancelMeeting(\''+m.id+'\')">Отменить встречу</button>';
-    else if(ready)action='<div class="meeting-arrived"><b>Обе стороны на месте</b><small>Можно осмотреть автомобиль и завершить сделку.</small></div><button class="action green" onclick="completeMeeting(\''+m.id+'\')">🤝 Провести встречу</button>';
+    else if(ready&&(m.kind==='seller_purchase'||m.kind==='seller_trade'))action='<div class="meeting-arrived"><b>Встреча началась</b><small>Осмотри автомобиль, проведи диагностику или сразу подтверди сделку.</small></div>'+sellerMeetingRoom(m);
+    else if(ready)action='<div class="meeting-arrived"><b>Обе стороны на месте</b><small>Можно осмотреть автомобили и завершить сделку.</small></div><button class="action green" onclick="completeMeeting(\''+m.id+'\')">🤝 Подтвердить сделку</button>';
     else if(m.status==='scheduled'&&!place)action='<div class="meeting-answer no"><b>Ты не в том городе</b><span>Встреча проходит в '+esc(m.city)+'. Без твоего присутствия сделка не состоится.</span></div><button class="action green" onclick="openMeetingRoute(\''+m.id+'\')">🧭 Открыть Карты</button>';
     else action='<div class="meeting-result '+m.status+'"><b>'+statusLabel(m)+'</b><span>'+esc(m.result||'Событие завершено.')+'</span></div>';
     render('<div class="app meeting-app">'+head('Встреча')+'<section class="meeting-hero compact"><small>'+esc(meetingLabel(m).toUpperCase())+'</small><h2>'+esc(m.carName)+'</h2><p>'+esc(personLabel(m))+': '+esc(m.person)+'</p></section><div class="meeting-ticket"><div><small>ГОРОД</small><b>'+esc(m.city)+'</b></div><div><small>ДАТА И ВРЕМЯ</small><b>'+fmt(m.at)+'</b></div><div><small>СТАТУС</small><b>'+statusLabel(m)+'</b></div></div>'+action+'<button class="action" onclick="messages(\'meetings\')">‹ Ко всем встречам</button></div>');
   };
   function durationShort(mins){mins=Math.max(0,Math.ceil(mins));var d=Math.floor(mins/1440),h=Math.floor(mins%1440/60),m=mins%60;return (d?d+' д ':'')+(h?h+' ч ':'')+(m?m+' мин':'');}
+  window.runMeetingDiagnostic=function(id,mode){
+    var m=meetingById(id),c=meetingCar(m);if(!m||!c||!isReady(m))return openMeeting(id);var full=mode==='full',cost=diagnosticCost(c,full?'full':'standard');
+    if(Number(state.money||0)<cost)return alert('Не хватает '+money(cost-Number(state.money||0))+' на диагностику.');
+    if(typeof ensureMarketFlipCondition!=='function')return alert('Диагностика временно недоступна.');
+    var condition=ensureMarketFlipCondition(c),previous=m.diagnostic,found=!condition.healthy&&(full||Math.random()<.30);
+    state.money=Number(state.money||0)-cost;m.diagnostic={kind:'diagnostic-v2',mode:full?'full':'standard',cost:cost,totalSpent:Number(previous&&previous.totalSpent||0)+cost,found:found,healthyConfirmed:full&&condition.healthy,faultName:found?condition.name:'',faultCost:found?Number(condition.cost||0):0,loss:found?Number(condition.loss||0):0,risk:found?condition.name:(full&&condition.healthy?'автомобиль исправен':'поломок не обнаружено'),negotiationBonus:found?(full?.05:.03):0};
+    c.prePurchaseDiagnostic=Object.assign({},m.diagnostic);if(!state.marketInspections||typeof state.marketInspections!=='object')state.marketInspections={};state.marketInspections[marketInspectionKey(c)]=Object.assign({},m.diagnostic);saveMeetings();openMeeting(id);
+  };
+  window.meetingCounterOffer=function(id){
+    var m=meetingById(id);if(!m||!isReady(m)||!m.diagnostic||!m.diagnostic.found||m.counterTried)return openMeeting(id);m.counterTried=true;
+    var discount=Math.min(Math.round(Number(m.price||0)*.08/1000)*1000,Math.round(Number(m.diagnostic.faultCost||0)*.55/1000)*1000),next=Math.max(10000,Number(m.price||0)-Math.max(1000,discount));
+    if(Math.random()<.72){m.price=next;m.counterText='Ладно, косяк увидели честно. Скину до '+money(next)+', ниже уже не двигаюсь.';}else m.counterText='По цене уже договорились. Поломка учтена не была, но больше не уступлю.';saveMeetings();openMeeting(id);
+  };
+  window.declineMeetingDeal=function(id){var m=meetingById(id);if(!m||!isReady(m))return openMeeting(id);m.status='cancelled';m.result='Ты осмотрел автомобиль и отказался от сделки. Деньги за машину не списаны.';saveMeetings();openMeeting(id);};
   window.cancelMeeting=function(id){var m=meetingById(id);if(!m||m.status!=='scheduled')return;m.status='cancelled';m.result='Ты заранее отменил встречу. Репутация не изменилась.';var buyer=findBuyer(m.sourceId);if(buyer&&buyer.status==='meeting')buyer.status='accepted';saveMeetings();openMeeting(id);};
   function successMeeting(m){m.status='completed';m.completedAt=total();m.result='Ты приехал вовремя и выполнил договорённость.';rep(m.side==='buyer'?3:1,'Встреча без опоздания · '+m.carName);}
   window.completeMeeting=function(id){

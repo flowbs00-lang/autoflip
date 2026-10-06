@@ -179,6 +179,16 @@
 #screen .meeting-app .meeting-list-card.missed .meeting-list-date{background:var(--os-danger-bg);color:var(--os-danger)}
 #screen .meeting-app .meeting-custom input{background:var(--os-raised);border-color:var(--os-line);color:var(--os-text)}
 #screen .world-meeting-deadline{background:var(--os-warning-bg);color:var(--os-warning)}
+#screen .meeting-app :is(.meeting-car,.meeting-diagnostic-grid button){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text)}
+#screen .meeting-app .meeting-car-specs span{border-color:var(--os-line)}
+#screen .meeting-app .meeting-car-specs small{color:var(--os-muted)}
+#screen .meeting-app .meeting-unknown{background:var(--os-raised);color:var(--os-text)}
+#screen .meeting-app .meeting-unknown>span{background:var(--os-elevated);color:var(--os-text)}
+#screen .meeting-app .meeting-unknown small{color:var(--os-muted)}
+#screen .meeting-app .meeting-diagnostic-grid button.full{background:linear-gradient(145deg,var(--os-raised),var(--os-elevated));color:var(--os-text)}
+#screen .meeting-app .condition-card.unknown{background:var(--os-warning-bg);border-color:color-mix(in srgb,var(--os-warning) 35%,var(--os-line));color:var(--os-text)}
+#screen .meeting-app .condition-card.unknown :is(h3,p,small){color:var(--os-text)}
+#screen .meeting-app .meeting-decline{background:var(--os-danger-bg);border-color:color-mix(in srgb,var(--os-danger) 35%,var(--os-line));color:var(--os-danger)!important}
 
 /* Games intentionally stay cinematic dark in both themes, now with readable type. */
 #screen .games-app{background:#090d13;color:#f2f5f8}
