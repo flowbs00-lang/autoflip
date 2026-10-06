@@ -6,7 +6,14 @@ var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return
 var marketListingsPerCity=100;
 var marketActivePerCity=50;
 var marketTargetSize=cities.length*marketListingsPerCity;
-var marketCatalogVersion=5;
+var marketCatalogVersion=6;
+var marketBudgetRevision={
+ 'Fiat Punto II':[160000,120000],
+ 'Renault Clio II':[190000,135000],
+ 'Opel Corsa C':[220000,150000],
+ 'Opel Astra G':[260000,170000],
+ 'Opel Vectra B':[180000,145000]
+};
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
 var marketPhotoCatalogVersion=2;
@@ -230,6 +237,11 @@ function reindexMarketListings(){
 function marketNowStored(){return Number(state.gameClock&&state.gameClock.total||450);}
 function ensureMarketListingMeta(car,index){
  var now=marketNowStored(),variant=Number(car.modelId||0)+Number(index||0);
+ if(Number(state.marketListingsVersion||0)<6&&marketBudgetRevision[car.name]){
+   var revision=marketBudgetRevision[car.name],ratio=revision[1]/revision[0],oldPrice=Number(car.price||0),oldBase=Number(car.basePrice||oldPrice);
+   car.price=marketRound(oldPrice*ratio);car.basePrice=marketRound(oldBase*ratio);
+   car.market=marketRound(Number(car.market||car.sale||0)*ratio);car.sale=car.market;
+ }
  if(cities.indexOf(car.city)<0)car.city=cities[Math.abs(Number(index||0))%cities.length];
  if(!Number.isFinite(Number(car.postedAt)))car.postedAt=Math.max(0,now-(30+((index||0)*37)%480));
  if(!car.sellerName)car.sellerName=marketSellerNames[Math.abs(variant)%marketSellerNames.length];
