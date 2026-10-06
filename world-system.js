@@ -45,8 +45,10 @@
   function routePanel(target){
     var from=city(state.city),to=city(target),km=distance(from,to);
     if(from.id===to.id)return '<section class="world-current-panel"><span>◎</span><div><small>ТЫ НАХОДИШЬСЯ ЗДЕСЬ</small><b>'+esc(to.name)+'</b><p>Выбери другой город на карте, чтобы построить маршрут.</p></div></section>';
-    var options=world.transports.map(function(t){var x=trip(from,to,t);return '<button class="world-transport" onclick="confirmWorldTrip(\''+to.id+'\',\''+t.id+'\')"><span>'+t.icon+'</span><div><small>'+esc(t.description)+' · '+String(t.rate).replace('.',',')+' ₽/км</small><b>'+esc(t.name)+'</b><em>'+duration(x.minutes)+'</em></div><strong>'+money(x.cost)+'</strong></button>';}).join('');
-    return '<section class="world-route-panel"><div class="world-route-title"><div><small>МАРШРУТ</small><b>'+esc(from.name)+' → '+esc(to.name)+'</b></div><strong>'+km.toLocaleString('ru-RU')+' км</strong></div><div class="world-transport-list">'+options+'</div></section>';
+    var meeting=Array.isArray(state.meetings)&&state.routeMeetingId?state.meetings.find(function(m){return m.id===state.routeMeetingId&&m.status==='scheduled'&&m.city===to.name;}):null;
+    var now=typeof window.getGameTotal==='function'?Number(window.getGameTotal()||0):Number(state.gameClock&&state.gameClock.total||0);
+    var options=world.transports.map(function(t){var x=trip(from,to,t),arrival=now+x.minutes,late=meeting&&arrival>meeting.at;return '<button class="world-transport '+(late?'world-transport-late':'')+'" '+(late?'disabled':'onclick="confirmWorldTrip(\''+to.id+'\',\''+t.id+'\')"')+'><span>'+t.icon+'</span><div><small>'+esc(t.description)+' · '+String(t.rate).replace('.',',')+' ₽/км</small><b>'+esc(t.name)+'</b><em>'+duration(x.minutes)+(meeting?' · '+(late?'не успеешь':'успеешь к встрече'):'')+'</em></div><strong>'+money(x.cost)+'</strong></button>';}).join('');
+    return '<section class="world-route-panel"><div class="world-route-title"><div><small>'+(meeting?'ПОЕЗДКА НА ВСТРЕЧУ':'МАРШРУТ')+'</small><b>'+esc(from.name)+' → '+esc(to.name)+'</b></div><strong>'+km.toLocaleString('ru-RU')+' км</strong></div>'+(meeting?'<div class="world-meeting-deadline"><span>📅</span><div><b>'+esc(meeting.carName)+'</b><small>Нужно быть в городе к '+(typeof window.autoFlipMeetings==='object'?window.autoFlipMeetings.format(meeting.at):meeting.at)+'</small></div></div>':'')+'<div class="world-transport-list">'+options+'</div></section>';
   }
   function renderMap(target){
     var current=city(state.city);routeTarget=target||routeTarget||current.id;
@@ -64,6 +66,7 @@
     if(typeof window.advanceGameMinutes==='function')window.advanceGameMinutes(x.minutes);
     else if(state.gameClock)state.gameClock.total=Number(state.gameClock.total||0)+x.minutes;
     state.city=to.name;state.marketCityFilter=to.name;
+    if(state.routeMeetingId&&Array.isArray(state.meetings)){var linked=state.meetings.find(function(m){return m.id===state.routeMeetingId;});if(!linked||linked.city===to.name)state.routeMeetingId='';}
     if(typeof window.getGameTotal==='function')state.day=Math.max(Number(state.day||1),Math.floor(window.getGameTotal()/1440)+1);
     if(!Array.isArray(state.travelHistory))state.travelHistory=[];
     state.travelHistory.unshift({from:from.name,to:to.name,transport:transport.name,km:x.km,cost:x.cost,minutes:x.minutes,day:state.day});
