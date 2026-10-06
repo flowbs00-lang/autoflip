@@ -188,7 +188,7 @@ function autoSellHub(){
    return '<button class="auto-sell-car" onclick="autoSelectSellCar('+i+')"><div class="auto-sell-car-photo" style="background-image:url(\''+photo(c)+'\')"></div><div><small>'+(listed?'🟢 ОБЪЯВЛЕНИЕ АКТИВНО':'ТВОЯ МАШИНА')+'</small><b>'+c.name+'</b><span>'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км</span><strong>'+(listed?'Открыть объявление':'Рынок ~ '+money(marketValue))+'</strong></div><em>›</em></button>';
  }).join('');
  render('<div class="app">'+head('Продать автомобиль')+
-   '<div class="auto-tab-intro sell"><div><small>МОИ АВТО</small><h3>Выбери машину для продажи</h3><p>Нажми на купленный автомобиль, чтобы создать или открыть его объявление.</p></div><b>'+cars.length+'/3</b></div>'+
+   '<div class="auto-tab-intro sell"><div><small>МОИ АВТО</small><h3>Выбери машину для продажи</h3><p>Нажми на купленный автомобиль, чтобы создать или открыть его объявление.</p></div><b>'+cars.length+'/'+(typeof window.garageCapacity==='function'?window.garageCapacity():2)+'</b></div>'+
    (cards||'<div class="note auto-empty-tab"><b>🚗 У тебя пока нет машин</b><p class="muted">Купи автомобиль в «Объявлениях», и он появится здесь.</p><button class="action green" onclick="market(\'all\',0)">Перейти к объявлениям</button></div>')+
    '</div>');
  setTimeout(function(){mountAutoBottomNav('sell');},130);
