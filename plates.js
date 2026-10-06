@@ -18,7 +18,7 @@
     {id:'legend',name:'Легендарный кейс',price:150000,level:10,weights:[['ordinary',5],['unusual',20],['rare',35],['ultra',28],['secret',11.9],['priceless',.1]]}
   ];
   const REGIONS=[
-    ['77','Москва','Россия'],['78','Санкт-Петербург','Россия'],['16','Казань','Россия'],['54','Новосибирск','Россия'],['66','Екатеринбург','Россия'],['23','Краснодар','Россия'],['61','Ростов-на-Дону','Россия'],['02','Уфа','Россия'],
+    ['77','Москва','Россия'],['78','Санкт-Петербург','Россия'],['43','Киров','Россия'],['16','Казань','Россия'],['54','Новосибирск','Россия'],['66','Екатеринбург','Россия'],['23','Краснодар','Россия'],['61','Ростов-на-Дону','Россия'],['02','Уфа','Россия'],
     ['01','Минск','Беларусь'],['02','Брест','Беларусь'],['01','Астана','Казахстан'],['02','Алматы','Казахстан'],['01','Ташкент','Узбекистан'],['01','Бишкек','Кыргызстан'],['01','Душанбе','Таджикистан'],['01','Ереван','Армения'],['01','Баку','Азербайджан'],['10','Кишинёв','Молдова']
   ];
   const PRICELESS=[['А777МР','777'],['Е777КХ','777'],['А777АА','777'],['В777ОР','777'],['О777ОО','777']];
@@ -65,7 +65,7 @@
   }
   function makePlate(rarity){
     const base=plateBase(rarity),r=base.region||region();
-    return {id:'plate-'+Date.now()+'-'+rnd(1000000),number:base.number,region:r,rarity:rarity,value:RARITIES[rarity].value,createdAt:Date.now(),attachedCarId:null};
+    return {id:'plate-'+Date.now()+'-'+rnd(1000000),number:String(base.number).toUpperCase(),region:r,rarity:rarity,value:RARITIES[rarity].value,createdAt:Date.now(),attachedCarId:null};
   }
   function rollPlateRarity(weights,randomValue){
     const roll=(typeof randomValue==='number'?randomValue:Math.random())*100;let edge=0;
@@ -76,9 +76,10 @@
   let activeTab='cases',filter='all',sort='new',opening=null,lastCase='standard',notice='';
   function plateFace(p,large){
     const countries={Россия:['RUS','🇷🇺'],Беларусь:['BY','🇧🇾'],Казахстан:['KZ','🇰🇿'],Узбекистан:['UZ','🇺🇿'],Кыргызстан:['KG','🇰🇬'],Таджикистан:['TJ','🇹🇯'],Армения:['AM','🇦🇲'],Азербайджан:['AZ','🇦🇿'],Молдова:['MD','🇲🇩']},country=countries[p.region.country]||['',''];
-    const match=String(p.number).match(/^([^\d])(\d{3})([^\d]{2})$/),number=match?'<em>'+escape(match[1])+'</em><strong>'+match[2]+'</strong><em>'+escape(match[3])+'</em>':'<strong>'+escape(p.number)+'</strong>';
+    const normalized=String(p.number).toUpperCase(),match=normalized.match(/^([^\d])(\d{3})([^\d]{2})$/),number=match?'<em>'+escape(match[1])+'</em><strong>'+match[2]+'</strong><em>'+escape(match[3])+'</em>':'<strong>'+escape(normalized)+'</strong>';
     return '<div class="plate-face plate-'+p.rarity+(large?' large':'')+'"><span class="plate-main">'+number+'</span><span class="plate-region"><i>'+escape(p.region.code)+'</i><small>'+country[0]+' <em>'+country[1]+'</em></small></span><u aria-hidden="true"></u><u aria-hidden="true"></u></div>';
   }
+  function fullPlateText(p){return String(p.number).toUpperCase()+' '+String(p.region.code).toUpperCase();}
   function chanceText(c){return c.weights.map(function(w){return RARITIES[w[0]].title+' '+String(w[1]).replace('.',',')+'%';}).join(' · ');}
   function caseCard(c){
     const locked=currentGarageLevel()<c.level,canPay=Number(state.money||0)>=c.price;
@@ -104,7 +105,8 @@
   function openingScreen(c,p,phase){
     const reveal=phase==='reveal',rolling=phase==='rolling';
     const canRepeat=Number(state.money||0)>=c.price;
-    const reel='<div class="number-reel"><i></i><div class="reel-track"><span>А462ВР</span><span>Е213ТТ</span><span>Н303ВВ</span><span>А070ВА</span><span>Е222КХ</span><span>О777ОО</span><span>А551ВА</span></div></div>';
+    const samples=['Т462ВР 77','Р684УО 78','Е213ТТ 43','А338КК 16','Н303ВВ 54','А070ВА 66','Е114КХ 77','Т333ТТ 23','В444ВВ 61','О554РО 02'];
+    const reel='<div class="number-reel"><i></i><div class="reel-track">'+samples.map(x=>'<span>'+x+'</span>').join('')+'<span class="winning-number">'+escape(fullPlateText(p))+'</span></div></div>';
     const process='<small>'+(rolling?'КЕЙС ОТКРЫТ':'ОТКРЫВАЕМ КЕЙС')+'</small><div class="case-machine '+(rolling?'is-open':'')+' '+p.rarity+'"><div class="case-lid">AUTOFLIP</div><div class="case-core">✦</div><div class="case-base"></div></div>'+(rolling?reel:'<div class="opening-progress"><i></i></div>')+'<h2>'+(rolling?'Ищем твой номер':c.name)+'</h2><p>'+(rolling?'Лента замедляется…':'Снимаем защиту и открываем замки…')+'</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>';
     render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
   }
@@ -125,9 +127,9 @@
     state.money=Number(state.money||0)-c.price;collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;persistPlates();
     if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','✦','Открыт '+c.name+': '+RARITIES[rarity].title+' номер.','plates','plate-'+p.id);
     opening={type:'case',caseId:c.id,plateId:p.id};openingScreen(c,p,'opening');
-    if(typeof setTimeout==='function')opening.timer=setTimeout(function(){startPlateRoll();},850);else revealPlateOpening();
+    if(typeof setTimeout==='function')opening.timer=setTimeout(function(){startPlateRoll();},1200);else revealPlateOpening();
   };
-  window.startPlateRoll=function(){if(!opening||opening.type!=='case')return;const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'rolling');if(typeof setTimeout==='function')opening.revealTimer=setTimeout(function(){revealPlateOpening();},2100);else revealPlateOpening();};
+  window.startPlateRoll=function(){if(!opening||opening.type!=='case')return;const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'rolling');if(typeof setTimeout==='function')opening.revealTimer=setTimeout(function(){revealPlateOpening();},3600);else revealPlateOpening();};
   window.revealPlateOpening=function(){if(!opening||opening.type!=='case')return;clearOpeningTimers();const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'reveal');};
   window.finishPlateOpening=function(){clearOpeningTimers();opening=null;activeTab='collection';filter='all';renderPlates();};
   window.sellPlate=function(id){
