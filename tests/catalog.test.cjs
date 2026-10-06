@@ -45,7 +45,8 @@ test('cheap feed starts with different models and different photographs',()=>{
  assert.equal(new Set(first.map(c=>c.name)).size,8);
  assert.equal(new Set(first.map(c=>c.photoUrl)).size,8);
  const budget=new Map(g.c.carCatalogExtra.map(c=>[c.name,c.market]));
- for(const name of ['Fiat Punto I','Fiat Punto II','Renault Clio II','Opel Vectra B','Opel Corsa C','Opel Astra G'])assert.ok(budget.get(name)<=170000,name+' must stay in the starter price tier');
+ assert.equal(budget.get('Fiat Punto II'),160000);assert.equal(budget.get('Renault Clio II'),190000);
+ assert.equal(budget.get('Opel Vectra B'),180000);assert.equal(budget.get('Opel Corsa C'),220000);assert.equal(budget.get('Opel Astra G'),260000);
 });
 test('every city always has ten distinct starter cars for 40,000 to 80,000 rubles',()=>{
  const g=game();
@@ -55,7 +56,14 @@ test('every city always has ten distinct starter cars for 40,000 to 80,000 ruble
    assert.equal(new Set(starter.map(c=>c.name)).size,10,city+' models');
    assert.equal(new Set(starter.map(c=>c.photoUrl)).size,10,city+' photos');
    assert.ok(starter.every(c=>c.price>=40000&&c.price<=80000),city+' prices');
+   assert.ok(starter.every(c=>c.restorationProject&&c.damageSummary&&c.photoUrl.includes('commons.wikimedia.org')),city+' restoration projects');
  }
+});
+test('restoration projects always keep their visible fault after purchase',()=>{
+ const g=game();const car=g.run('makes.find(c=>c.restorationProject)');
+ const condition=g.c.ensureMarketFlipCondition(car);
+ assert.equal(condition.healthy,false);assert.equal(condition.name,car.risk);assert.equal(condition.cost,car.repair);
+ const owned=g.c.applyMarketConditionToOwned(car);assert.equal(owned.healthy,false);assert.equal(owned.name,car.risk);
 });
 test('buying a starter car replenishes the affordable city stock',()=>{
  const g=game();const city='Москва';
@@ -63,6 +71,15 @@ test('buying a starter car replenishes the affordable city stock',()=>{
  g.c.removePurchasedListing(id);
  assert.equal(g.run(`makes.filter(c=>c.city==='Москва'&&c.marketActive!==false&&c.starterOffer).length`),10);
  assert.equal(g.run(`makes.some(c=>c.listingId===${JSON.stringify(id)})`),false);
+});
+test('old artificial starter cars return to normal prices during migration',()=>{
+ const first=game(),saved=first.saved(),legacy=saved.marketListings.find(c=>c.city==='Москва'&&c.starterOffer);
+ Object.assign(legacy,{name:'Fiat Punto II',price:40000,basePrice:40000,market:70000,sale:70000,repair:12000,starterOffer:true,starterVersion:1,restorationProject:false,photoUrl:'assets/cars/fiat-punto-1999.webp'});
+ delete legacy.damageSummary;delete legacy.photo;saved.marketListingsVersion=7;
+ const restored=game(saved);
+ const car=restored.run(`makes.find(c=>c.listingId===${JSON.stringify(legacy.listingId)})`);
+ assert.equal(car.starterOffer,false);assert.equal(car.price,138000);assert.equal(car.market,160000);
+ assert.equal(restored.run(`makes.filter(c=>c.city==='Москва'&&c.starterOffer&&c.restorationProject).length`),10);
 });
 test('migration keeps money, owned cars, favourite identity and diagnostics while growing the market',()=>{
  const first=game();const saved=first.saved();saved.marketListings=saved.marketListings.slice(0,36);saved.marketListingsVersion=3;
