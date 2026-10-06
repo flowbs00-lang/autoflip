@@ -4,11 +4,12 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'../plates.js'),'utf8');
+const worldSource=fs.readFileSync(path.join(__dirname,'../world-data.js'),'utf8');
 function game(saved,animate=false){
   let html='',savedState,scheduled,delays=[];
   const c={state:saved||{money:1000000,garageLevel:1},window:null,Math:Object.create(Math),Date,render:v=>html=v,head:t=>'<h1>'+t+'</h1>',money:n=>Number(n).toLocaleString('ru-RU')+' ₽',persist:()=>{savedState=JSON.parse(JSON.stringify(c.state));},alert:()=>{},pushPhoneNotification:()=>{}};
   if(animate){c.setTimeout=(fn,ms)=>{scheduled=fn;delays.push(ms);return 1;};c.clearTimeout=()=>{scheduled=null;};}
-  c.Math.random=Math.random;c.window=c;vm.createContext(c);vm.runInContext(source,c);
+  c.Math.random=Math.random;c.window=c;vm.createContext(c);vm.runInContext(worldSource,c);vm.runInContext(source,c);
   return {c,html:()=>html,saved:()=>savedState,delays:()=>delays.slice(),runTimer:()=>scheduled&&scheduled()};
 }
 test('all case probability tables total 100%',()=>{
@@ -16,10 +17,10 @@ test('all case probability tables total 100%',()=>{
   assert.equal(g.c.plateSystem.cases.find(x=>x.id==='collector').level,8);
   assert.equal(g.c.plateSystem.cases.find(x=>x.id==='legend').level,10);
 });
-test('region pool contains every requested code from 01 to 87 plus 89, 92 and 94',()=>{
-  const g=game(),actual=new Set(g.c.plateSystem.regions.map(x=>x[0])),expected=[];
-  for(let i=1;i<=87;i++)expected.push(String(i).padStart(2,'0'));expected.push('89','92','94');
-  assert.deepEqual([...actual].sort(),expected.sort());assert.equal(actual.size,90);
+test('region pool contains only the codes of the twenty game cities',()=>{
+  const g=game(),actual=new Set(g.c.plateSystem.regions.map(x=>x[0]));
+  const expected=['77','97','799','78','98','178','52','152','66','96','196','43','23','93','123','59','81','159','39','91','86','186','75','80','16','116','716','25','125','76','61','161','761','05','02','102','702','36','136','56','69','63','163','763'];
+  assert.deepEqual([...actual].sort(),expected.sort());assert.equal(actual.size,expected.length);
 });
 test('roll respects case probability boundaries',()=>{
   const g=game(),weights=g.c.plateSystem.cases[4].weights;
@@ -31,7 +32,7 @@ test('every generated plate has uppercase letters, a CIS city and the correct sa
   const g=game();for(const [rarity,meta] of Object.entries(g.c.plateSystem.rarities)){const plate=g.c.plateSystem.makePlate(rarity);assert.equal(plate.number,plate.number.toUpperCase());assert.ok(plate.region.city);assert.ok(plate.region.country);assert.equal(plate.value,meta.value);}
 });
 test('priceless series is strictly one of the five 777 plates',()=>{
-  const g=game();for(let i=0;i<30;i++){const p=g.c.plateSystem.makePlate('priceless');assert.match(p.number,/^(А777МР|Е777КХ|А777АА|В777ОР|О777ОО)$/);assert.equal(p.region.code,'777');}
+  const g=game(),allowed=new Set(g.c.plateSystem.regions.map(x=>x[0]));for(let i=0;i<30;i++){const p=g.c.plateSystem.makePlate('priceless');assert.match(p.number,/^(А777МР|Е777КХ|А777АА|В777ОР|О777ОО)$/);assert.ok(allowed.has(p.region.code));}
 });
 test('locked cases cannot take money and the starter case stores a plate',()=>{
   const g=game();g.c.plates();const before=g.c.state.money;g.c.openPlateCase('rare');assert.equal(g.c.state.money,before);assert.equal(g.c.state.plates.items.length,0);
@@ -55,4 +56,8 @@ test('collection supports favorites, filters and a sale confirmation sheet',()=>
 test('old lowercase plate numbers migrate to uppercase',()=>{
   const g=game({money:0,garageLevel:1,plates:{items:[{id:'old',number:'в435хв',region:{code:'43',city:'Киров',country:'Россия'},rarity:'ordinary',value:1000}],nextId:2}});
   g.c.plates();assert.equal(g.c.state.plates.items[0].number,'В435ХВ');g.c.setPlateTab('collection');assert.match(g.html(),/<em>В<\/em><strong>435<\/strong><em>ХВ<\/em>/);
+});
+test('old removed regions migrate without deleting the collected plate',()=>{
+  const g=game({money:0,garageLevel:1,plates:{items:[{id:'old-region',number:'А123ВС',region:{code:'54',city:'Новосибирск',country:'Россия'},rarity:'ordinary',value:1000}],nextId:2}});
+  g.c.plates();const plate=g.c.state.plates.items[0],allowed=new Set(g.c.plateSystem.regions.map(x=>x[0]));assert.equal(g.c.state.plates.items.length,1);assert.ok(allowed.has(plate.region.code));
 });
