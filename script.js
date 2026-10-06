@@ -295,6 +295,11 @@ function marketNextRefreshText(){
  var next=Number(state.liveMarket&&state.liveMarket.nextRefreshAt||0),left=Math.max(0,next-now),h=Math.floor(left/60),m=Math.floor(left%60);
  return left<=0?'обновление сейчас':'следующее обновление через '+(h?h+' ч ':'')+m+' мин';
 }
+function updateMarketCountdownUI(){
+ var el=document.getElementById('autoMarketCountdown');if(!el)return;
+ var text=marketNextRefreshText();
+ el.textContent=text==='обновление сейчас'?'Обновление сейчас':'До обновления · '+text.replace('следующее обновление через ','');
+}
 function performMarketRefresh(refreshAt){
  var count=Math.max(6,Math.round(marketTargetSize*(.10+Math.random()*.05))),change=rotateMarketByCount(count,'scheduled');
  state.liveMarket.cycle=Number(state.liveMarket.cycle||0)+1;
@@ -489,12 +494,7 @@ function decorateMarket(){
     card.appendChild(el);
     if(badge){var pic=card.querySelector('.pic');if(pic){var tag=document.createElement('span');tag.textContent=badge;tag.style.cssText='display:inline-block;background:#111c;color:#fff;padding:4px 7px;border-radius:8px;font-size:10px;margin:6px';pic.appendChild(tag);}}
   });
-  var app=document.querySelector('.app'),filters=app&&app.querySelector('.filters');
-  if(filters&&!document.getElementById('v79MarketRefresh')){
-    var box=document.createElement('div');box.id='v79MarketRefresh';box.className='note';box.style.margin='8px 0';
-    box.innerHTML='<div class="row"><span><b>📡 Живой рынок</b><small>'+marketEventText()+' · '+marketNextRefreshText()+'</small></span></div>';
-    filters.insertAdjacentElement('afterend',box);
-  }
+  updateMarketCountdownUI();
 }
 var originalMarket=window.market;
 if(typeof originalMarket==='function'&&!originalMarket.__v79){
@@ -596,7 +596,7 @@ function updateGameClockUI(){
   document.querySelectorAll('.clock').forEach(function(el){el.textContent=time;});
   document.querySelectorAll('.home-top small').forEach(function(el){el.textContent=date;});
 }
-setInterval(function(){updateGameClockUI();if(gameTotal()%10===0){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));}},1000);
+setInterval(function(){updateGameClockUI();updateMarketCountdownUI();if(gameTotal()%10===0){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));}},1000);
 window.addEventListener('beforeunload',function(){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));});
 function advanceGameMinutes(mins){
   clockAnchorTotal=gameTotal()+Math.max(0,Math.round(Number(mins)||0));
