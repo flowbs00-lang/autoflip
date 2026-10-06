@@ -57,6 +57,8 @@ test('every city always has ten distinct starter cars for 40,000 to 80,000 ruble
    assert.equal(new Set(starter.map(c=>c.photoUrl)).size,10,city+' photos');
    assert.ok(starter.every(c=>c.price>=40000&&c.price<=80000),city+' prices');
    assert.ok(starter.every(c=>c.restorationProject&&c.damageSummary&&c.photoUrl.includes('commons.wikimedia.org')),city+' restoration projects');
+   assert.ok(starter.every(c=>(c.market-c.price)/c.price>=.10&&(c.market-c.price)/c.price<=.20),city+' balanced market spread');
+   assert.ok(starter.every(c=>c.market>c.price+c.repair),city+' repair must leave a small profit');
  }
 });
 test('restoration projects always keep their visible fault after purchase',()=>{
@@ -82,7 +84,7 @@ test('old artificial starter cars return to normal prices during migration',()=>
  assert.equal(restored.run(`makes.filter(c=>c.city==='Москва'&&c.starterOffer&&c.restorationProject).length`),10);
 });
 test('migration keeps money, owned cars, favourite identity and diagnostics while growing the market',()=>{
- const first=game();const saved=first.saved();saved.marketListings=saved.marketListings.slice(0,36);saved.marketListingsVersion=3;
+ const first=game();const saved=first.saved();saved.marketListings=saved.marketListings.filter(c=>!c.restorationProject).slice(0,36);saved.marketListingsVersion=3;
  saved.marketFavorites=[saved.marketListings[0].listingId];saved.marketListings[0].marketFlipCondition={healthy:false,name:'Двигатель',loss:.35,cost:20000};saved.marketListings[0].marketConditionVersion=2;saved.money=123456;
  const second=game(saved);assert.equal(second.run('makes.length'),2000);assert.equal(second.run('state.money'),123456);assert.equal(second.run('makes[0].listingId'),saved.marketFavorites[0]);assert.equal(second.run('makes[0].marketFlipCondition.name'),'Двигатель');
  assert.equal(second.run('state.marketFavorites[0]'),saved.marketFavorites[0]);
