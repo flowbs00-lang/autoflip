@@ -54,3 +54,14 @@ test('minimap uses twenty fixed grid buttons without a moving canvas',()=>{
   assert.match(styles,/grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(styles,/\.world-map-city \{[\s\S]*?transform: none;/);
 });
+
+test('meeting route marks transports that cannot reach the city before the appointment',()=>{
+  const g=worldGame();
+  g.c.state.meetings=[{id:'meet-1',status:'scheduled',city:'Киров',carName:'Lada',at:850}];
+  g.c.state.routeMeetingId='meet-1';
+  g.c.openCityRoute('kirov');
+  assert.match(g.html(),/ПОЕЗДКА НА ВСТРЕЧУ/);
+  assert.match(g.html(),/успеешь к встрече/);
+  assert.match(g.html(),/world-transport-late/);
+  assert.match(g.html(),/не успеешь/);
+});

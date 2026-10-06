@@ -613,3 +613,4 @@
 .world-static-map-foot i { width:7px;height:7px;border-radius:3px;background:#76e3bb }
 .world-static-map-foot i.selected { background:#ffd36e }
 .world-static-map-foot > small { margin-left:auto;color:#6f8994;font-size:6px }
+.world-meeting-deadline{display:flex;gap:10px;align-items:center;margin:10px 0;padding:11px;border-radius:13px;background:#fff4d7;color:#79550c}.world-meeting-deadline>span{font-size:20px}.world-meeting-deadline>div{display:flex;flex-direction:column}.world-meeting-deadline b{font-size:11px}.world-meeting-deadline small{font-size:9px}.world-transport-late{opacity:.48;filter:grayscale(.65)}.world-transport-late em{color:#c75648!important}

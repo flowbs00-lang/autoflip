@@ -162,6 +162,24 @@
 #screen .bank-v22-app .bank-home-credit-level-grid .current{background:var(--os-info-bg);border-color:var(--os-info)}
 #screen .bank-v22-app .bank-home-credit-level-grid .current b{color:var(--os-info)}
 
+/* Meetings — readable in both OS themes. */
+#screen .meeting-app :is(.meeting-route-card,.meeting-place,.meeting-time,.meeting-custom,.meeting-ticket,.meeting-list-card,.meeting-price){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text);box-shadow:var(--os-shadow)}
+#screen .meeting-app :is(.meeting-route-card,.meeting-place,.meeting-time,.meeting-ticket,.meeting-list-card) small{color:var(--os-muted)}
+#screen .meeting-app .meeting-tabs{background:var(--os-raised)}
+#screen .meeting-app .meeting-tabs button{color:var(--os-muted)}
+#screen .meeting-app .meeting-tabs button.active{background:var(--os-surface);color:var(--os-text)}
+#screen .meeting-app .meeting-place>span{background:var(--os-raised)}
+#screen .meeting-app .meeting-place.selected{background:var(--os-success-bg);border-color:var(--os-success)}
+#screen .meeting-app .meeting-travel-ok,#screen .meeting-app .meeting-arrived{background:var(--os-success-bg);color:var(--os-success)}
+#screen .meeting-app .meeting-travel-warning{background:var(--os-warning-bg);color:var(--os-warning)}
+#screen .meeting-app .meeting-answer.no,#screen .meeting-app .meeting-result.missed{background:var(--os-danger-bg);color:var(--os-danger)}
+#screen .meeting-app .meeting-answer.yes,#screen .meeting-app .meeting-result.completed{background:var(--os-success-bg);color:var(--os-success)}
+#screen .meeting-app .meeting-result.cancelled{background:var(--os-raised);color:var(--os-muted)}
+#screen .meeting-app .meeting-list-date{background:var(--os-success-bg);color:var(--os-success)}
+#screen .meeting-app .meeting-list-card.missed .meeting-list-date{background:var(--os-danger-bg);color:var(--os-danger)}
+#screen .meeting-app .meeting-custom input{background:var(--os-raised);border-color:var(--os-line);color:var(--os-text)}
+#screen .world-meeting-deadline{background:var(--os-warning-bg);color:var(--os-warning)}
+
 /* Games intentionally stay cinematic dark in both themes, now with readable type. */
 #screen .games-app{background:#090d13;color:#f2f5f8}
 #screen .games-app .os-head b,#screen .games-app .os-status{color:#f2f5f8}
