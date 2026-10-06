@@ -3,7 +3,13 @@
   'use strict';
   var world=window.AUTOFLIP_WORLD;if(!world||!Array.isArray(world.cities))return;
   var routeTarget='';
-  var mapScrollLeft=0;
+  var schematicLayout={
+    kaliningrad:[1,1],spb:[1,2],kirov:[1,3],surgut:[1,4],
+    tver:[2,1],yaroslavl:[2,2],perm:[2,3],chita:[2,4],
+    moscow:[3,1],nizhny:[3,2],ekb:[3,3],vladivostok:[3,4],
+    voronezh:[4,1],kazan:[4,2],ufa:[4,3],samara:[4,4],
+    rostov:[5,1],krasnodar:[5,2],orenburg:[5,3],makhachkala:[5,4]
+  };
   function esc(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function city(value){return world.cities.find(function(c){return c.id===value||c.name===value;})||world.cities[0];}
   function radians(v){return v*Math.PI/180;}
@@ -19,22 +25,19 @@
   }
   function duration(minutes){var d=Math.floor(minutes/1440),h=Math.floor(minutes%1440/60),m=minutes%60;return (d?d+' д ':'')+(h?h+' ч ':'')+(m?m+' мин':'');}
   function saveWorld(){if(typeof persist==='function')persist();else if(typeof save==='function')save();}
-  function captureMapScroll(){if(typeof document!=='undefined'&&document.querySelector){var el=document.querySelector('.world-map-scroll');if(el)mapScrollLeft=el.scrollLeft;}}
-  function restoreMapScroll(){
-    if(typeof document==='undefined'||!document.querySelector)return;
-    var apply=function(){var el=document.querySelector('.world-map-scroll');if(el)el.scrollLeft=mapScrollLeft;};
-    apply();if(typeof requestAnimationFrame==='function')requestAnimationFrame(apply);else if(typeof setTimeout==='function')setTimeout(apply,0);
-  }
   function mapNodes(){
-    return world.cities.map(function(c){var current=c.name===state.city,selected=c.id===routeTarget;return '<button type="button" class="world-city '+(current?'current ':'')+(selected?'selected':'')+'" style="--x:'+c.x+'%;--y:'+c.y+'%" onclick="openCityRoute(\''+c.id+'\')" aria-label="Построить маршрут: '+esc(c.name)+'"><i></i><span>'+esc(c.name)+'</span></button>';}).join('');
+    return world.cities.map(function(c){
+      var current=c.name===state.city,selected=c.id===routeTarget,pos=schematicLayout[c.id]||[5,4],status=current?'Ты здесь':(selected?'Куда едем':'Выбрать');
+      return '<button type="button" class="world-map-city '+(current?'current ':'')+(selected?'selected':'')+'" style="--map-row:'+pos[0]+';--map-col:'+pos[1]+'" onclick="openCityRoute(\''+c.id+'\')" aria-label="Построить маршрут: '+esc(c.name)+'"><span class="world-map-pin">'+String(world.cities.indexOf(c)+1).padStart(2,'0')+'</span><span class="world-map-city-copy"><b>'+esc(c.name)+'</b><small>'+status+' · '+c.regions.join('/')+'</small></span></button>';
+    }).join('');
   }
   function routeSelector(){
     var current=city(state.city),target=city(routeTarget);
     return '<section class="world-route-selector"><div class="world-route-selector-head"><div><small>ПЛАНИРОВЩИК ПОЕЗДКИ</small><b>Куда отправимся?</b></div><span>20 направлений</span></div><div class="world-route-fields"><div><small>ОТКУДА</small><b>'+esc(current.name)+'</b></div><i>→</i><label><small>КУДА</small><select aria-label="Выбрать город назначения" onchange="openCityRoute(this.value)">'+world.cities.map(function(c){return '<option value="'+c.id+'" '+(c.id===target.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select></label></div></section>';
   }
-  function routeLine(){
-    var from=city(state.city),to=city(routeTarget);if(from.id===to.id)return '';
-    return '<svg class="world-route-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="'+from.x+'" y1="'+from.y+'" x2="'+to.x+'" y2="'+to.y+'"></line></svg>';
+  function staticMiniMap(){
+    var from=city(state.city),to=city(routeTarget),same=from.id===to.id;
+    return '<section class="world-static-map"><div class="world-static-map-head"><div><small>СТАТИЧНАЯ СХЕМА</small><b>Города России</b></div><span>20 точек</span></div><div class="world-static-route"><span><small>СТАРТ</small><b>'+esc(from.name)+'</b></span><i>→</i><span><small>'+(same?'ТЕКУЩАЯ ТОЧКА':'НАЗНАЧЕНИЕ')+'</small><b>'+esc(to.name)+'</b></span></div><div class="world-static-grid">'+mapNodes()+'</div><div class="world-static-map-foot"><span><i class="current"></i>Ты здесь</span><span><i class="selected"></i>Выбранный город</span><small>Нажми на любую карточку</small></div></section>';
   }
   function cityDirectory(){
     return '<section class="world-city-directory"><div class="world-city-directory-title"><div><small>ВСЕ НАПРАВЛЕНИЯ</small><b>Выбери город</b></div><span>'+world.cities.length+' городов</span></div><div class="world-city-directory-grid">'+world.cities.map(function(c){var current=c.name===state.city,selected=c.id===routeTarget;return '<button type="button" class="world-city-choice '+(current?'current ':'')+(selected?'selected':'')+'" onclick="openCityRoute(\''+c.id+'\')"><i></i><span><b>'+esc(c.name)+'</b><small>'+(current?'Ты здесь':'Построить маршрут')+'</small></span><strong>›</strong></button>';}).join('')+'</div></section>';
@@ -48,14 +51,10 @@
   function renderMap(target){
     var current=city(state.city);routeTarget=target||routeTarget||current.id;
     render('<div class="app world-app">'+head('Карта России')+
-      '<section class="world-summary"><div><small>ТЕКУЩИЙ ГОРОД</small><h2>'+esc(current.name)+'</h2><p>Выбери направление любым удобным способом.</p></div><span>20<small>городов</small></span></section>'+routeSelector()+
-      '<div class="world-map-scroll" onscroll="rememberWorldMapScroll(this.scrollLeft)"><div class="world-map"><div class="world-map-brand"><b>РОССИЯ</b><small>СЕТЬ МАРШРУТОВ</small></div><div class="world-map-legend"><span class="here">текущий</span><span class="target">назначение</span></div><div class="world-land"></div>'+routeLine()+mapNodes()+'</div></div>'+
-      '<div class="world-map-hint">← Проводи по карте, чтобы увидеть всю Россию →</div>'+routePanel(routeTarget)+cityDirectory()+'</div>');
-    restoreMapScroll();
+      '<section class="world-summary"><div><small>ТЕКУЩИЙ ГОРОД</small><h2>'+esc(current.name)+'</h2><p>Выбери направление любым удобным способом.</p></div><span>20<small>городов</small></span></section>'+routeSelector()+staticMiniMap()+routePanel(routeTarget)+cityDirectory()+'</div>');
   }
-  window.rememberWorldMapScroll=function(value){mapScrollLeft=Math.max(0,Number(value)||0);};
   window.mapApp=function(){routeTarget=city(state.city).id;renderMap(routeTarget);};
-  window.openCityRoute=function(id){captureMapScroll();routeTarget=city(id).id;renderMap(routeTarget);};
+  window.openCityRoute=function(id){routeTarget=city(id).id;renderMap(routeTarget);};
   window.confirmWorldTrip=function(cityId,transportId){
     var from=city(state.city),to=city(cityId),transport=world.transports.find(function(t){return t.id===transportId;});
     if(!transport||from.id===to.id)return mapApp();
