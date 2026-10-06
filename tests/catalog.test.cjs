@@ -39,6 +39,14 @@ test('fresh market has 50 active and 50 reserve listings in every supported city
  assert.ok(JSON.stringify(g.saved()).length<4500000,'market save must fit normal browser storage limits');
  for(const t of g.c.carCatalogExtra){const car=g.c.createMarketListing(t);assert.equal(car.photoUrl,t.photoUrl);assert.equal(car.body,t.body);assert.ok(car.year>=t.yearMin&&car.year<=t.yearMax);assert.ok(Number.isFinite(car.price));}
 });
+test('cheap feed starts with different models and different photographs',()=>{
+ const g=game();
+ const first=g.run("diversifyMarketModels(makes.filter(c=>c.marketActive!==false).sort((a,b)=>a.price-b.price)).slice(0,8)");
+ assert.equal(new Set(first.map(c=>c.name)).size,8);
+ assert.equal(new Set(first.map(c=>c.photoUrl)).size,8);
+ const budget=new Map(g.c.carCatalogExtra.map(c=>[c.name,c.market]));
+ for(const name of ['Fiat Punto I','Fiat Punto II','Renault Clio II','Opel Vectra B','Opel Corsa C','Opel Astra G'])assert.ok(budget.get(name)<=170000,name+' must stay in the starter price tier');
+});
 test('migration keeps money, owned cars, favourite identity and diagnostics while growing the market',()=>{
  const first=game();const saved=first.saved();saved.marketListings=saved.marketListings.slice(0,36);saved.marketListingsVersion=3;
  saved.marketFavorites=[saved.marketListings[0].listingId];saved.marketListings[0].marketFlipCondition={healthy:false,name:'Двигатель',loss:.35,cost:20000};saved.marketListings[0].marketConditionVersion=2;saved.money=123456;
