@@ -13,6 +13,8 @@ function game(saved,animate=false){
 }
 test('all case probability tables total 100%',()=>{
   const g=game();for(const box of g.c.plateSystem.cases){const total=box.weights.reduce((s,x)=>s+x[1],0);assert.equal(total,100,box.id);}
+  assert.equal(g.c.plateSystem.cases.find(x=>x.id==='collector').level,8);
+  assert.equal(g.c.plateSystem.cases.find(x=>x.id==='legend').level,10);
 });
 test('roll respects case probability boundaries',()=>{
   const g=game(),weights=g.c.plateSystem.cases[4].weights;
@@ -35,11 +37,12 @@ test('selling returns exactly the configured rarity value',()=>{
 });
 test('case opening renders animation before revealing the won plate',()=>{
   const g=game(undefined,true);g.c.plates();g.c.openPlateCase('standard');assert.match(g.html(),/ОТКРЫВАЕМ/);assert.match(g.html(),/Пропустить анимацию/);
-  g.runTimer();assert.match(g.html(),/НОВЫЙ НОМЕР/);g.c.finishPlateOpening();assert.match(g.html(),/Коллекция/);
+  g.runTimer();assert.match(g.html(),/Лента замедляется/);assert.match(g.html(),/number-reel/);
+  g.runTimer();assert.match(g.html(),/НОВЫЙ НОМЕР/);assert.match(g.html(),/plate-main/);assert.match(g.html(),/plate-region/);g.c.finishPlateOpening();assert.match(g.html(),/Коллекция/);
 });
 test('collection supports favorites, filters and a sale confirmation sheet',()=>{
   const g=game({money:0,garageLevel:1,plates:{items:[{id:'one',number:'А111МР',region:{code:'77',city:'Москва',country:'Россия'},rarity:'secret',value:500000,createdAt:1}],nextId:2}});
   g.c.plates();g.c.setPlateTab('collection');g.c.favoritePlate('one');assert.equal(g.c.state.plates.items[0].favorite,true);
-  g.c.setPlateFilter('favorites');assert.match(g.html(),/А111МР/);g.c.confirmPlateSale('one');assert.match(g.html(),/ПРОДАЖА НОМЕРА/);
+  g.c.setPlateFilter('favorites');assert.match(g.html(),/plate-main/);assert.match(g.html(),/<strong>111<\/strong>/);g.c.confirmPlateSale('one');assert.match(g.html(),/ПРОДАЖА НОМЕРА/);
   g.c.cancelPlateSale();assert.doesNotMatch(g.html(),/ПРОДАЖА НОМЕРА/);
 });
