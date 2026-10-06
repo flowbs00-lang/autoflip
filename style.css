@@ -839,27 +839,6 @@ button[disabled]{cursor:default}
   border-radius:11px;
 }
 
-#v79MarketRefresh{
-  margin:7px 0 10px!important;
-  border:1px solid #dfe9f2!important;
-  border-radius:13px!important;
-  background:linear-gradient(145deg,#fff,#f7fbfe)!important;
-  box-shadow:0 5px 15px rgba(51,73,91,.06)!important;
-}
-#v79MarketRefresh>.row{
-  margin:0;
-  padding:2px;
-  border:0;
-  background:transparent;
-  box-shadow:none;
-}
-#v79MarketRefresh .action{
-  min-height:31px;
-  border-color:#d8e6f2;
-  background:#eef6ff;
-  color:#216dcc;
-}
-
 .auto-market-list{display:block}
 .auto-market-card{
   padding:8px;
