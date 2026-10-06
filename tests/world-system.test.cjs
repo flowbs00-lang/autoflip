@@ -32,3 +32,13 @@ test('trip charges money, advances time and switches city market',()=>{
   g.c.confirmWorldTrip('kirov','train');
   assert.equal(g.c.state.city,'Киров');assert.equal(g.c.state.marketCityFilter,'Киров');assert.ok(g.c.state.money<before);assert.ok(g.advanced()>0);assert.equal(g.c.state.travelHistory.length,1);
 });
+
+test('map exposes a working directory button for every city',()=>{
+  const g=worldGame();g.c.mapApp();
+  for(const city of g.c.autoFlipWorld.cities){
+    assert.match(g.html(),new RegExp("openCityRoute\\('"+city.id+"'\\)"));
+    g.c.openCityRoute(city.id);
+    assert.match(g.html(),new RegExp('world-city-choice [^"\\n]*selected'));
+    assert.match(g.html(),new RegExp(city.name));
+  }
+});
