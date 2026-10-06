@@ -22,6 +22,14 @@
   function mapNodes(){
     return world.cities.map(function(c){var current=c.name===state.city,selected=c.id===routeTarget;return '<button type="button" class="world-city '+(current?'current ':'')+(selected?'selected':'')+'" style="--x:'+c.x+'%;--y:'+c.y+'%" onclick="openCityRoute(\''+c.id+'\')" aria-label="Построить маршрут: '+esc(c.name)+'"><i></i><span>'+esc(c.name)+'</span></button>';}).join('');
   }
+  function routeSelector(){
+    var current=city(state.city),target=city(routeTarget);
+    return '<section class="world-route-selector"><div class="world-route-selector-head"><div><small>ПЛАНИРОВЩИК ПОЕЗДКИ</small><b>Куда отправимся?</b></div><span>20 направлений</span></div><div class="world-route-fields"><div><small>ОТКУДА</small><b>'+esc(current.name)+'</b></div><i>→</i><label><small>КУДА</small><select aria-label="Выбрать город назначения" onchange="openCityRoute(this.value)">'+world.cities.map(function(c){return '<option value="'+c.id+'" '+(c.id===target.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select></label></div></section>';
+  }
+  function routeLine(){
+    var from=city(state.city),to=city(routeTarget);if(from.id===to.id)return '';
+    return '<svg class="world-route-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="'+from.x+'" y1="'+from.y+'" x2="'+to.x+'" y2="'+to.y+'"></line></svg>';
+  }
   function cityDirectory(){
     return '<section class="world-city-directory"><div class="world-city-directory-title"><div><small>ВСЕ НАПРАВЛЕНИЯ</small><b>Выбери город</b></div><span>'+world.cities.length+' городов</span></div><div class="world-city-directory-grid">'+world.cities.map(function(c){var current=c.name===state.city,selected=c.id===routeTarget;return '<button type="button" class="world-city-choice '+(current?'current ':'')+(selected?'selected':'')+'" onclick="openCityRoute(\''+c.id+'\')"><i></i><span><b>'+esc(c.name)+'</b><small>'+(current?'Ты здесь':'Построить маршрут')+'</small></span><strong>›</strong></button>';}).join('')+'</div></section>';
   }
@@ -34,8 +42,8 @@
   function renderMap(target){
     var current=city(state.city);routeTarget=target||routeTarget||current.id;
     render('<div class="app world-app">'+head('Карта России')+
-      '<section class="world-summary"><div><small>ТЕКУЩИЙ ГОРОД</small><h2>'+esc(current.name)+'</h2><p>Выбери точку на карте и способ поездки.</p></div><span>20<small>городов</small></span></section>'+
-      '<div class="world-map-scroll" onscroll="rememberWorldMapScroll(this.scrollLeft)"><div class="world-map"><div class="world-land"></div><div class="world-route-line"></div>'+mapNodes()+'</div></div>'+
+      '<section class="world-summary"><div><small>ТЕКУЩИЙ ГОРОД</small><h2>'+esc(current.name)+'</h2><p>Выбери направление любым удобным способом.</p></div><span>20<small>городов</small></span></section>'+routeSelector()+
+      '<div class="world-map-scroll" onscroll="rememberWorldMapScroll(this.scrollLeft)"><div class="world-map"><div class="world-land"></div>'+routeLine()+mapNodes()+'</div></div>'+
       '<div class="world-map-hint">← Проводи по карте, чтобы увидеть всю Россию →</div>'+routePanel(routeTarget)+cityDirectory()+'</div>');
     if(typeof document!=='undefined'&&document.querySelector){var scroller=document.querySelector('.world-map-scroll');if(scroller)scroller.scrollLeft=mapScrollLeft;}
   }
