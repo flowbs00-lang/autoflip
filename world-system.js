@@ -19,6 +19,12 @@
   }
   function duration(minutes){var d=Math.floor(minutes/1440),h=Math.floor(minutes%1440/60),m=minutes%60;return (d?d+' д ':'')+(h?h+' ч ':'')+(m?m+' мин':'');}
   function saveWorld(){if(typeof persist==='function')persist();else if(typeof save==='function')save();}
+  function captureMapScroll(){if(typeof document!=='undefined'&&document.querySelector){var el=document.querySelector('.world-map-scroll');if(el)mapScrollLeft=el.scrollLeft;}}
+  function restoreMapScroll(){
+    if(typeof document==='undefined'||!document.querySelector)return;
+    var apply=function(){var el=document.querySelector('.world-map-scroll');if(el)el.scrollLeft=mapScrollLeft;};
+    apply();if(typeof requestAnimationFrame==='function')requestAnimationFrame(apply);else if(typeof setTimeout==='function')setTimeout(apply,0);
+  }
   function mapNodes(){
     return world.cities.map(function(c){var current=c.name===state.city,selected=c.id===routeTarget;return '<button type="button" class="world-city '+(current?'current ':'')+(selected?'selected':'')+'" style="--x:'+c.x+'%;--y:'+c.y+'%" onclick="openCityRoute(\''+c.id+'\')" aria-label="Построить маршрут: '+esc(c.name)+'"><i></i><span>'+esc(c.name)+'</span></button>';}).join('');
   }
@@ -43,13 +49,13 @@
     var current=city(state.city);routeTarget=target||routeTarget||current.id;
     render('<div class="app world-app">'+head('Карта России')+
       '<section class="world-summary"><div><small>ТЕКУЩИЙ ГОРОД</small><h2>'+esc(current.name)+'</h2><p>Выбери направление любым удобным способом.</p></div><span>20<small>городов</small></span></section>'+routeSelector()+
-      '<div class="world-map-scroll" onscroll="rememberWorldMapScroll(this.scrollLeft)"><div class="world-map"><div class="world-land"></div>'+routeLine()+mapNodes()+'</div></div>'+
+      '<div class="world-map-scroll" onscroll="rememberWorldMapScroll(this.scrollLeft)"><div class="world-map"><div class="world-map-brand"><b>РОССИЯ</b><small>СЕТЬ МАРШРУТОВ</small></div><div class="world-map-legend"><span class="here">текущий</span><span class="target">назначение</span></div><div class="world-land"></div>'+routeLine()+mapNodes()+'</div></div>'+
       '<div class="world-map-hint">← Проводи по карте, чтобы увидеть всю Россию →</div>'+routePanel(routeTarget)+cityDirectory()+'</div>');
-    if(typeof document!=='undefined'&&document.querySelector){var scroller=document.querySelector('.world-map-scroll');if(scroller)scroller.scrollLeft=mapScrollLeft;}
+    restoreMapScroll();
   }
   window.rememberWorldMapScroll=function(value){mapScrollLeft=Math.max(0,Number(value)||0);};
   window.mapApp=function(){routeTarget=city(state.city).id;renderMap(routeTarget);};
-  window.openCityRoute=function(id){routeTarget=city(id).id;renderMap(routeTarget);};
+  window.openCityRoute=function(id){captureMapScroll();routeTarget=city(id).id;renderMap(routeTarget);};
   window.confirmWorldTrip=function(cityId,transportId){
     var from=city(state.city),to=city(cityId),transport=world.transports.find(function(t){return t.id===transportId;});
     if(!transport||from.id===to.id)return mapApp();
