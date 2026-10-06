@@ -6,7 +6,7 @@ var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return
 var marketListingsPerCity=100;
 var marketActivePerCity=50;
 var marketTargetSize=cities.length*marketListingsPerCity;
-var marketCatalogVersion=8;
+var marketCatalogVersion=9;
 var marketStarterPerCity=10;
 var marketRestorationTemplates=[
  {name:'ВАЗ 2101 · проект',year:1984,km:286000,body:'Седан',risk:'сквозная коррозия кузова',repair:32000,photo:'Abandoned Car (88134285).jpeg',damage:'Сквозная коррозия, повреждён кузов',credit:'Wikimedia Commons · CC license'},
@@ -258,7 +258,17 @@ function createStarterListing(template,city,slot){
  fresh.photoCredit=template.photoCredit;fresh.photoSource=template.photoSource;fresh.damageSummary=template.damage;
  fresh.starterOffer=true;fresh.restorationProject=true;fresh.starterVersion=2;
  fresh.condition=.58;fresh.conditionLabel='Под восстановление';
- return fresh;
+ return balanceRestorationProject(fresh);
+}
+function balanceRestorationProject(car){
+ if(!car||!car.restorationProject)return car;
+ var index=Math.max(0,marketRestorationTemplates.findIndex(function(x){return x.name===car.name;}));
+ var ask=Math.max(40000,Math.min(80000,Number(car.basePrice||car.price||50000))),markup=.12+(index%4)*.02;
+ car.price=ask;car.basePrice=ask;car.repair=2000+(index%3)*500;
+ car.market=marketRound(ask*(1+markup));car.sale=car.market;car.restorationBalanceVersion=2;
+ if(car.marketFlipCondition&&!car.marketFlipCondition.healthy){car.marketFlipCondition.name=car.risk;car.marketFlipCondition.cost=car.repair;car.marketFlipCondition.healthyMarket=car.market;car.marketFlipCondition.loss=car.repair/car.market;}
+ if(car.prePurchaseDiagnostic&&car.prePurchaseDiagnostic.found){car.prePurchaseDiagnostic.faultName=car.risk;car.prePurchaseDiagnostic.faultCost=car.repair;car.prePurchaseDiagnostic.loss=car.repair/car.market;}
+ return car;
 }
 function ensureCityStarterListings(list,city,cityCars){
  var desired=starterTemplatesForCity(city),favorites=new Set(Array.isArray(state.marketFavorites)?state.marketFavorites:[]),inspections=state.marketInspections||{};
@@ -306,7 +316,7 @@ function ensureMarketListingMeta(car,index){
  if(car.restorationProject&&car.photo)car.photoUrl=commons(car.photo);
  else if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion)car.photoUrl=marketPhotoFor(car,variant);
  if(Number(state.marketPhotoColorCatalogVersion||0)<marketPhotoColorCatalogVersion)car.color=marketColorFor(car,variant);
- return car;
+ return balanceRestorationProject(car);
 }
 function marketAgeText(car){
  var now=(typeof gameTotal==='function'?gameTotal():marketNowStored()),mins=Math.max(0,Math.floor(now-Number(car.postedAt||now)));
