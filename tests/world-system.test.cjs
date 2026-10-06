@@ -5,6 +5,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 const data=fs.readFileSync(path.join(__dirname,'../world-data.js'),'utf8');
 const system=fs.readFileSync(path.join(__dirname,'../world-system.js'),'utf8');
+const styles=fs.readFileSync(path.join(__dirname,'../world-fixes.css'),'utf8');
 
 function worldGame(){
   let html='',advanced=0;
@@ -42,4 +43,11 @@ test('map exposes a working directory button for every city',()=>{
     assert.match(g.html(),new RegExp('world-city-choice [^"\\n]*selected'));
     assert.match(g.html(),new RegExp(city.name));
   }
+});
+
+test('minimap markers stay fixed while rerender preserves scroll position',()=>{
+  assert.match(system,/captureMapScroll\(\);routeTarget=/);
+  assert.match(system,/requestAnimationFrame\(apply\)/);
+  assert.match(styles,/Stable schematic minimap/);
+  assert.match(styles,/\.world-city i,[\s\S]*?transform: none;/);
 });
