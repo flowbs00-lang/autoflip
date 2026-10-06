@@ -14,8 +14,8 @@
     {id:'standard',name:'Обычный кейс',price:3000,level:1,weights:[['ordinary',70],['unusual',25],['rare',5]]},
     {id:'rare',name:'Редкий кейс',price:10000,level:3,weights:[['ordinary',45],['unusual',38],['rare',14],['ultra',3]]},
     {id:'secret',name:'Тайный кейс',price:30000,level:6,weights:[['ordinary',25],['unusual',38],['rare',27],['ultra',9],['secret',1]]},
-    {id:'collector',name:'Коллекционный кейс',price:70000,level:10,weights:[['ordinary',10],['unusual',30],['rare',35],['ultra',20],['secret',5]]},
-    {id:'legend',name:'Легендарный кейс',price:150000,level:15,weights:[['ordinary',5],['unusual',20],['rare',35],['ultra',28],['secret',11.9],['priceless',.1]]}
+    {id:'collector',name:'Коллекционный кейс',price:70000,level:8,weights:[['ordinary',10],['unusual',30],['rare',35],['ultra',20],['secret',5]]},
+    {id:'legend',name:'Легендарный кейс',price:150000,level:10,weights:[['ordinary',5],['unusual',20],['rare',35],['ultra',28],['secret',11.9],['priceless',.1]]}
   ];
   const REGIONS=[
     ['77','Москва','Россия'],['78','Санкт-Петербург','Россия'],['16','Казань','Россия'],['54','Новосибирск','Россия'],['66','Екатеринбург','Россия'],['23','Краснодар','Россия'],['61','Ростов-на-Дону','Россия'],['02','Уфа','Россия'],
@@ -74,7 +74,11 @@
   }
   function escape(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   let activeTab='cases',filter='all',sort='new',opening=null,lastCase='standard',notice='';
-  function plateFace(p,large){const country={Россия:'RUS',Беларусь:'BY',Казахстан:'KZ',Узбекистан:'UZ',Кыргызстан:'KG',Таджикистан:'TJ',Армения:'AM',Азербайджан:'AZ',Молдова:'MD'}[p.region.country]||'';return '<div class="plate-face plate-'+p.rarity+(large?' large':'')+'"><b>'+escape(p.number)+'</b><i>'+escape(p.region.code)+'</i><small>'+country+'</small></div>';}
+  function plateFace(p,large){
+    const countries={Россия:['RUS','🇷🇺'],Беларусь:['BY','🇧🇾'],Казахстан:['KZ','🇰🇿'],Узбекистан:['UZ','🇺🇿'],Кыргызстан:['KG','🇰🇬'],Таджикистан:['TJ','🇹🇯'],Армения:['AM','🇦🇲'],Азербайджан:['AZ','🇦🇿'],Молдова:['MD','🇲🇩']},country=countries[p.region.country]||['',''];
+    const match=String(p.number).match(/^([^\d])(\d{3})([^\d]{2})$/),number=match?'<em>'+escape(match[1])+'</em><strong>'+match[2]+'</strong><em>'+escape(match[3])+'</em>':'<strong>'+escape(p.number)+'</strong>';
+    return '<div class="plate-face plate-'+p.rarity+(large?' large':'')+'"><span class="plate-main">'+number+'</span><span class="plate-region"><i>'+escape(p.region.code)+'</i><small>'+country[0]+' <em>'+country[1]+'</em></small></span><u aria-hidden="true"></u><u aria-hidden="true"></u></div>';
+  }
   function chanceText(c){return c.weights.map(function(w){return RARITIES[w[0]].title+' '+String(w[1]).replace('.',',')+'%';}).join(' · ');}
   function caseCard(c){
     const locked=currentGarageLevel()<c.level,canPay=Number(state.money||0)>=c.price;
@@ -98,10 +102,13 @@
     render('<div class="app plates-app">'+title+dashboard(items,total)+tabs(items)+'<main class="plate-content">'+(activeTab==='cases'?casesView():collectionView(items))+'</main>'+toast+saleSheet(items)+'</div>');
   }
   function openingScreen(c,p,phase){
-    const reveal=phase==='reveal';
+    const reveal=phase==='reveal',rolling=phase==='rolling';
     const canRepeat=Number(state.money||0)>=c.price;
-    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':'<small>ОТКРЫВАЕМ</small><div class="animated-case '+p.rarity+'"><span>▱</span><i>✦</i></div><h2>'+c.name+'</h2><p>Определяем редкость номера…</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>')+'</section></div>');
+    const reel='<div class="number-reel"><i></i><div class="reel-track"><span>А462ВР</span><span>Е213ТТ</span><span>Н303ВВ</span><span>А070ВА</span><span>Е222КХ</span><span>О777ОО</span><span>А551ВА</span></div></div>';
+    const process='<small>'+(rolling?'КЕЙС ОТКРЫТ':'ОТКРЫВАЕМ КЕЙС')+'</small><div class="case-machine '+(rolling?'is-open':'')+' '+p.rarity+'"><div class="case-lid">AUTOFLIP</div><div class="case-core">✦</div><div class="case-base"></div></div>'+(rolling?reel:'<div class="opening-progress"><i></i></div>')+'<h2>'+(rolling?'Ищем твой номер':c.name)+'</h2><p>'+(rolling?'Лента замедляется…':'Снимаем защиту и открываем замки…')+'</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>';
+    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
   }
+  function clearOpeningTimers(){if(!opening)return;if(opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);if(opening.revealTimer&&typeof clearTimeout==='function')clearTimeout(opening.revealTimer);}
   window.plates=function(){opening=null;renderPlates();};
   window.setPlateTab=function(tab){activeTab=tab==='collection'?'collection':'cases';opening=null;renderPlates();};
   window.setPlateFilter=function(value){filter=value;renderPlates();};
@@ -113,15 +120,16 @@
     const c=CASES.filter(function(x){return x.id===id;})[0];if(!c)return;
     if(currentGarageLevel()<c.level){alert('Этот кейс откроется на '+c.level+' уровне гаража. Уровни будут добавлены в следующем обновлении.');return;}
     if(Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}
-    if(opening&&opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);
+    clearOpeningTimers();
     const rarity=rollPlateRarity(c.weights),p=makePlate(rarity),collection=ensure();lastCase=c.id;
     state.money=Number(state.money||0)-c.price;collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;persistPlates();
     if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','✦','Открыт '+c.name+': '+RARITIES[rarity].title+' номер.','plates','plate-'+p.id);
     opening={type:'case',caseId:c.id,plateId:p.id};openingScreen(c,p,'opening');
-    if(typeof setTimeout==='function')opening.timer=setTimeout(function(){revealPlateOpening();},1900);else revealPlateOpening();
+    if(typeof setTimeout==='function')opening.timer=setTimeout(function(){startPlateRoll();},850);else revealPlateOpening();
   };
-  window.revealPlateOpening=function(){if(!opening||opening.type!=='case')return;const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'reveal');};
-  window.finishPlateOpening=function(){if(opening&&opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);opening=null;activeTab='collection';filter='all';renderPlates();};
+  window.startPlateRoll=function(){if(!opening||opening.type!=='case')return;const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'rolling');if(typeof setTimeout==='function')opening.revealTimer=setTimeout(function(){revealPlateOpening();},2100);else revealPlateOpening();};
+  window.revealPlateOpening=function(){if(!opening||opening.type!=='case')return;clearOpeningTimers();const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'reveal');};
+  window.finishPlateOpening=function(){clearOpeningTimers();opening=null;activeTab='collection';filter='all';renderPlates();};
   window.sellPlate=function(id){
     const collection=ensure(),index=collection.items.findIndex(function(p){return p.id===id;});if(index<0)return;
     const p=collection.items[index];state.money=Number(state.money||0)+Number(p.value||0);collection.items.splice(index,1);opening=null;notice='Номер продан за '+formatMoney(p.value);persistPlates();
