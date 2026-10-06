@@ -17,18 +17,8 @@
     {id:'collector',name:'Коллекционный кейс',price:70000,level:8,weights:[['ordinary',10],['unusual',30],['rare',35],['ultra',20],['secret',5]]},
     {id:'legend',name:'Легендарный кейс',price:150000,level:10,weights:[['ordinary',5],['unusual',20],['rare',35],['ultra',28],['secret',11.9],['priceless',.1]]}
   ];
-  const REGIONS=[
-    ['01','Майкоп','Россия'],['02','Уфа','Россия'],['03','Улан-Удэ','Россия'],['04','Горно-Алтайск','Россия'],['05','Махачкала','Россия'],['06','Магас','Россия'],['07','Нальчик','Россия'],['08','Элиста','Россия'],['09','Черкесск','Россия'],['10','Петрозаводск','Россия'],
-    ['11','Сыктывкар','Россия'],['12','Йошкар-Ола','Россия'],['13','Саранск','Россия'],['14','Якутск','Россия'],['15','Владикавказ','Россия'],['16','Казань','Россия'],['17','Кызыл','Россия'],['18','Ижевск','Россия'],['19','Абакан','Россия'],['20','Грозный','Россия'],
-    ['21','Чебоксары','Россия'],['22','Барнаул','Россия'],['23','Краснодар','Россия'],['24','Красноярск','Россия'],['25','Владивосток','Россия'],['26','Ставрополь','Россия'],['27','Хабаровск','Россия'],['28','Благовещенск','Россия'],['29','Архангельск','Россия'],['30','Астрахань','Россия'],
-    ['31','Белгород','Россия'],['32','Брянск','Россия'],['33','Владимир','Россия'],['34','Волгоград','Россия'],['35','Вологда','Россия'],['36','Воронеж','Россия'],['37','Иваново','Россия'],['38','Иркутск','Россия'],['39','Калининград','Россия'],['40','Калуга','Россия'],
-    ['41','Петропавловск-Камчатский','Россия'],['42','Кемерово','Россия'],['43','Киров','Россия'],['44','Кострома','Россия'],['45','Курган','Россия'],['46','Курск','Россия'],['47','Гатчина','Россия'],['48','Липецк','Россия'],['49','Магадан','Россия'],['50','Красногорск','Россия'],
-    ['51','Мурманск','Россия'],['52','Нижний Новгород','Россия'],['53','Великий Новгород','Россия'],['54','Новосибирск','Россия'],['55','Омск','Россия'],['56','Оренбург','Россия'],['57','Орёл','Россия'],['58','Пенза','Россия'],['59','Пермь','Россия'],['60','Псков','Россия'],
-    ['61','Ростов-на-Дону','Россия'],['62','Рязань','Россия'],['63','Самара','Россия'],['64','Саратов','Россия'],['65','Южно-Сахалинск','Россия'],['66','Екатеринбург','Россия'],['67','Смоленск','Россия'],['68','Тамбов','Россия'],['69','Тверь','Россия'],['70','Томск','Россия'],
-    ['71','Тула','Россия'],['72','Тюмень','Россия'],['73','Ульяновск','Россия'],['74','Челябинск','Россия'],['75','Чита','Россия'],['76','Ярославль','Россия'],['77','Москва','Россия'],['78','Санкт-Петербург','Россия'],['79','Биробиджан','Россия'],['80','Донецк','Россия'],
-    ['81','Луганск','Россия'],['82','Симферополь','Россия'],['83','Нарьян-Мар','Россия'],['84','Херсон','Россия'],['85','Мелитополь','Россия'],['86','Ханты-Мансийск','Россия'],['87','Анадырь','Россия'],['89','Салехард','Россия'],['92','Севастополь','Россия'],['94','Байконур','Россия']
-  ];
-  const PRICELESS=[['А777МР','777'],['Е777КХ','777'],['А777АА','777'],['В777ОР','777'],['О777ОО','777']];
+  const REGIONS=(window.AUTOFLIP_WORLD&&window.AUTOFLIP_WORLD.cities||[]).flatMap(function(city){return city.regions.map(function(code){return [code,city.name,'Россия'];});});
+  const PRICELESS=['А777МР','Е777КХ','А777АА','В777ОР','О777ОО'];
   function rnd(n){return Math.floor(Math.random()*n);}
   function pick(a){return a[rnd(a.length)];}
   function letter(except){let value=pick(LETTERS);while(except&&except.indexOf(value)>=0)value=pick(LETTERS);return value;}
@@ -39,7 +29,8 @@
     if(typeof state==='undefined'||!state)throw new Error('Игровое состояние ещё не загружено');
     if(!state.plates||typeof state.plates!=='object')state.plates={items:[],nextId:1};
     if(!Array.isArray(state.plates.items))state.plates.items=[];
-    state.plates.items.forEach(function(p){if(p&&p.number)p.number=String(p.number).toUpperCase();});
+    const allowed=new Set(REGIONS.map(function(r){return r[0];}));
+    state.plates.items.forEach(function(p,index){if(!p)return;if(p.number)p.number=String(p.number).toUpperCase();if(!p.region||!allowed.has(String(p.region.code))){let r=REGIONS[index%REGIONS.length];p.region={code:r[0],city:r[1],country:r[2]};}});
     if(!Number.isFinite(Number(state.plates.nextId)))state.plates.nextId=1;
     return state.plates;
   }
@@ -69,7 +60,7 @@
       if(Math.random()<.55){a=pick(['А','Е']);return {number:a+d+(a==='Е'?'КХ':'МР')};}
       a=letter();return {number:a+d+a+a};
     }
-    const fixed=pick(PRICELESS);return {number:fixed[0],region:{code:fixed[1],city:'Москва',country:'Россия'}};
+    return {number:pick(PRICELESS)};
   }
   function makePlate(rarity){
     const base=plateBase(rarity),r=base.region||region();
@@ -113,7 +104,7 @@
   function openingScreen(c,p,phase){
     const reveal=phase==='reveal',rolling=phase==='rolling';
     const canRepeat=Number(state.money||0)>=c.price;
-    const samples=['Т462ВР 77','Р684УО 78','Е213ТТ 43','А338КК 16','Н303ВВ 54','А070ВА 66','Е114КХ 77','Т333ТТ 23','В444ВВ 61','О554РО 02'];
+    const samples=['Т462ВР 77','Р684УО 78','Е213ТТ 43','А338КК 16','Н303ВВ 52','А070ВА 66','Е114КХ 97','Т333ТТ 23','В444ВВ 61','О554РО 02'];
     const reel='<div class="number-reel"><i></i><div class="reel-track">'+samples.map(x=>'<span>'+x+'</span>').join('')+'<span class="winning-number">'+escape(fullPlateText(p))+'</span></div></div>';
     const process='<small>'+(rolling?'КЕЙС ОТКРЫТ':'ОТКРЫВАЕМ КЕЙС')+'</small><div class="case-machine '+(rolling?'is-open':'')+' '+p.rarity+'"><div class="case-lid">AUTOFLIP</div><div class="case-core">✦</div><div class="case-base"></div></div>'+(rolling?reel:'<div class="opening-progress"><i></i></div>')+'<h2>'+(rolling?'Ищем твой номер':c.name)+'</h2><p>'+(rolling?'Лента замедляется…':'Снимаем защиту и открываем замки…')+'</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>';
     render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
