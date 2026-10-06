@@ -229,12 +229,12 @@ function market(filter='all',page=0){
  const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
  render(`<div class="app">${head('Объявления')}
    <section class="auto-market-hero">
-     <div class="auto-market-hero-copy"><small>AUTOMARKET · LIVE</small><h3>Рынок автомобилей</h3><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p></div>
+     <div class="auto-market-hero-copy"><small>AUTOMARKET · LIVE</small><h3>Рынок автомобилей</h3><div class="auto-market-refresh-line"><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p><span id="autoMarketCountdown">До обновления —</span></div></div>
      <div class="auto-market-wallet"><span>Свободные деньги</span><b>${money(state.money)}</b></div>
    </section>
    <div class="auto-market-stats">
      <div><b>${arr.length}</b><span>объявлений</span></div>
-     <div><b>${garageCount}/3</b><span>в гараже</span></div>
+     <div><b>${garageCount}/${typeof window.garageCapacity==='function'?window.garageCapacity():2}</b><span>в гараже</span></div>
      <div><b>${Number(state.rep||0)}</b><span>репутация</span></div>
    </div>
    <div class="market-search-box">
