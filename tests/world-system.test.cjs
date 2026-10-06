@@ -35,6 +35,7 @@ test('trip charges money, advances time and switches city market',()=>{
 
 test('map exposes a working directory button for every city',()=>{
   const g=worldGame();g.c.mapApp();
+  assert.match(g.html(),/ПЛАНИРОВЩИК ПОЕЗДКИ/);assert.match(g.html(),/<select[^>]+onchange="openCityRoute\(this.value\)"/);
   for(const city of g.c.autoFlipWorld.cities){
     assert.match(g.html(),new RegExp("openCityRoute\\('"+city.id+"'\\)"));
     g.c.openCityRoute(city.id);
