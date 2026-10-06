@@ -1,0 +1,117 @@
+/* Map interaction fixes: larger hit areas, preserved horizontal canvas and a full city list. */
+.world-map-scroll {
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+.world-map { width: 960px; }
+.world-city {
+  min-width: 44px;
+  min-height: 36px;
+  padding: 5px;
+  cursor: pointer;
+}
+.world-city span {
+  background: #08121bdc;
+  pointer-events: none;
+}
+.world-city:hover,
+.world-city:focus-visible,
+.world-city.selected { z-index: 5; }
+.world-city.selected i {
+  background: #76e3bb;
+  border-color: #fff;
+  transform: scale(1.3);
+}
+.world-city.selected span {
+  background: #76e3bb;
+  color: #10281f;
+}
+.world-city-directory {
+  margin-top: 11px;
+  padding: 13px;
+  border: 1px solid var(--os-line);
+  border-radius: 18px;
+  background: var(--os-surface);
+  box-shadow: var(--os-shadow);
+}
+.world-city-directory-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.world-city-directory-title small {
+  display: block;
+  color: var(--os-muted);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.world-city-directory-title b {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+}
+.world-city-directory-title > span {
+  padding: 5px 8px;
+  border-radius: 9px;
+  background: var(--os-raised);
+  color: var(--os-muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+.world-city-directory-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.world-city-choice {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) 8px;
+  gap: 7px;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px;
+  border: 1px solid var(--os-line);
+  border-radius: 13px;
+  background: var(--os-raised);
+  color: var(--os-text);
+  text-align: left;
+  cursor: pointer;
+}
+.world-city-choice > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--os-muted);
+}
+.world-city-choice > span { min-width: 0; }
+.world-city-choice b,
+.world-city-choice small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-city-choice b { font-size: 8px; }
+.world-city-choice small {
+  margin-top: 2px;
+  color: var(--os-muted);
+  font-size: 6px;
+}
+.world-city-choice > strong {
+  color: var(--os-muted);
+  font-size: 14px;
+}
+.world-city-choice:hover,
+.world-city-choice:focus-visible,
+.world-city-choice.selected {
+  border-color: var(--os-accent);
+  background: color-mix(in srgb, var(--os-accent) 10%, var(--os-surface));
+}
+.world-city-choice.selected > i,
+.world-city-choice.current > i {
+  background: var(--os-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--os-accent) 18%, transparent);
+}
+.world-city-choice.current small { color: var(--os-accent); }
