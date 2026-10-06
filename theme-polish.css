@@ -1,0 +1,188 @@
+/* AutoFlip OS 2.1 — final semantic palette and contrast layer. */
+:root{
+  color-scheme:dark;
+  --os-bg:#0b111a;
+  --os-bg-soft:#0f1722;
+  --os-surface:#141d29;
+  --os-raised:#1c2836;
+  --os-elevated:#253446;
+  --os-text:#f2f6fb;
+  --os-muted:#a5b2c3;
+  --os-faint:#7f8da0;
+  --os-line:#304052;
+  --os-accent-ink:#102820;
+  --os-success:#55d99f;
+  --os-success-bg:#16352a;
+  --os-warning:#f2bf6b;
+  --os-warning-bg:#382b17;
+  --os-danger:#ff7b88;
+  --os-danger-bg:#3d2027;
+  --os-info:#80baff;
+  --os-info-bg:#182d45;
+  --os-shadow:0 12px 30px #00000030;
+}
+:root[data-theme=light]{
+  color-scheme:light;
+  --os-bg:#edf2f7;
+  --os-bg-soft:#f5f8fb;
+  --os-surface:#ffffff;
+  --os-raised:#e7edf4;
+  --os-elevated:#dce5ee;
+  --os-text:#152235;
+  --os-muted:#5d6d82;
+  --os-faint:#77869a;
+  --os-line:#cdd8e4;
+  --os-accent-ink:#102820;
+  --os-success:#147b58;
+  --os-success-bg:#dff5eb;
+  --os-warning:#8a5b0d;
+  --os-warning-bg:#fff0cf;
+  --os-danger:#b9394a;
+  --os-danger-bg:#ffe5e9;
+  --os-info:#226fc7;
+  --os-info-bg:#e1efff;
+  --os-shadow:0 12px 30px #304a6818;
+}
+
+/* Canvas, navigation and controls. */
+.phone #screen{background:var(--os-bg);color:var(--os-text)}
+#screen .app:not(.games-app):not(.opening-screen){
+  background:
+    radial-gradient(circle at 0 0,color-mix(in srgb,var(--os-accent) 9%,transparent),transparent 28%),
+    linear-gradient(180deg,var(--os-bg-soft),var(--os-bg));
+  color:var(--os-text);
+}
+#screen .os-head{border-color:var(--os-line)}
+#screen .os-head b,#screen .os-status{color:var(--os-text)}
+#screen .os-head button{background:var(--os-raised);border:1px solid var(--os-line);color:var(--os-text)}
+#screen .os-head button:hover{background:var(--os-elevated)}
+#screen .app:not(.games-app):not(.opening-screen) :is(h1,h2,h3,h4){color:var(--os-text)}
+#screen .app:not(.games-app):not(.opening-screen) :is(p,small,em){text-wrap:pretty}
+#screen .app :is(input,select,textarea){background:var(--os-raised)!important;color:var(--os-text)!important;border-color:var(--os-line)!important}
+#screen .app :is(input,textarea)::placeholder{color:var(--os-faint);opacity:1}
+#screen .app .action{min-height:42px;background:var(--os-raised);border-color:var(--os-line);color:var(--os-text)}
+#screen .app .action:hover:not(:disabled){background:var(--os-elevated)}
+#screen .app .action.green,#screen .app .filters .active,#screen .app .chip.active{background:var(--os-accent);border-color:var(--os-accent);color:var(--os-accent-ink)}
+#screen .app .action:disabled,#screen .app button:disabled{opacity:.48}
+#screen .app :is(.muted,.soft){color:var(--os-muted)!important}
+#screen .app :is(.profit,.market-good,.up){color:var(--os-success)!important}
+#screen .app :is(.market-bad,.down){color:var(--os-danger)!important}
+
+/* Shared legacy surfaces. */
+#screen .app :is(.note,.market,.setting,.contact,.row,.stat,.buyer,.event,.profile-card,.condition-card,.auto-market-hero,.auto-tab-intro,.auto-market-stats>div,.market-search-box,#v79MarketRefresh,.auto-sell-car){
+  background:var(--os-surface);
+  border-color:var(--os-line);
+  color:var(--os-text);
+  box-shadow:var(--os-shadow);
+}
+#screen .app :is(.note,.market,.setting,.contact,.row,.buyer,.event,.condition-card,.auto-sell-car) :is(b,strong,h3){color:var(--os-text)}
+#screen .app :is(.note,.market,.setting,.contact,.row,.buyer,.event,.condition-card,.auto-sell-car) :is(small,p,span){color:var(--os-muted)}
+#screen .app .hero-line{border-color:var(--os-line)}
+#screen .app .hero-line span{color:var(--os-muted)}
+#screen .app .hero-line strong{color:var(--os-text)}
+#screen .app .deal-score span{background:var(--os-raised);border-color:var(--os-line);color:var(--os-muted)}
+#screen .app .deal-score b{color:var(--os-text)}
+#screen .app .bar{background:var(--os-elevated)}
+#screen .app .bar i{background:var(--os-accent)}
+#screen .app .seller{background:var(--os-raised);color:var(--os-text)}
+#screen .app .you{background:var(--os-info-bg);color:var(--os-text);border:1px solid color-mix(in srgb,var(--os-info) 35%,var(--os-line))}
+#screen .app .warning{background:var(--os-warning-bg);border-color:color-mix(in srgb,var(--os-warning) 38%,var(--os-line));color:var(--os-warning)}
+#screen .app .condition-card.broken{background:var(--os-danger-bg);border-color:color-mix(in srgb,var(--os-danger) 35%,var(--os-line))}
+#screen .app .condition-card.broken h3{color:var(--os-danger)}
+#screen .app :is(.condition-card.healthy,.condition-card.repaired){background:var(--os-success-bg);border-color:color-mix(in srgb,var(--os-success) 35%,var(--os-line))}
+#screen .app :is(.condition-card.healthy,.condition-card.repaired) h3{color:var(--os-success)}
+
+/* AutoMarket and bottom navigation. */
+#screen .auto-bottom-nav{background:color-mix(in srgb,var(--os-surface) 94%,transparent);border-color:var(--os-line);box-shadow:0 -10px 30px #0002;backdrop-filter:blur(18px)}
+#screen .auto-tab{color:var(--os-muted)}
+#screen .auto-tab.active{background:var(--os-raised);color:var(--os-text)}
+#screen .auto-tab-plus{background:var(--os-accent);color:var(--os-accent-ink)}
+#screen :is(.auto-market-hero-copy h3,.auto-tab-intro h3,.auto-market-title b,.auto-market-title strong,.auto-market-bottom b,.auto-market-stats b,#v79MarketRefresh b){color:var(--os-text)}
+#screen :is(.auto-market-hero-copy p,.auto-tab-intro p,.auto-market-specs,.auto-market-bottom>span,.auto-market-stats span,#v79MarketRefresh span){color:var(--os-muted)}
+#screen .auto-market-wallet{background:var(--os-raised);border-color:var(--os-line)}
+#screen .auto-market-wallet b{color:var(--os-text)}
+#screen .auto-market-wallet span{color:var(--os-muted)}
+#screen .auto-market-bottom{border-color:var(--os-line)}
+
+/* Garage. */
+#screen .garage-app{background:var(--os-bg);color:var(--os-text)}
+#screen .garage-tabs button{background:var(--os-raised);color:var(--os-muted);border:1px solid var(--os-line)}
+#screen .garage-tabs button.active{background:var(--os-accent);border-color:var(--os-accent);color:var(--os-accent-ink)}
+#screen :is(.garage-kpis div,.service-dashboard div,.garage-car-card,.garage-empty-slot,.garage-rep,.garage-task,.garage-complete,.garage-empty-day,.garage-facility-build,.service-order,.tuning-car){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text);box-shadow:var(--os-shadow)}
+#screen :is(.garage-kpis,.service-dashboard) small,#screen :is(.garage-car-main,.garage-rep,.garage-task,.garage-road-level,.service-message,.tuning-car) small{color:var(--os-muted)}
+#screen .garage-car-main{color:var(--os-text)}
+#screen .garage-car-main em,#screen .tuning-car em,#screen .garage-section-title span,#screen .garage-road-level small{color:var(--os-muted)}
+#screen .garage-empty-slot{border-color:var(--os-line);color:var(--os-muted)}
+#screen .garage-warning{background:var(--os-warning-bg);color:var(--os-warning)}
+#screen .garage-max{background:var(--os-success-bg);color:var(--os-success)}
+#screen .garage-task>span,#screen .garage-rep>span,#screen .garage-road-level>b{background:var(--os-raised);color:var(--os-muted)}
+#screen :is(.garage-task.done,.garage-rep.done)>span,#screen :is(.garage-road-level.passed,.garage-road-level.current)>b{background:var(--os-success);color:#08271c}
+#screen .garage-road-level{border-color:var(--os-line)}
+#screen .garage-facility-build p,#screen .garage-empty-day p{color:var(--os-muted)}
+#screen .garage-facility-build>div,#screen .service-message>p{background:var(--os-raised);color:var(--os-text)}
+#screen .service-message>small,#screen .service-message>div{color:var(--os-muted)}
+#screen .service-message>div span b{color:var(--os-text)}
+#screen .service-message>div strong{color:var(--os-success)}
+#screen :is(.service-message,.tuning-car) button{background:var(--os-accent);color:var(--os-accent-ink)}
+
+/* Plates — keeps the physical number plate white while theming its cards. */
+#screen .plates-app{color:var(--os-text)}
+#screen :is(.case-card,.plate-item,.plate-sheet){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text)}
+#screen :is(.case-top h3,.case-bottom b,.plate-info b,.plate-value>b,.plate-sheet h3){color:var(--os-text)}
+#screen :is(.case-top small,.case-bottom small,.case-hint,.plate-info span,.plate-sheet p){color:var(--os-muted)}
+#screen .rarity.rare{color:#74adff}#screen .rarity.ultra{color:#d9aa45}#screen .rarity.secret{color:#bd93ff}#screen .rarity.priceless{color:#d99b19}
+:root:not([data-theme=light]) #screen .rarity.ultra,:root:not([data-theme=light]) #screen .rarity.priceless{color:#ffd168}
+#screen .plate-filters button,#screen .collection-tools select{background:var(--os-raised);border-color:var(--os-line);color:var(--os-muted)}
+#screen .plate-filters button.active{border-color:var(--os-accent);color:var(--os-text)}
+#screen .plate-open,#screen .plate-value button,#screen .plates-empty button{color:var(--os-accent-ink)}
+
+/* Bank: replaces the old hard-coded white dashboard in dark mode. */
+#screen .bank-v22-app{color:var(--os-text)}
+#screen .bank-v22-app :is(.bank-rating-visible,.bank-actions button,.bank-home-credit,.bank-home-limit,.bank-credit-option,.bank-preview-hero,.bank-success-screen,.bank-preview-table,.bank-loan-details,.bank-loan-big,.bank-rating-page,.bank-rating-levels,.bank-history-v22,.bank-home-rating-hero,.bank-services-grid button,.bank-home-info-card,.bank-home-limit-v23,.bank-home-history,.bank-home-credit-levels,.bank-home-credit-level-grid button){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text);box-shadow:none}
+#screen .bank-v22-app :is(.bank-page-title h2,.bank-home-credit h3,.bank-home-limit h3,.bank-credit-option h3,.bank-preview-hero h2,.bank-success-screen h2,.bank-loan-big h2,.bank-rating-page h3,.bank-rating-level b,.bank-history-v22-row b,.bank-home-rating-score em,.bank-services-grid b,.bank-home-section-title>b,.bank-profile-grid b,.bank-home-limit-v23 h3,.bank-home-history-row b,.bank-home-credit-level-grid b){color:var(--os-text)}
+#screen .bank-v22-app :is(.bank-page-title p,.bank-page-title small,.bank-home-credit p,.bank-home-credit small,.bank-home-limit p,.bank-home-limit small,.bank-credit-option p,.bank-credit-option small,.bank-preview-hero p,.bank-preview-hero small,.bank-success-screen p,.bank-success-screen small,.bank-preview-table span,.bank-loan-details span,.bank-rating-page p,.bank-rating-page>small,.bank-rating-level small,.bank-history-v22-row small,.bank-home-rating-score small,.bank-home-rating-info p,.bank-services-grid small,.bank-profile-grid span,.bank-home-info-card>p,.bank-home-limit-v23 p,.bank-home-limit-v23 small,.bank-home-history-row small,.bank-home-credit-level-grid small){color:var(--os-muted)}
+#screen .bank-v22-app :is(.bank-profile-grid>div,.bank-rating-stats>div,.bank-home-rules>div){background:var(--os-raised)}
+#screen .bank-v22-app :is(.bank-profile-grid b,.bank-rating-stats b,.bank-home-rules b){color:var(--os-text)}
+#screen .bank-v22-app :is(.bank-profile-grid span,.bank-rating-stats span,.bank-home-rules span){color:var(--os-muted)}
+#screen .bank-v22-app :is(.bank-rating-progress i,.bank-rating-page-bar,.bank-home-rating-line i){background:var(--os-elevated)}
+#screen .bank-v22-app :is(.bank-preview-table>div,.bank-loan-details>div,.bank-rating-level,.bank-history-v22-row,.bank-home-history-row,.bank-home-info-card>p){border-color:var(--os-line)}
+#screen .bank-v22-app :is(.bank-service-icon.blue,.bank-history-v22-row .ico,.bank-home-history-row>span){background:var(--os-info-bg);color:var(--os-info)}
+#screen .bank-v22-app .bank-service-icon.green{background:var(--os-success-bg);color:var(--os-success)}
+#screen .bank-v22-app .bank-service-icon.gold{background:var(--os-warning-bg);color:var(--os-warning)}
+#screen .bank-v22-app .bank-service-icon.gray{background:var(--os-raised);color:var(--os-muted)}
+#screen .bank-v22-app .bank-warning-box{background:var(--os-warning-bg);color:var(--os-warning)}
+#screen .bank-v22-app .bank-danger-box{background:var(--os-danger-bg);color:var(--os-danger)}
+#screen .bank-v22-app .bank-reward-box{background:var(--os-success-bg);color:var(--os-success)}
+#screen .bank-v22-app .bank-credit-option.locked{background:var(--os-raised)}
+#screen .bank-v22-app .bank-home-credit-level-grid .open{background:var(--os-success-bg);border-color:color-mix(in srgb,var(--os-success) 30%,var(--os-line))}
+#screen .bank-v22-app .bank-home-credit-level-grid .open b{color:var(--os-success)}
+#screen .bank-v22-app .bank-home-credit-level-grid .current{background:var(--os-info-bg);border-color:var(--os-info)}
+#screen .bank-v22-app .bank-home-credit-level-grid .current b{color:var(--os-info)}
+
+/* Games intentionally stay cinematic dark in both themes, now with readable type. */
+#screen .games-app{background:#090d13;color:#f2f5f8}
+#screen .games-app .os-head b,#screen .games-app .os-status{color:#f2f5f8}
+#screen .games-app .os-head button{background:#171e29;border-color:#2b3544;color:#f2f5f8}
+#screen .games-app :is(.games-hero p,.game-focus p,.game-tile span,.games-result p,.games-bet-top em,.games-section-title small,.games-history-row){color:#a7b0bd}
+#screen .games-app :is(.games-stats small,.games-bet-top span,.games-result small){color:#96a1af}
+#screen .games-app :is(.game-tile,.games-history,.game-focus,.games-bet,.games-result,.games-stats>div){border-color:#2b3542}
+#screen .games-app :is(.game-tile b,.games-section-title span,.games-history-row span,.games-result h3){color:#f2f5f8}
+#screen .games-app .games-footnote{color:#85909e}
+#screen .games-app .game-tile small{color:#c0aaff}
+#screen .games-app .games-wallet b{color:#a9f0cf}
+
+/* Readability and rhythm. */
+#screen .bank-v22-app :is(p,small,span,em),#screen .games-app :is(p,small,span,em){line-height:1.4}
+#screen .bank-v22-app .bank-page-title p,#screen .bank-v22-app .bank-credit-option p,#screen .bank-v22-app .bank-home-info-card>p{font-size:8px}
+#screen .bank-v22-app :is(.bank-services-grid small,.bank-home-history-row small,.bank-history-v22-row small,.bank-rating-level small){font-size:7px}
+#screen .bank-v22-app :is(.bank-services-grid b,.bank-home-history-row b,.bank-history-v22-row b,.bank-rating-level b){font-size:8.5px}
+#screen .games-app .game-tile b{font-size:10px}
+#screen .games-app .game-tile span{font-size:7.5px}
+#screen .games-app .game-tile small{font-size:6.5px}
+#screen .games-app .games-section-title span{font-size:9px}
+
+@media(max-width:460px){
+  #screen .garage-scene{margin-left:-15px;margin-right:-15px}
+  #screen .garage-kpis{grid-template-columns:1fr 1fr}
+  #screen .garage-kpis>div:last-child{grid-column:1/3}
+}
