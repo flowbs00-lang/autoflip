@@ -1,6 +1,6 @@
 const KEY='autoflip-v7-save';
-const cities=['Москва','Казань','Санкт-Петербург','Екатеринбург','Новосибирск'];
-const cityFactor={Москва:1.05,Казань:.94,'Санкт-Петербург':1.03,Екатеринбург:.91,Новосибирск:.88};
+const cities=(window.AUTOFLIP_CITIES||['Москва','Санкт-Петербург','Нижний Новгород','Екатеринбург','Киров','Краснодар','Пермь','Калининград','Сургут','Чита','Казань','Владивосток','Ярославль','Ростов','Махачкала','Уфа','Воронеж','Оренбург','Тверь','Самара']).slice();
+const cityFactor=Object.fromEntries(cities.map((city,index)=>[city,.94+(index%7)*.015]));
 const makes=[
 ['ВАЗ 2106','Новосибирск',1998,238000,42000,68000,'кузов и пороги',12000],['ВАЗ 2107','Екатеринбург',2004,214000,55000,82000,'карбюратор',9000],['ВАЗ 2109','Казань',2002,201000,72000,105000,'коробка',14000],['ВАЗ 2110','Новосибирск',2005,189000,88000,125000,'электрика',11000],['Lada Priora','Екатеринбург',2009,176000,145000,195000,'двигатель',22000],['Lada Kalina','Казань',2011,154000,185000,235000,'ходовая',18000],['Daewoo Nexia','Новосибирск',2010,181000,175000,225000,'кузов',20000],['Renault Logan','Казань',2012,167000,275000,345000,'сцепление',26000],['Ford Focus II','Санкт-Петербург',2008,193000,320000,405000,'коробка',35000],['Hyundai Solaris','Екатеринбург',2014,149000,520000,625000,'двигатель',42000],['Kia Rio','Новосибирск',2015,137000,570000,690000,'кузов',38000],['Lada Vesta','Казань',2018,112000,690000,820000,'электрика',32000],['Skoda Rapid','Санкт-Петербург',2017,128000,760000,900000,'турбина',48000],['Volkswagen Polo','Москва',2018,119000,820000,960000,'коробка',55000],['Toyota Corolla','Казань',2015,142000,920000,1080000,'ходовая',45000],['BMW 320i','Москва',2017,126000,1480000,1690000,'двигатель',85000],['Toyota Camry 70','Казань',2019,98000,2050000,2290000,'кузов',55000],['Kia K5','Санкт-Петербург',2021,72000,1790000,1990000,'документы',35000],['BMW X5','Екатеринбург',2016,155000,2290000,2650000,'подвеска',140000],['Mercedes C180','Москва',2018,108000,2200000,2490000,'турбина',105000],['Audi A4','Казань',2019,93000,2100000,2390000,'коробка',125000],['Volkswagen Tiguan','Москва',2018,119000,2050000,2320000,'подвеска',65000],['Toyota RAV4','Казань',2020,76000,2550000,2890000,'вариатор',115000],['Geely Monjaro','Новосибирск',2023,42000,2350000,2580000,'мультимедиа',30000],['Haval F7','Казань',2022,52000,1650000,1840000,'турбина',50000],['Mercedes E200','Москва',2020,78000,3150000,3590000,'пневма',145000],['Audi Q5','Екатеринбург',2021,69000,3450000,3890000,'коробка',130000],['BMW X5 G05','Москва',2021,64000,5150000,5790000,'пневма',190000],['Mercedes GLE 300d','Санкт-Петербург',2022,48000,6250000,6990000,'электроника',210000],['Porsche Macan','Москва',2022,39000,7350000,8190000,'подвеска',230000],
 ['Chevrolet Lacetti','Казань',2008,196000,260000,330000,'кузов',26000],
@@ -216,7 +216,9 @@ function clearMarketSearch(){
 }
 function market(filter='all',page=0){
  const consumedIds=new Set([...(Array.isArray(state.consumedMarketListingIds)?state.consumedMarketListingIds:[]),...(Array.isArray(state.cars)?state.cars.map(c=>c&&c.listingId).filter(Boolean):[]),...(state.car&&state.car.listingId?[state.car.listingId]:[])].map(String));
- let arr=[...makes].filter(c=>!c.listingId||!consumedIds.has(String(c.listingId)));
+ let arr=[...makes].filter(c=>(c.marketActive!==false)&&(!c.listingId||!consumedIds.has(String(c.listingId))));
+ const selectedMarketCity=cities.includes(state.marketCityFilter)?state.marketCityFilter:'';
+ if(selectedMarketCity)arr=arr.filter(c=>c.city===selectedMarketCity);
  const q=String(marketSearchTerm||'').trim().toLowerCase();
  if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km),c.color,c.body,c.trim,c.listingId].join(' ').toLowerCase().includes(q));
  if(filter==='all')arr=shuffleMarketAll(arr,Number(page||0)===0);
@@ -246,7 +248,7 @@ function market(filter='all',page=0){
      <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
      <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">↑ Дешевле</button>
      <button class="${filter==='expensive'?'active':''}" onclick="market('expensive',0)">↓ Дороже</button>
-     <button class="${filter==='city'?'active':''}" onclick="market('city',0)">📍 ${state.city}</button>
+     <button class="${selectedMarketCity?'active':''}" onclick="marketCityPicker()">📍 ${selectedMarketCity||'Выбрать город'}</button>
      <button class="${filter==='new'?'active':''}" onclick="market('new',0)">🆕 Новые</button>
    </div>
    ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
