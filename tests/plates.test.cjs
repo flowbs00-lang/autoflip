@@ -16,6 +16,11 @@ test('all case probability tables total 100%',()=>{
   assert.equal(g.c.plateSystem.cases.find(x=>x.id==='collector').level,8);
   assert.equal(g.c.plateSystem.cases.find(x=>x.id==='legend').level,10);
 });
+test('region pool contains every requested code from 01 to 87 plus 89, 92 and 94',()=>{
+  const g=game(),actual=new Set(g.c.plateSystem.regions.map(x=>x[0])),expected=[];
+  for(let i=1;i<=87;i++)expected.push(String(i).padStart(2,'0'));expected.push('89','92','94');
+  assert.deepEqual([...actual].sort(),expected.sort());assert.equal(actual.size,90);
+});
 test('roll respects case probability boundaries',()=>{
   const g=game(),weights=g.c.plateSystem.cases[4].weights;
   assert.equal(g.c.plateSystem.rollPlateRarity(weights,0),'ordinary');
@@ -46,4 +51,8 @@ test('collection supports favorites, filters and a sale confirmation sheet',()=>
   g.c.plates();g.c.setPlateTab('collection');g.c.favoritePlate('one');assert.equal(g.c.state.plates.items[0].favorite,true);
   g.c.setPlateFilter('favorites');assert.match(g.html(),/plate-main/);assert.match(g.html(),/<strong>111<\/strong>/);g.c.confirmPlateSale('one');assert.match(g.html(),/ПРОДАЖА НОМЕРА/);
   g.c.cancelPlateSale();assert.doesNotMatch(g.html(),/ПРОДАЖА НОМЕРА/);
+});
+test('old lowercase plate numbers migrate to uppercase',()=>{
+  const g=game({money:0,garageLevel:1,plates:{items:[{id:'old',number:'в435хв',region:{code:'43',city:'Киров',country:'Россия'},rarity:'ordinary',value:1000}],nextId:2}});
+  g.c.plates();assert.equal(g.c.state.plates.items[0].number,'В435ХВ');g.c.setPlateTab('collection');assert.match(g.html(),/<em>В<\/em><strong>435<\/strong><em>ХВ<\/em>/);
 });
