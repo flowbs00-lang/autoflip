@@ -6,13 +6,19 @@ var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return
 var marketListingsPerCity=100;
 var marketActivePerCity=50;
 var marketTargetSize=cities.length*marketListingsPerCity;
-var marketCatalogVersion=7;
+var marketCatalogVersion=8;
 var marketStarterPerCity=10;
-var marketStarterModels=[
- 'Fiat Punto I','Fiat Punto II','Ford Mondeo III','Peugeot 307','Renault Clio II',
- 'Renault Symbol I','Renault Megane II','Opel Corsa C','Opel Astra G','Opel Vectra B',
- 'Volkswagen Golf IV','Volkswagen Passat B5','Volkswagen Bora','Skoda Fabia I','Skoda Octavia Tour',
- 'Suzuki Swift III','Chevrolet Aveo T250','Chevrolet Spark M300','Volvo S40 II','Peugeot 107'
+var marketRestorationTemplates=[
+ {name:'ВАЗ 2101 · проект',year:1984,km:286000,body:'Седан',risk:'сквозная коррозия кузова',repair:32000,photo:'Abandoned Car (88134285).jpeg',damage:'Сквозная коррозия, повреждён кузов',credit:'Wikimedia Commons · CC license'},
+ {name:'Lada Niva · проект',year:1993,km:241000,body:'Внедорожник',risk:'кузов и пороги',repair:28000,photo:'Rusty Lada Niva.jpg',damage:'Сильная коррозия кузова и порогов',credit:'PeteVerdon · CC BY-SA 3.0'},
+ {name:'Opel Kadett D · проект',year:1983,km:254000,body:'Хэтчбек',risk:'передняя часть кузова',repair:26000,photo:'1979-84 Opel Kadett D (abandoned) (10250799795).jpg',damage:'Нет бампера, кузов требует восстановления',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Ford Sierra · проект',year:1984,km:279000,body:'Универсал',risk:'ходовая и кузов',repair:30000,photo:'1982-83 Ford Sierra Base estate (abandoned?!) (10315412895).jpg',damage:'Долгий простой, коррозия и неисправная ходовая',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Toyota Corolla E70 · проект',year:1979,km:318000,body:'Седан',risk:'кузов и днище',repair:35000,photo:'1977-79 Toyota Corolla in an appaling "roadworthy" condition (10274398094).jpg',damage:'Гнилое днище и множественная коррозия',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Cadillac DeVille · проект',year:1978,km:225000,body:'Седан',risk:'кузов и двигатель',repair:42000,photo:'Rusty Cadillac.JPG',damage:'Кузов покрыт ржавчиной, двигатель не запускается',credit:'Wikimedia Commons · свободная лицензия'},
+ {name:'Ford Falcon · проект',year:1969,km:340000,body:'Седан',risk:'аварийный кузов',repair:45000,photo:'03 Falcon Wreck.jpg',damage:'Сильные повреждения кузова после простоя',credit:'Wikimedia Commons · свободная лицензия'},
+ {name:'TagAZ Vortex Estina · проект',year:2010,km:198000,body:'Седан',risk:'коррозия и стёкла',repair:27000,photo:'Moscow, Tagaz Vortex Estina (Chery A5) decrepit Sept 2026 07.jpg',damage:'Коррозия, разбитое стекло и разукомплектованный салон',credit:'Wikimedia Commons · CC0'},
+ {name:'Opel Kadett E · проект',year:1988,km:267000,body:'Универсал',risk:'пороги и арки',repair:29000,photo:'Rusty old Kadett van (15658910431).jpg',damage:'Сгнившие арки и пороги',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Авто со свалки · проект',year:1996,km:301000,body:'Хэтчбек',risk:'стёкла и колёса',repair:38000,photo:'Damaged blue car sits in junkyard with open door and missing wheels.jpg',damage:'Нет колёс, разбиты стёкла, повреждены двери',credit:'Shixart1985 · CC BY 2.0'}
 ];
 var marketBudgetRevision={
  'Fiat Punto II':[160000,120000],
@@ -20,6 +26,13 @@ var marketBudgetRevision={
  'Opel Corsa C':[220000,150000],
  'Opel Astra G':[260000,170000],
  'Opel Vectra B':[180000,145000]
+};
+var marketRestoreRevision={
+ 'Fiat Punto II':[120000,160000],
+ 'Renault Clio II':[135000,190000],
+ 'Opel Corsa C':[150000,220000],
+ 'Opel Astra G':[170000,260000],
+ 'Opel Vectra B':[145000,180000]
 };
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
@@ -234,20 +247,17 @@ function createMarketListing(template,forcedVariant,forcedCity,forcedActive){
  });
 }
 function starterTemplatesForCity(city){
- var cityIndex=Math.max(0,cities.indexOf(city)),result=[];
- for(var i=0;i<marketStarterPerCity;i++){
-   var name=marketStarterModels[(cityIndex*7+i)%marketStarterModels.length];
-   var template=marketTemplates.find(function(x){return x.name===name;});
-   if(template)result.push(template);
- }
- return result;
+ var cityIndex=Math.max(0,cities.indexOf(city));
+ return marketRestorationTemplates.map(function(template,index){return Object.assign({id:3000+index,price:60000,market:110000,sale:110000,yearMin:template.year-2,yearMax:template.year+2,city:city,photoUrl:commons(template.photo),photoCredit:template.credit,photoSource:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(template.photo)},template,{rotation:(cityIndex+index)%marketRestorationTemplates.length});});
 }
 function createStarterListing(template,city,slot){
  var cityIndex=Math.max(0,cities.indexOf(city)),fresh=createMarketListing(template,cityIndex*100+slot,city,true);
  var price=40000+((cityIndex+slot)%9)*5000;
- fresh.price=price;fresh.basePrice=price;fresh.market=price+18000+(slot%3)*4000;fresh.sale=fresh.market;
- fresh.repair=7000+(slot%6)*2000;fresh.starterOffer=true;fresh.starterVersion=1;
- fresh.conditionLabel=slot%3===0?'Требует вложений':'Есть недостатки';
+ fresh.price=price;fresh.basePrice=price;fresh.market=price+Number(template.repair||30000)+22000;fresh.sale=fresh.market;
+ fresh.repair=Number(template.repair||30000);fresh.risk=template.risk;fresh.photoUrl=template.photoUrl;
+ fresh.photoCredit=template.photoCredit;fresh.photoSource=template.photoSource;fresh.damageSummary=template.damage;
+ fresh.starterOffer=true;fresh.restorationProject=true;fresh.starterVersion=2;
+ fresh.condition=.58;fresh.conditionLabel='Под восстановление';
  return fresh;
 }
 function ensureCityStarterListings(list,city,cityCars){
@@ -276,13 +286,25 @@ function ensureMarketListingMeta(car,index){
    car.price=marketRound(oldPrice*ratio);car.basePrice=marketRound(oldBase*ratio);
    car.market=marketRound(Number(car.market||car.sale||0)*ratio);car.sale=car.market;
  }
+ if(Number(state.marketListingsVersion||0)<8&&Number(car.marketPriceRevision||0)<8&&marketRestoreRevision[car.name]){
+   var restore=marketRestoreRevision[car.name],restoreRatio=restore[1]/restore[0];
+   car.price=marketRound(Number(car.price||0)*restoreRatio);car.basePrice=marketRound(Number(car.basePrice||car.price||0)*restoreRatio);
+   car.market=marketRound(Number(car.market||car.sale||0)*restoreRatio);car.sale=car.market;
+   car.marketPriceRevision=8;
+ }
+ if(Number(state.marketListingsVersion||0)<8&&car.starterOffer&&!car.restorationProject){
+   var original=marketTemplates.find(function(x){return x.name===car.name;});
+   if(original){car.price=Number(original.price||original.market);car.basePrice=car.price;car.market=Number(original.market||original.sale);car.sale=car.market;car.repair=Number(original.repair||car.repair);car.photoUrl=original.photoUrl||car.photoUrl;}
+   car.starterOffer=false;car.starterVersion=0;car.marketPriceRevision=8;
+ }
  if(cities.indexOf(car.city)<0)car.city=cities[Math.abs(Number(index||0))%cities.length];
  if(!Number.isFinite(Number(car.postedAt)))car.postedAt=Math.max(0,now-(30+((index||0)*37)%480));
  if(!car.sellerName)car.sellerName=marketSellerNames[Math.abs(variant)%marketSellerNames.length];
  if(!car.sellerKind)car.sellerKind=marketSellerKinds[Math.abs(variant*3)%marketSellerKinds.length];
  if(!car.sellerUrgency)car.sellerUrgency=car.sellerKind==='Срочная продажа'?'high':(car.sellerKind==='Перекупщик'?'medium':'normal');
  if(!car.photoPosition)car.photoPosition=marketPhotoPositions[Math.abs(variant)%marketPhotoPositions.length];
- if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion)car.photoUrl=marketPhotoFor(car,variant);
+ if(car.restorationProject&&car.photo)car.photoUrl=commons(car.photo);
+ else if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion)car.photoUrl=marketPhotoFor(car,variant);
  if(Number(state.marketPhotoColorCatalogVersion||0)<marketPhotoColorCatalogVersion)car.color=marketColorFor(car,variant);
  return car;
 }
@@ -464,9 +486,9 @@ pruneConsumedMarketListings();
 reindexMarketListings();
 localStorage.setItem(KEY,JSON.stringify(state));
 if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion){
- if(typeof makes!=='undefined')makes.forEach(function(car,i){car.photoUrl=marketPhotoFor(car,i);});
- if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=marketPhotoFor(car,i);});
- if(state.car)state.car.photoUrl=marketPhotoFor(state.car,0);
+ if(typeof makes!=='undefined')makes.forEach(function(car,i){car.photoUrl=car.restorationProject&&car.photo?commons(car.photo):marketPhotoFor(car,i);});
+ if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=car.restorationProject&&car.photo?commons(car.photo):marketPhotoFor(car,i);});
+ if(state.car)state.car.photoUrl=state.car.restorationProject&&state.car.photo?commons(state.car.photo):marketPhotoFor(state.car,0);
  state.marketPhotoCatalogVersion=marketPhotoCatalogVersion;
  reindexMarketListings();
  localStorage.setItem(KEY,JSON.stringify(state));
