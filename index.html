@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="ui.css">
 <link rel="stylesheet" href="plates.css?v=20261006-4">
+<link rel="stylesheet" href="garage-system.css?v=20261006-1">
 </head>
 <body>
 <header>
@@ -1057,7 +1058,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       var status=issue&&issue.healthy?'🟢 Исправна':(issue&&issue.repaired?'🟢 Поломка устранена':'🔴 '+(issue?issue.name:'Неисправность'));
       return '<div class="note garage-v2-card" onclick="garageCarDetails('+i+')"><div class="row"><span><b>🚗 '+c.name+'</b><small>'+c.year+' · '+Number(c.km||0).toLocaleString('ru-RU')+' км</small></span><b>'+money(c.market)+'</b></div><div class="muted">'+status+'</div><div class="row"><span>Куплена за</span><b>'+money(c.buy)+'</b></div></div>';
     }).join('');
-    render('<div class="app">'+head('Мои машины')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/3</b><small>машин</small></div><div class="stat"><b>'+money(state.money)+'</b><small>деньги</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.market||0);},0))+'</b><small>рынок авто</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button></div>');
+    render('<div class="app">'+head('Мои машины')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/'+(typeof window.garageCapacity==='function'?window.garageCapacity():2)+'</b><small>машин</small></div><div class="stat"><b>'+money(state.money)+'</b><small>деньги</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.market||0);},0))+'</b><small>рынок авто</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button></div>');
     if(typeof persist==='function')persist();
   };
 
@@ -1833,5 +1834,6 @@ if(typeof window.autoBankHome==='function'){
 
 <script src="ui.js"></script>
 <script src="plates.js?v=20261006-4"></script>
+<script src="garage-system.js?v=20261006-1"></script>
 </body>
 </html>
