@@ -205,6 +205,13 @@ function shuffleMarketAll(arr,renew){
  const pos=new Map(marketAllOrder.map((k,i)=>[k,i]));
  return arr.sort((a,b)=>(pos.has(marketListingKey(a))?pos.get(marketListingKey(a)):99999)-(pos.has(marketListingKey(b))?pos.get(marketListingKey(b)):99999));
 }
+function diversifyMarketModels(arr){
+ const groups=new Map();
+ arr.forEach(car=>{const key=String(car.name||'Автомобиль');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(car)});
+ const result=[];let round=0,added=true;
+ while(added){added=false;for(const list of groups.values()){if(list[round]){result.push(list[round]);added=true}}round++}
+ return result;
+}
 function marketSearch(){
   const input=document.getElementById('marketSearch');
   marketSearchTerm=(input?input.value:'').trim();
@@ -226,6 +233,7 @@ function market(filter='all',page=0){
  if(filter==='expensive')arr.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
  if(filter==='city')arr=arr.filter(c=>c.city===state.city).sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
  if(filter==='new')arr.sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
+ arr=diversifyMarketModels(arr);
  const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
  page=Math.max(0,Math.min(Number(page)||0,totalPages-1));
  const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
