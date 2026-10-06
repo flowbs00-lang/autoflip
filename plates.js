@@ -73,35 +73,60 @@
     return weights[weights.length-1][0];
   }
   function escape(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function plateFace(p,large){return '<div class="plate-face plate-'+p.rarity+(large?' large':'')+'"><b>'+escape(p.number)+'</b><i>'+escape(p.region.code)+'</i><small>RUS</small></div>';}
+  let activeTab='cases',filter='all',sort='new',opening=null,lastCase='standard',notice='';
+  function plateFace(p,large){const country={Россия:'RUS',Беларусь:'BY',Казахстан:'KZ',Узбекистан:'UZ',Кыргызстан:'KG',Таджикистан:'TJ',Армения:'AM',Азербайджан:'AZ',Молдова:'MD'}[p.region.country]||'';return '<div class="plate-face plate-'+p.rarity+(large?' large':'')+'"><b>'+escape(p.number)+'</b><i>'+escape(p.region.code)+'</i><small>'+country+'</small></div>';}
   function chanceText(c){return c.weights.map(function(w){return RARITIES[w[0]].title+' '+String(w[1]).replace('.',',')+'%';}).join(' · ');}
   function caseCard(c){
     const locked=currentGarageLevel()<c.level,canPay=Number(state.money||0)>=c.price;
-    return '<article class="case-card '+(locked?'locked':'')+'"><div class="case-top"><span class="case-orb">✦</span><div><small>КЕЙС · УР. '+c.level+'</small><h3>'+c.name+'</h3></div></div><p>'+chanceText(c)+'</p><div class="case-bottom"><b>'+formatMoney(c.price)+'</b>'+(locked?'<span class="case-lock">🔒 Уровень '+c.level+'</span>':'<button class="plate-open" '+(canPay?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">Открыть</button>')+'</div>'+(locked?'<small class="case-hint">Откроется с уровнем гаража '+c.level+'. Уровни появятся в следующем обновлении.</small>':'')+'</article>';
+    const tier=c.weights[c.weights.length-1][0];
+    return '<article class="case-card '+tier+'"><div class="case-top"><span class="case-orb" aria-hidden="true">▱<i>✦</i></span><div><small>'+(locked?'🔒 ГАРАЖ · УРОВЕНЬ '+c.level:'ДОСТУПЕН СЕЙЧАС')+'</small><h3>'+c.name+'</h3><span class="rarity '+tier+'">До «'+RARITIES[tier].title+'»</span></div></div><details class="case-odds"><summary>Шансы выпадения <span>⌄</span></summary>'+c.weights.map(w=>'<div><span class="rarity '+w[0]+'">'+RARITIES[w[0]].title+'</span><b>'+String(w[1]).replace('.',',')+'%</b><meter min="0" max="100" value="'+w[1]+'">'+w[1]+'%</meter></div>').join('')+'</details><div class="case-bottom"><div><small>Стоимость кейса</small><b>'+formatMoney(c.price)+'</b></div><button class="plate-open" '+(locked||!canPay?'disabled':'')+' onclick="openPlateCase(\''+c.id+'\')">'+(locked?'Уровень '+c.level:canPay?'Открыть ↗':'Не хватает денег')+'</button></div>'+(locked?'<small class="case-hint">Уровни гаража — в следующем обновлении.</small>':!canPay?'<small class="case-hint">Нужно ещё '+formatMoney(c.price-Number(state.money||0))+'</small>':'')+'</article>';
   }
-  function inventoryCard(p){return '<article class="plate-item"><div>'+plateFace(p,false)+'</div><div class="plate-info"><small class="rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</small><b>'+escape(p.region.city)+', '+escape(p.region.country)+'</b><span>'+RARITIES[p.rarity].description+'</span></div><div class="plate-value"><b>'+formatMoney(p.value)+'</b><button onclick="sellPlate(\''+p.id+'\')">Продать</button></div></article>';}
-  function renderPlates(reveal){
-    const collection=ensure(),items=collection.items,total=items.reduce(function(sum,p){return sum+Number(p.value||0);},0);
-    const title=typeof head==='function'?head('Номера'):'';
-    const revealHtml=reveal?'<section class="plate-reveal"><small>НОМЕР ПОЛУЧЕН</small>'+plateFace(reveal,true)+'<h2>'+RARITIES[reveal.rarity].title+'</h2><p>'+RARITIES[reveal.rarity].description+' · '+escape(reveal.region.city)+', '+escape(reveal.region.country)+'</p><b>'+formatMoney(reveal.value)+'</b><button class="action green" onclick="plates()">В коллекцию</button></section>':'';
-    const content=revealHtml||'<section class="plates-hero"><div><small>КОЛЛЕКЦИЯ НОМЕРОВ</small><h2>'+items.length+' '+(items.length===1?'номер':'номеров')+'</h2><p>Собирай комбинации, продавай дубликаты и жди обновления гаражей для установки на автомобили.</p></div><b>'+formatMoney(total)+'</b></section><h3 class="plates-section-title">Кейсы</h3><div class="case-list">'+CASES.map(caseCard).join('')+'</div><h3 class="plates-section-title">Коллекция</h3>'+(items.length?'<div class="plate-list">'+items.map(inventoryCard).join('')+'</div>':'<div class="plates-empty">Пока пусто. Открой первый кейс и начни коллекцию.</div>');
-    render('<div class="app plates-app">'+title+content+'</div>');
+  function inventoryCard(p){return '<article class="plate-item"><div class="plate-item-top"><span class="rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</span><button class="plate-star" aria-label="'+(p.favorite?'Убрать из избранного':'В избранное')+'" aria-pressed="'+!!p.favorite+'" onclick="favoritePlate(\''+p.id+'\')">'+(p.favorite?'★':'☆')+'</button></div>'+plateFace(p,true)+'<div class="plate-info"><b>'+escape(p.region.city)+'</b><span>'+escape(p.region.country)+'</span></div><div class="plate-value"><b>'+formatMoney(p.value)+'</b><button onclick="confirmPlateSale(\''+p.id+'\')">Продать</button></div></article>';}
+  function tabs(items){return '<nav class="plate-tabs" aria-label="Разделы"><button class="'+(activeTab==='cases'?'active':'')+'" onclick="setPlateTab(\'cases\')">Кейсы</button><button class="'+(activeTab==='collection'?'active':'')+'" onclick="setPlateTab(\'collection\')">Коллекция <i>'+items.length+'</i></button></nav>';}
+  function dashboard(items,total){return '<section class="plates-hero"><div><small>НОМЕРНОЙ ФОНД</small><h2>Твоя коллекция</h2><p>Открывай кейсы и собирай редкие сочетания.</p></div><div class="plates-stats"><span><small>НОМЕРОВ</small><b>'+items.length+'</b></span><span><small>ЦЕННОСТЬ</small><b>'+formatMoney(total)+'</b></span></div></section>';}
+  function collectionView(items){
+    let shown=items.filter(p=>filter==='favorites'?p.favorite:filter==='all'||p.rarity===filter);
+    shown=shown.slice().sort((a,b)=>sort==='value'?Number(b.value)-Number(a.value):Number(b.createdAt)-Number(a.createdAt));
+    const filters=[['all','Все'],['favorites','★'],['rare','Редкие'],['ultra','Сверхредкие'],['secret','Тайные'],['priceless','Бесценные']];
+    return '<div class="collection-tools"><div class="plate-filters">'+filters.map(x=>'<button class="'+(filter===x[0]?'active':'')+'" onclick="setPlateFilter(\''+x[0]+'\')">'+x[1]+'</button>').join('')+'</div><label>Сортировка <select onchange="setPlateSort(this.value)"><option value="new" '+(sort==='new'?'selected':'')+'>Сначала новые</option><option value="value" '+(sort==='value'?'selected':'')+'>Сначала дорогие</option></select></label></div>'+(shown.length?'<div class="plate-list">'+shown.map(inventoryCard).join('')+'</div>':'<div class="plates-empty"><span>▱</span><b>'+(items.length?'Здесь пока пусто':'Начни коллекцию')+'</b><p>'+(items.length?'Измени фильтр, чтобы увидеть другие номера.':'Открой доступный кейс — новый номер сохранится здесь.')+'</p><button onclick="setPlateTab(\'cases\')">Перейти к кейсам</button></div>');
   }
-  window.plates=function(){renderPlates(null);};
+  function casesView(){return '<div class="plate-intro"><div><small>5 КЕЙСОВ</small><h3>Выбери свой шанс</h3></div><span>Гараж · ур. '+currentGarageLevel()+'</span></div><div class="case-list">'+CASES.map(caseCard).join('')+'</div>';}
+  function saleSheet(items){if(!opening||opening.type!=='sale')return '';const p=items.find(x=>x.id===opening.id);if(!p)return '';return '<div class="plate-sheet-backdrop"><section class="plate-sheet"><i></i><small>ПРОДАЖА НОМЕРА</small>'+plateFace(p,true)+'<p>'+RARITIES[p.rarity].title+' · '+escape(p.region.city)+'</p><h3>'+formatMoney(p.value)+'</h3><button class="action green" onclick="sellPlate(\''+p.id+'\')">Продать номер</button><button class="action" onclick="cancelPlateSale()">Отмена</button></section></div>';}
+  function renderPlates(){
+    const collection=ensure(),items=collection.items,total=items.reduce(function(sum,p){return sum+Number(p.value||0);},0),title=typeof head==='function'?head('Номера'):'';
+    const toast=notice?'<div class="plate-toast">✓ '+escape(notice)+'</div>':'';notice='';
+    render('<div class="app plates-app">'+title+dashboard(items,total)+tabs(items)+'<main class="plate-content">'+(activeTab==='cases'?casesView():collectionView(items))+'</main>'+toast+saleSheet(items)+'</div>');
+  }
+  function openingScreen(c,p,phase){
+    const reveal=phase==='reveal';
+    const canRepeat=Number(state.money||0)>=c.price;
+    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':'<small>ОТКРЫВАЕМ</small><div class="animated-case '+p.rarity+'"><span>▱</span><i>✦</i></div><h2>'+c.name+'</h2><p>Определяем редкость номера…</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>')+'</section></div>');
+  }
+  window.plates=function(){opening=null;renderPlates();};
+  window.setPlateTab=function(tab){activeTab=tab==='collection'?'collection':'cases';opening=null;renderPlates();};
+  window.setPlateFilter=function(value){filter=value;renderPlates();};
+  window.setPlateSort=function(value){sort=value==='value'?'value':'new';renderPlates();};
+  window.favoritePlate=function(id){const p=ensure().items.find(x=>x.id===id);if(!p)return;p.favorite=!p.favorite;persistPlates();renderPlates();};
+  window.confirmPlateSale=function(id){opening={type:'sale',id:id};renderPlates();};
+  window.cancelPlateSale=function(){opening=null;renderPlates();};
   window.openPlateCase=function(id){
     const c=CASES.filter(function(x){return x.id===id;})[0];if(!c)return;
     if(currentGarageLevel()<c.level){alert('Этот кейс откроется на '+c.level+' уровне гаража. Уровни будут добавлены в следующем обновлении.');return;}
     if(Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}
-    const rarity=rollPlateRarity(c.weights),p=makePlate(rarity),collection=ensure();
+    if(opening&&opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);
+    const rarity=rollPlateRarity(c.weights),p=makePlate(rarity),collection=ensure();lastCase=c.id;
     state.money=Number(state.money||0)-c.price;collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;persistPlates();
     if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','✦','Открыт '+c.name+': '+RARITIES[rarity].title+' номер.','plates','plate-'+p.id);
-    renderPlates(p);
+    opening={type:'case',caseId:c.id,plateId:p.id};openingScreen(c,p,'opening');
+    if(typeof setTimeout==='function')opening.timer=setTimeout(function(){revealPlateOpening();},1900);else revealPlateOpening();
   };
+  window.revealPlateOpening=function(){if(!opening||opening.type!=='case')return;const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'reveal');};
+  window.finishPlateOpening=function(){if(opening&&opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);opening=null;activeTab='collection';filter='all';renderPlates();};
   window.sellPlate=function(id){
     const collection=ensure(),index=collection.items.findIndex(function(p){return p.id===id;});if(index<0)return;
-    const p=collection.items[index];state.money=Number(state.money||0)+Number(p.value||0);collection.items.splice(index,1);persistPlates();
+    const p=collection.items[index];state.money=Number(state.money||0)+Number(p.value||0);collection.items.splice(index,1);opening=null;notice='Номер продан за '+formatMoney(p.value);persistPlates();
     if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','₽','Продан номер '+p.number+' за '+formatMoney(p.value)+'.','plates','plate-sale-'+p.id);
-    plates();
+    activeTab='collection';renderPlates();
   };
   window.plateSystem={rarities:RARITIES,cases:CASES,regions:REGIONS,makePlate:makePlate,rollPlateRarity:rollPlateRarity,currentGarageLevel:currentGarageLevel};
 })();
