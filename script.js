@@ -3,8 +3,10 @@
 // Dependencies are loaded synchronously by index.html before this layer.
 (function(){function install(){if(typeof state==='undefined'||typeof KEY==='undefined'||typeof render!=='function'||typeof head!=='function'||typeof money!=='function'){setTimeout(install,50);return;}if(!Array.isArray(state.cars))state.cars=[];if(state.car&&!state.cars.some(function(x){return x===state.car||(x._garageId&&x._garageId===state.car._garageId);}))state.cars.push(state.car);state.cars=state.cars.filter(Boolean).slice(0,10);var seq=Date.now();state.cars.forEach(function(c){if(!c._garageId)c._garageId='car-'+(++seq);});if(!state.car&&state.cars.length)state.car=state.cars[0];if(!state.businessHistory)state.businessHistory=[];if(!Array.isArray(state.repHistory))state.repHistory=[];if(state.profitStreak===undefined)state.profitStreak=0;if(!state.liveMarket)state.liveMarket={cycle:0,visits:0};if(!state.liveMarket.priceFactors)state.liveMarket.priceFactors={};if(!Array.isArray(state.liveMarket.hiddenIds))state.liveMarket.hiddenIds=[];if(!Array.isArray(state.liveMarket.newIds))state.liveMarket.newIds=[];if(!Array.isArray(state.liveMarket.hotIds))state.liveMarket.hotIds=[];
 var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return Object.assign({},x);});
-var marketTargetSize=140;
-var marketCatalogVersion=4;
+var marketListingsPerCity=100;
+var marketActivePerCity=50;
+var marketTargetSize=cities.length*marketListingsPerCity;
+var marketCatalogVersion=5;
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
 var marketPhotoCatalogVersion=2;
@@ -175,17 +177,17 @@ function marketConditionLabel(factor){
  if(factor<1.02)return 'Нормальное';
  return 'Хорошее';
 }
-function pickMarketTemplate(existing){
- var active=existing||makes,used=new Set(active.map(function(c){return c.name;}));
+function pickMarketTemplate(existing,city){
+ var active=existing||makes,used=new Set(active.filter(function(c){return !city||c.city===city;}).map(function(c){return c.name;}));
  var available=marketTemplates.filter(function(c){return !used.has(c.name);});
- if(!available.length)return null;
+ if(!available.length)available=marketTemplates.slice();
  // Price bands, not array positions: every model remains reachable after expansion.
  var r=Math.random(),band=r<.35?0:r<.65?1:r<.88?2:3;
  var pool=available.filter(function(c){var v=Number(c.market);return band===0?v<500000:band===1?v>=500000&&v<1500000:band===2?v>=1500000&&v<4000000:v>=4000000;});
  if(!pool.length)pool=available;
  return pool[Math.floor(Math.random()*pool.length)];
 }
-function createMarketListing(template,forcedVariant){
+function createMarketListing(template,forcedVariant,forcedCity,forcedActive){
  var seq=Number(state.marketListingSeq||0)+1;state.marketListingSeq=seq;
  var variant=forcedVariant===undefined?seq:forcedVariant;
  var yearDelta=Math.floor(Math.random()*5)-2;
@@ -204,7 +206,7 @@ function createMarketListing(template,forcedVariant){
  var risk=Math.random()<.56?template.risk:marketRisks[Math.floor(Math.random()*marketRisks.length)];
  var listingId='AF-'+String(Date.now()).slice(-6)+'-'+String(seq).padStart(4,'0');
  var photoUrl=marketPhotoFor({name:template.name,listingId:listingId},variant);
- var city=cities[Math.floor(Math.random()*cities.length)]||template.city;
+ var city=cities.indexOf(forcedCity)>=0?forcedCity:(cities[Math.floor(Math.random()*cities.length)]||template.city);
  var postedAt=Number(state.gameClock&&state.gameClock.total||450),sellerIndex=Math.abs(variant)%marketSellerNames.length,sellerKind=marketSellerKinds[Math.abs(variant*3)%marketSellerKinds.length];
  return Object.assign({},template,{
    id:0,modelId:template.id,listingId:listingId,city:city,year:year,km:km,
@@ -213,7 +215,7 @@ function createMarketListing(template,forcedVariant){
    trim:marketTrim(template,variant),condition:condition,conditionLabel:marketConditionLabel(condition),
    photoUrl:photoUrl,photoVariant:Math.abs(variant)%Math.max(1,pool.length),
    photoPosition:marketPhotoPositions[Math.abs(variant)%marketPhotoPositions.length],
-   postedAt:postedAt,sellerName:marketSellerNames[sellerIndex],sellerKind:sellerKind,
+   postedAt:postedAt,marketActive:forcedActive===undefined?true:!!forcedActive,sellerName:marketSellerNames[sellerIndex],sellerKind:sellerKind,
    sellerUrgency:sellerKind==='Срочная продажа'?'high':(sellerKind==='Перекупщик'?'medium':'normal')
  });
 }
@@ -228,6 +230,7 @@ function reindexMarketListings(){
 function marketNowStored(){return Number(state.gameClock&&state.gameClock.total||450);}
 function ensureMarketListingMeta(car,index){
  var now=marketNowStored(),variant=Number(car.modelId||0)+Number(index||0);
+ if(cities.indexOf(car.city)<0)car.city=cities[Math.abs(Number(index||0))%cities.length];
  if(!Number.isFinite(Number(car.postedAt)))car.postedAt=Math.max(0,now-(30+((index||0)*37)%480));
  if(!car.sellerName)car.sellerName=marketSellerNames[Math.abs(variant)%marketSellerNames.length];
  if(!car.sellerKind)car.sellerKind=marketSellerKinds[Math.abs(variant*3)%marketSellerKinds.length];
@@ -262,24 +265,20 @@ function removeMarketListingAt(index,reason){
 }
 function rotateMarketByCount(count,reason){
  if(typeof makes==='undefined'||!makes.length)return{removed:[],added:[],count:0};
- count=Math.max(1,Math.min(Number(count||1),Math.max(1,makes.length-10)));
- var ranked=makes.map(function(car,i){return{i:i,score:marketAttractiveness(car),car:car};}).sort(function(a,b){return b.score-a.score;});
- var picks=[],top=Math.max(count*2,Math.ceil(makes.length*.45)),removed=[],added=[];
- while(picks.length<count&&ranked.length){
-   var slot=Math.floor(Math.random()*Math.min(top,ranked.length)),pick=ranked.splice(slot,1)[0];
-   if(pick&&picks.indexOf(pick.i)<0)picks.push(pick.i);
- }
- picks.sort(function(a,b){return b-a;}).forEach(function(i,n){
-   var car=makes[i];if(!car)return;
-   removed.push({name:car.name,price:Number(car.price||0),listingId:car.listingId||'',reason:(n%3===0?'seller':'npc')});
-   removeMarketListingAt(i,n%3===0?'seller':'npc');
- });
+ count=Math.max(cities.length,Math.min(Number(count||cities.length),cities.length*12));
+ var perCity=Math.max(1,Math.round(count/cities.length)),removed=[],added=[];
  var now=(typeof gameTotal==='function'?gameTotal():marketNowStored());
- while(makes.length<marketTargetSize){
-   var template=pickMarketTemplate();if(!template)break;
-   var fresh=createMarketListing(template);fresh.postedAt=now;makes.push(fresh);
-   added.push({name:fresh.name,price:Number(fresh.price||0),listingId:fresh.listingId||'',city:fresh.city});
- }
+ cities.forEach(function(city){
+   var active=makes.filter(function(c){return c.city===city&&c.marketActive!==false;});
+   var reserve=makes.filter(function(c){return c.city===city&&c.marketActive===false;});
+   for(var n=0;n<Math.min(perCity,active.length,reserve.length);n++){
+     var outgoing=active.splice(Math.floor(Math.random()*active.length),1)[0];
+     var incoming=reserve.splice(Math.floor(Math.random()*reserve.length),1)[0];
+     outgoing.marketActive=false;incoming.marketActive=true;incoming.postedAt=now;
+     removed.push({name:outgoing.name,price:Number(outgoing.price||0),listingId:outgoing.listingId||'',city:city,reason:(n%3===0?'seller':'npc')});
+     added.push({name:incoming.name,price:Number(incoming.price||0),listingId:incoming.listingId||'',city:city});
+   }
+ });
  reindexMarketListings();
  state.marketListingsVersion=marketCatalogVersion;
  return{removed:removed,added:added,count:removed.length};
@@ -330,15 +329,25 @@ function processScheduledMarketRefresh(){
  return updates;
 }
 function fillGeneratedMarket(list){
- while(list.length<marketTargetSize){
-   var template=pickMarketTemplate(list);if(!template)break;
-   list.push(createMarketListing(template));
- }
+ var normalized=[];
+ list.filter(Boolean).forEach(function(car,index){
+   ensureMarketListingMeta(car,index);
+   if(normalized.filter(function(x){return x.city===car.city;}).length<marketListingsPerCity)normalized.push(car);
+ });
+ list.splice.apply(list,[0,list.length].concat(normalized));
+ cities.forEach(function(city){
+   var cityCars=list.filter(function(c){return c.city===city;});
+   while(cityCars.length<marketListingsPerCity){
+     var template=pickMarketTemplate(cityCars,city);if(!template)break;
+     var fresh=createMarketListing(template,undefined,city,cityCars.length<marketActivePerCity);
+     list.push(fresh);cityCars.push(fresh);
+   }
+   var preferred=cityCars.filter(function(c){return c.marketActive!==false;}).concat(cityCars.filter(function(c){return c.marketActive===false;}));
+   preferred.forEach(function(c,index){c.marketActive=index<marketActivePerCity;});
+ });
 }
 function generateInitialMarket(){
  var list=[];
- // Always leave affordable starting choices, then fill all price bands.
- marketTemplates.filter(function(t){return t.market<100000;}).slice(0,4).forEach(function(t){list.push(createMarketListing(t));});
  fillGeneratedMarket(list);
  makes.splice.apply(makes,[0,makes.length].concat(list));
  reindexMarketListings();state.marketListingsVersion=marketCatalogVersion;
@@ -396,6 +405,7 @@ function removePurchasedListing(listingId,snapshot){
    if(fallback>=0)makes.splice(fallback,1);
  }
  pruneConsumedMarketListings();
+ fillGeneratedMarket(makes);
  reindexMarketListings();
  if(Array.isArray(state.marketFavorites)&&id)state.marketFavorites=state.marketFavorites.filter(function(x){return String(x)!==id;});
  state.liveMarket.priceFactors={};state.liveMarket.hiddenIds=[];state.liveMarket.newIds=[];state.liveMarket.hotIds=[];
@@ -604,6 +614,7 @@ function advanceGameMinutes(mins){
   state.gameClock.total=clockAnchorTotal;
   updateGameClockUI();
 }
+window.advanceGameMinutes=advanceGameMinutes;
 window.sleepGame=function(){
   var total=gameTotal(),minute=((total%1440)+1440)%1440,canSleep=minute>=1260||minute<480;
   if(!canSleep){
