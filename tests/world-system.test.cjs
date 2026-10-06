@@ -45,9 +45,12 @@ test('map exposes a working directory button for every city',()=>{
   }
 });
 
-test('minimap markers stay fixed while rerender preserves scroll position',()=>{
-  assert.match(system,/captureMapScroll\(\);routeTarget=/);
-  assert.match(system,/requestAnimationFrame\(apply\)/);
-  assert.match(styles,/Stable schematic minimap/);
-  assert.match(styles,/\.world-city i,[\s\S]*?transform: none;/);
+test('minimap uses twenty fixed grid buttons without a moving canvas',()=>{
+  const g=worldGame();g.c.mapApp();const html=g.html();
+  assert.equal((html.match(/class="world-map-city /g)||[]).length,20);
+  assert.equal(new Set([...html.matchAll(/--map-row:(\d);--map-col:(\d)/g)].map(x=>x[1]+'-'+x[2])).size,20);
+  assert.doesNotMatch(html,/world-map-scroll/);
+  assert.match(styles,/Static city board/);
+  assert.match(styles,/grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(styles,/\.world-map-city \{[\s\S]*?transform: none;/);
 });
