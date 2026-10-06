@@ -288,7 +288,7 @@ function marketInspectionData(c){
  return value&&value.kind==='diagnostic-v2'?value:null;
 }
 function purchaseFlowHtml(step){
- const labels=['Объявление','Диагностика','Торг','Покупка'];
+ const labels=['Объявление','Торг','Встреча','Сделка'];
  return '<div class="purchase-flow">'+labels.map(function(label,i){var n=i+1,cls=n<step?'done':(n===step?'active':'');return '<div class="purchase-step '+cls+'"><b>'+n+'</b><span>'+label+'</span></div>';}).join('')+'</div>';
 }
 function marketDiagnosticCost(c,mode){
@@ -347,26 +347,19 @@ function completeMarketInspection(id,mode){
 }
 function carView(id){
  let c=makes[id];if(!c)return market();
- let inspection=marketInspectionData(c);
  let spread=Number(c.market||0)-Number(c.price||0),needRep=(typeof requiredRepForCar==='function'?requiredRepForCar(c):0),repOk=Number(state.rep||0)>=needRep,canAfford=Number(state.money||0)>=Number(c.price||0);
- let conditionText='неизвестно',diagBrief='<div class="warning"><b>🔍 Диагностика не проведена</b><br>Можно купить машину сразу или сначала проверить её техническое состояние.</div>';
- if(inspection){
-   if(inspection.found){conditionText='обнаружена поломка';diagBrief='<div class="note inspection-brief"><b>⚠️ '+inspection.faultName+'</b><p class="muted">Диагностика выявила поломку. Ремонт: '+money(inspection.faultCost)+'. Это даёт дополнительный аргумент в торге.</p></div>';}
-   else if(inspection.healthyConfirmed){conditionText='исправна';diagBrief='<div class="note inspection-brief"><b>✅ Полная диагностика: исправна</b><p class="muted">Технических поломок не обнаружено.</p></div>';}
-   else{conditionText='не подтверждено';diagBrief='<div class="note inspection-brief"><b>🟡 Стандартная диагностика</b><p class="muted">Поломок не обнаружено, но шанс обнаружения существующей неисправности — 30%.</p></div>';}
- }
  render(`<div class="app auto-car-view">${head(c.name)}
-   ${purchaseFlowHtml(inspection?3:2)}
+   ${purchaseFlowHtml(1)}
    <div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url('${photo(c)}'),url('${fallbackPhoto(c)}')"><span class="market-city-badge">📍 ${c.city}</span><span class="car-year-badge">${c.year}</span></div>
    <div class="car-detail-heading"><div><small>ЦЕНА ПРОДАВЦА</small><div class="price">${money(c.price)}</div></div><span class="car-km">${c.km.toLocaleString('ru-RU')} км</span></div>
-   <div class="note" style="margin:8px 0"><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Кузов</span><strong>${c.body||'—'}</strong></div><div class="hero-line"><span>Комплектация</span><strong>${c.trim||'—'}</strong></div><div class="hero-line"><span>Тех. состояние</span><strong>${conditionText}</strong></div></div>
+   <div class="note" style="margin:8px 0"><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Кузов</span><strong>${c.body||'—'}</strong></div><div class="hero-line"><span>Комплектация</span><strong>${c.trim||'—'}</strong></div><div class="hero-line"><span>Тех. состояние</span><strong>проверяется на встрече</strong></div></div>
    ${c.damageSummary?`<div class="condition-card broken"><small>ВИДИМЫЕ ДЕФЕКТЫ</small><h3>🛠️ Автомобиль под восстановление</h3><p>${c.damageSummary}. Заявленный ремонт: ${money(c.repair)}. Неисправность закреплена за объявлением и не исчезнет после покупки.</p></div>`:''}
    <div class="deal-score car-economics">
      <span>РЫНОК<b>${money(c.market)}</b></span>
      <span>ЦЕНА<b>${money(c.price)}</b></span>
      <span>РАЗНИЦА<b class="${spread>=0?'profit':'market-bad'}">${spread>=0?'+':''}${money(spread)}</b></span>
    </div>
-   ${diagBrief}
+   <div class="warning"><b>🔍 Диагностика проводится только при встрече</b><br>Сначала договорись с продавцом о цене, месте и времени. На встрече можно проверить автомобиль или купить его без проверки.</div>
    <div class="car-buy-status">
      <span><small>На руках</small><b>${money(state.money)}</b></span>
      <span><small>Репутация</small><b>${Number(state.rep||0)}${needRep?' / '+needRep:''}</b></span>
@@ -374,7 +367,6 @@ function carView(id){
    ${!repOk?'<div class="note"><b>🔒 Автомобиль пока недоступен</b><p class="muted">Для этого уровня сделки нужно '+needRep+' репутации.</p></div>':''}
    ${repOk&&!canAfford?'<div class="note"><b>🏦 Не хватает '+money(c.price-state.money)+'</b><p class="muted">Можно накопить или проверить доступный лимит в Банке.</p></div>':''}
    <button class="action auto-detail-favorite ${isMarketFavorite(c)?'saved':''}" onclick="toggleMarketFavorite(${id},event,'detail')">${isMarketFavorite(c)?'♥ В избранном':'♡ Добавить в избранное'}</button>
-   <button class="action" onclick="marketInspection(${id})">🔎 ${inspection?'Результат диагностики':'Провести диагностику'}</button>
    <button class="action green" onclick="deal(${id})" ${repOk?'':'disabled'}>💬 Перейти к торгу</button>
  </div>`)
 }
