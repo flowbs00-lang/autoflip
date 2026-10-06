@@ -6,7 +6,14 @@ var marketTemplates=(typeof makes!=='undefined'?makes:[]).map(function(x){return
 var marketListingsPerCity=100;
 var marketActivePerCity=50;
 var marketTargetSize=cities.length*marketListingsPerCity;
-var marketCatalogVersion=6;
+var marketCatalogVersion=7;
+var marketStarterPerCity=10;
+var marketStarterModels=[
+ 'Fiat Punto I','Fiat Punto II','Ford Mondeo III','Peugeot 307','Renault Clio II',
+ 'Renault Symbol I','Renault Megane II','Opel Corsa C','Opel Astra G','Opel Vectra B',
+ 'Volkswagen Golf IV','Volkswagen Passat B5','Volkswagen Bora','Skoda Fabia I','Skoda Octavia Tour',
+ 'Suzuki Swift III','Chevrolet Aveo T250','Chevrolet Spark M300','Volvo S40 II','Peugeot 107'
+];
 var marketBudgetRevision={
  'Fiat Punto II':[160000,120000],
  'Renault Clio II':[190000,135000],
@@ -226,6 +233,33 @@ function createMarketListing(template,forcedVariant,forcedCity,forcedActive){
    sellerUrgency:sellerKind==='Срочная продажа'?'high':(sellerKind==='Перекупщик'?'medium':'normal')
  });
 }
+function starterTemplatesForCity(city){
+ var cityIndex=Math.max(0,cities.indexOf(city)),result=[];
+ for(var i=0;i<marketStarterPerCity;i++){
+   var name=marketStarterModels[(cityIndex*7+i)%marketStarterModels.length];
+   var template=marketTemplates.find(function(x){return x.name===name;});
+   if(template)result.push(template);
+ }
+ return result;
+}
+function createStarterListing(template,city,slot){
+ var cityIndex=Math.max(0,cities.indexOf(city)),fresh=createMarketListing(template,cityIndex*100+slot,city,true);
+ var price=40000+((cityIndex+slot)%9)*5000;
+ fresh.price=price;fresh.basePrice=price;fresh.market=price+18000+(slot%3)*4000;fresh.sale=fresh.market;
+ fresh.repair=7000+(slot%6)*2000;fresh.starterOffer=true;fresh.starterVersion=1;
+ fresh.conditionLabel=slot%3===0?'Требует вложений':'Есть недостатки';
+ return fresh;
+}
+function ensureCityStarterListings(list,city,cityCars){
+ var desired=starterTemplatesForCity(city),favorites=new Set(Array.isArray(state.marketFavorites)?state.marketFavorites:[]),inspections=state.marketInspections||{};
+ desired.forEach(function(template,slot){
+   var existing=cityCars.find(function(c){return c.starterOffer===true&&c.name===template.name;});
+   if(existing){existing.marketActive=true;return;}
+   var victim=cityCars.slice().reverse().find(function(c){return !c.starterOffer&&c.marketActive===false&&!favorites.has(c.listingId)&&!inspections[c.listingId];})||cityCars.slice().reverse().find(function(c){return !c.starterOffer&&!favorites.has(c.listingId)&&!inspections[c.listingId];});
+   if(victim){var listIndex=list.indexOf(victim),cityIndex=cityCars.indexOf(victim);if(listIndex>=0)list.splice(listIndex,1);if(cityIndex>=0)cityCars.splice(cityIndex,1);}
+   var fresh=createStarterListing(template,city,slot);list.push(fresh);cityCars.push(fresh);
+ });
+}
 window.marketTemplates=marketTemplates;
 window.createMarketListing=createMarketListing;
 window.removePurchasedListing=removePurchasedListing;
@@ -281,8 +315,8 @@ function rotateMarketByCount(count,reason){
  var perCity=Math.max(1,Math.round(count/cities.length)),removed=[],added=[];
  var now=(typeof gameTotal==='function'?gameTotal():marketNowStored());
  cities.forEach(function(city){
-   var active=makes.filter(function(c){return c.city===city&&c.marketActive!==false;});
-   var reserve=makes.filter(function(c){return c.city===city&&c.marketActive===false;});
+   var active=makes.filter(function(c){return c.city===city&&c.marketActive!==false&&!c.starterOffer;});
+   var reserve=makes.filter(function(c){return c.city===city&&c.marketActive===false&&!c.starterOffer;});
    for(var n=0;n<Math.min(perCity,active.length,reserve.length);n++){
      var outgoing=active.splice(Math.floor(Math.random()*active.length),1)[0];
      var incoming=reserve.splice(Math.floor(Math.random()*reserve.length),1)[0];
@@ -349,12 +383,13 @@ function fillGeneratedMarket(list){
  list.splice.apply(list,[0,list.length].concat(normalized));
  cities.forEach(function(city){
    var cityCars=list.filter(function(c){return c.city===city;});
+   ensureCityStarterListings(list,city,cityCars);
    while(cityCars.length<marketListingsPerCity){
      var template=pickMarketTemplate(cityCars,city);if(!template)break;
      var fresh=createMarketListing(template,undefined,city,cityCars.length<marketActivePerCity);
      list.push(fresh);cityCars.push(fresh);
    }
-   var preferred=cityCars.filter(function(c){return c.marketActive!==false;}).concat(cityCars.filter(function(c){return c.marketActive===false;}));
+   var preferred=cityCars.filter(function(c){return c.starterOffer;}).concat(cityCars.filter(function(c){return !c.starterOffer&&c.marketActive!==false;}),cityCars.filter(function(c){return !c.starterOffer&&c.marketActive===false;}));
    preferred.forEach(function(c,index){c.marketActive=index<marketActivePerCity;});
  });
 }
