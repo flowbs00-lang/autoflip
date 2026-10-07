@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="world-fixes.css?v=20261007-6">
 <link rel="stylesheet" href="negotiations-system.css?v=20261007-2">
 <link rel="stylesheet" href="mobile-first.css?v=20261007-1">
-<link rel="stylesheet" href="theme-polish.css?v=20261007-3">
+<link rel="stylesheet" href="theme-polish.css?v=20261008-4">
 </head>
 <body>
 <header>
@@ -1156,7 +1156,6 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(!state.games||typeof state.games!=='object')state.games={};
     if(!state.games.stats)state.games.stats={played:0,wins:0,losses:0,wagered:0,net:0};
     if(!Array.isArray(state.games.history))state.games.history=[];
-    if(!state.games.highCard)state.games.highCard=2+Math.floor(Math.random()*13);
     return state.games;
   }
   function gsave(){
@@ -1214,12 +1213,11 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     render('<div class="app games-app games-lobby">'+head('Games')+
       '<section class="games-hero"><div class="games-hero-orb">🎮</div><div class="games-hero-copy"><small>AUTOFLIP ARCADE</small><h3>Игровая пауза</h3><p>Быстрые мини-игры между сделками.</p></div><div class="games-wallet"><span>Баланс</span><b>'+money(state.money)+'</b></div></section>'+
       '<div class="games-stats"><div><small>ИГР</small><b>'+s.played+'</b></div><div><small>ПОБЕД</small><b>'+rate+'%</b></div><div><small>ИТОГ</small><b class="'+(s.net>=0?'profit':'market-bad')+'">'+(s.net>=0?'+':'')+money(s.net)+'</b></div></div>'+
-      '<div class="games-section-title"><span>Мини-игры</span><small>5 режимов</small></div>'+
+      '<div class="games-section-title"><span>Мини-игры</span><small>4 режима</small></div>'+
       '<div class="games-list">'+
         gameCard('🪙','Coinflip','Орёл или решка · выигрыш ×2','50 / 50','coinflipGame()','gold')+
         gameCard('💣','Мины','Открывай клетки и забирай вовремя','РИСК','minesGame()','red')+
         gameCard('🎲','Кости','Угадай сторону от отметки 50','1–100','diceGame()','blue')+
-        gameCard('🃏','Выше / ниже','Предскажи следующую карту','КАРТЫ','higherLowerGame()','violet')+
         gameCard('🎰','Слоты','Поймай пару или джекпот','УДАЧА','slotsGame()','pink')+
       '</div>'+
       (h.length?'<div class="games-history"><div class="games-section-title"><span>Последние игры</span><small>'+h.length+'</small></div>'+h.slice(0,4).map(function(x){return '<div class="games-history-row"><span>'+x.name+'</span><b class="'+(x.net>=0?'profit':'market-bad')+'">'+(x.net>=0?'+':'')+money(x.net)+'</b></div>';}).join('')+'</div>':'')+
@@ -1273,30 +1271,6 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       finishBusy();
       diceGame(resultHtml('ВЫПАЛО '+roll,'🎲',win?'Прогноз оказался верным.':roll===50?'Ровно 50 — ставка проиграла.':'Число ушло в другую сторону.',net));
     },1000);
-  };
-
-  // Higher / Lower
-  function cardText(v){return v===14?'A':v===13?'K':v===12?'Q':v===11?'J':String(v);}
-  window.higherLowerGame=function(result){
-    gamesBusy=false;
-    var g=ensureGames(),card=Number(g.highCard||7);
-    render('<div class="app games-app">'+gamesHead('Выше / ниже')+
-      '<div class="game-focus card-focus"><div class="playing-card"><span>'+cardText(card)+'</span><small>♠</small></div><small>ТЕКУЩАЯ КАРТА</small><h3>Что будет дальше?</h3><p>Совпадение возвращает ставку · победа ×1,9.</p></div>'+
-      (result||'')+gamesInput('highBet',5000)+
-      '<div class="games-two"><button class="action games-choice" onclick="playHigherLower(\'lower\')">↓ Ниже</button><button class="action green games-choice" onclick="playHigherLower(\'higher\')">↑ Выше</button></div></div>');
-  };
-  window.playHigherLower=function(choice){
-    var bet=readBet('highBet');if(!bet)return;
-    var g=ensureGames(),old=Number(g.highCard||7),next=2+Math.floor(Math.random()*13);
-    beginBet(bet);
-    stage('Выше / ниже','<div class="card-flip-wrap"><div class="card-flip"><div class="card-back">A</div><div class="card-front">'+cardText(next)+'</div></div></div>','Открываем карту…');
-    setTimeout(function(){
-      var tie=next===old,win=(choice==='higher'&&next>old)||(choice==='lower'&&next<old),payout=tie?bet:(win?Math.floor(bet*1.9):0);
-      state.money+=payout;g.highCard=next;
-      var net=gameRecord('Выше / ниже',bet,payout,'');
-      finishBusy();
-      higherLowerGame(resultHtml('НОВАЯ КАРТА · '+cardText(next),'🃏',tie?'Та же карта — ставка возвращена.':win?'Направление угадано.':'Направление не угадано.',net));
-    },950);
   };
 
   // Slots

@@ -8,8 +8,20 @@ const css=fs.readFileSync(path.join(__dirname,'../theme-polish.css'),'utf8');
 
 test('final theme layer loads after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(links.at(-1),'theme-polish.css?v=20261007-3');
-  assert.ok(links.indexOf('theme-polish.css?v=20261007-3')>links.indexOf('mobile-first.css?v=20261007-1'));
+  assert.equal(links.at(-1),'theme-polish.css?v=20261008-4');
+  assert.ok(links.indexOf('theme-polish.css?v=20261008-4')>links.indexOf('mobile-first.css?v=20261007-1'));
+});
+
+test('dark feature cards keep light text when the OS theme is light',()=>{
+  assert.match(css,/\.meeting-app \.meeting-hero h2\{color:#f2f6fb\}/);
+  assert.match(css,/\.meeting-app \.meeting-hero p\{color:#d4dbe3\}/);
+  assert.match(css,/\.garage-upgrade-head h3[^\{]*\{color:#f2f6fb\}/);
+  assert.match(css,/\.garage-upgrade-head p\{color:#c9d2dc\}/);
+});
+
+test('higher or lower card game is removed from the arcade',()=>{
+  assert.doesNotMatch(html,/higherLowerGame|playHigherLower|Выше \/ ниже/);
+  assert.match(html,/Мини-игры<\/span><small>4 режима/);
 });
 
 test('both themes define complete readable semantic palettes',()=>{
