@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">AutoFlip</title>
+  <desc id="desc">Синий знак AutoFlip с силуэтом автомобиля и буквой A</desc>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="36" x2="452" y2="486" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#0B1020"/>
+    </linearGradient>
+    <linearGradient id="car" x1="112" y1="210" x2="400" y2="347" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#B8D8FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M84 381 217 112c16-32 62-32 78 0l133 269h-83l-28-61H195l-28 61H84Zm143-132h58l-29-68-29 68Z" fill="#5BE7B6"/>
+  <path d="M112 304c0-19 13-35 32-39l36-8 29-47c10-17 28-27 48-27h61c20 0 39 10 49 28l24 43 22 7c17 5 29 21 29 39v41c0 12-10 22-22 22h-17c-8 0-15-4-19-11l-7-11H177l-7 11c-4 7-11 11-19 11h-17c-12 0-22-10-22-22v-37Z" fill="url(#car)"/>
+  <path d="M209 258h151l-15-27c-5-9-15-15-26-15h-61c-11 0-21 6-27 15l-22 27Z" fill="#16233D"/>
+  <circle cx="178" cy="306" r="22" fill="#0B1020"/>
+  <circle cx="362" cy="306" r="22" fill="#0B1020"/>
+  <path d="M145 306h266" stroke="#D7E8FF" stroke-width="12" stroke-linecap="round"/>
+</svg>
