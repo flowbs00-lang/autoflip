@@ -118,6 +118,10 @@
 #screen .garage-empty-slot{border-color:var(--os-line);color:var(--os-muted)}
 #screen .garage-warning{background:var(--os-warning-bg);color:var(--os-warning)}
 #screen .garage-max{background:var(--os-success-bg);color:var(--os-success)}
+#screen .garage-upgrade-head{background:linear-gradient(145deg,#17212d,#263546);color:#f2f6fb}
+#screen .garage-upgrade-head h3,#screen .garage-upgrade-head .garage-ring b{color:#f2f6fb}
+#screen .garage-upgrade-head p{color:#c9d2dc}
+#screen .garage-upgrade-head>div>small{color:#72edae}
 #screen .garage-task>span,#screen .garage-rep>span,#screen .garage-road-level>b{background:var(--os-raised);color:var(--os-muted)}
 #screen :is(.garage-task.done,.garage-rep.done)>span,#screen :is(.garage-road-level.passed,.garage-road-level.current)>b{background:var(--os-success);color:#08271c}
 #screen .garage-road-level{border-color:var(--os-line)}
@@ -163,6 +167,10 @@
 #screen .bank-v22-app .bank-home-credit-level-grid .current b{color:var(--os-info)}
 
 /* Meetings — readable in both OS themes. */
+#screen .meeting-app .meeting-hero{background:linear-gradient(145deg,#17212d,#263546);color:#f2f6fb}
+#screen .meeting-app .meeting-hero h2{color:#f2f6fb}
+#screen .meeting-app .meeting-hero p{color:#d4dbe3}
+#screen .meeting-app .meeting-hero small{color:#72edae}
 #screen .meeting-app :is(.meeting-route-card,.meeting-place,.meeting-time,.meeting-custom,.meeting-ticket,.meeting-list-card,.meeting-price){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text);box-shadow:var(--os-shadow)}
 #screen .meeting-app :is(.meeting-route-card,.meeting-place,.meeting-time,.meeting-ticket,.meeting-list-card) small{color:var(--os-muted)}
 #screen .meeting-app .meeting-tabs{background:var(--os-raised)}
