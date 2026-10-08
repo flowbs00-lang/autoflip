@@ -36,6 +36,7 @@ export async function ensureCommunitySchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS clan_members (
       user_id TEXT PRIMARY KEY,
       clan_id TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member',
       joined_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (clan_id) REFERENCES clans(id) ON DELETE CASCADE
@@ -51,6 +52,14 @@ export async function ensureCommunitySchema(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS community_messages_channel_idx ON community_messages(channel, created_at DESC)"),
     db.prepare("CREATE INDEX IF NOT EXISTS clan_members_clan_idx ON clan_members(clan_id)")
   ]);
+  const columns = await db.prepare("PRAGMA table_info(clan_members)").all();
+  if (!(columns.results || []).some((column) => column.name === "role")) {
+    await db.prepare("ALTER TABLE clan_members ADD COLUMN role TEXT NOT NULL DEFAULT 'member'").run();
+  }
+  await db.prepare(`CREATE TRIGGER IF NOT EXISTS clan_members_limit
+    BEFORE INSERT ON clan_members
+    WHEN (SELECT COUNT(*) FROM clan_members WHERE clan_id = NEW.clan_id) >= 50
+    BEGIN SELECT RAISE(ABORT, 'clan_full'); END`).run();
   schemaReady = true;
 }
 

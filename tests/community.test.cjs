@@ -62,3 +62,27 @@ test('community is a permanent visible home-screen application', () => {
   assert.match(modernHome, /\['openCommunity','Сообщество','spark','violet'\]/);
   assert.match(modernHome, /<span>14<\/span>/);
 });
+
+test('open chats poll for new messages without replacing the draft', () => {
+  const client = read('community.js');
+  assert.match(client, /setInterval\(pollMessages, 4000\)/);
+  assert.match(client, /document\.getElementById\('communityChat'\)/);
+  assert.match(client, /chat\.innerHTML = messageRows\(data\)/);
+  assert.doesNotMatch(client.match(/async function pollMessages[\s\S]*?\n  }/)[0], /renderCommunity/);
+});
+
+test('clans are limited to 50 and expose managed member roles', () => {
+  const schema = read('functions/_lib/community.js');
+  const api = read('functions/api/community.js');
+  const client = read('community.js');
+  assert.match(schema, /CREATE TRIGGER IF NOT EXISTS clan_members_limit/);
+  assert.match(schema, />= 50/);
+  assert.match(api, /Number\(clan\.members \|\| 0\) >= 50/);
+  assert.match(api, /action === "set_role"/);
+  assert.match(api, /action === "kick_member"/);
+  assert.match(api, /"coleader", "member"/);
+  assert.match(client, /Глава/);
+  assert.match(client, /Соруководитель/);
+  assert.match(client, /СОСТАВ КЛАНА/);
+  assert.match(client, /\/50 участников/);
+});

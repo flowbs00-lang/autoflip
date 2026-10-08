@@ -20,7 +20,8 @@ function clanId() {
 
 async function membership(db, userId) {
   return db.prepare(`
-    SELECT c.id, c.name, c.tag, c.owner_user_id AS ownerUserId
+    SELECT c.id, c.name, c.tag, c.owner_user_id AS ownerUserId,
+           CASE WHEN c.owner_user_id = cm.user_id THEN 'leader' ELSE COALESCE(cm.role, 'member') END AS role
     FROM clan_members cm JOIN clans c ON c.id = cm.clan_id
     WHERE cm.user_id = ? LIMIT 1
   `).bind(userId).first();
@@ -48,7 +49,7 @@ async function snapshot(db, session, channelValue) {
   const ownProfile = await profile(db, session.id);
   const ownClan = await membership(db, session.id);
   const channel = channelFrom(channelValue, ownClan);
-  const [messagesResult, playersResult, clansResult] = await Promise.all([
+  const [messagesResult, playersResult, clansResult, clanMembersResult] = await Promise.all([
     db.prepare(`
       SELECT m.id, m.body, m.created_at AS createdAt, u.id AS userId, u.nickname,
              COALESCE(c.tag, '') AS clanTag
@@ -72,7 +73,19 @@ async function snapshot(db, session, channelValue) {
       LEFT JOIN clan_members cm ON cm.clan_id = c.id
       LEFT JOIN community_profiles p ON p.user_id = cm.user_id
       GROUP BY c.id ORDER BY reputation DESC, members DESC, c.name COLLATE NOCASE ASC LIMIT 100
-    `).all()
+    `).all(),
+    ownClan ? db.prepare(`
+      SELECT u.id, u.nickname, p.reputation, p.city, cm.joined_at AS joinedAt,
+             CASE WHEN c.owner_user_id = u.id THEN 'leader' ELSE COALESCE(cm.role, 'member') END AS role
+      FROM clan_members cm
+      JOIN users u ON u.id = cm.user_id
+      JOIN clans c ON c.id = cm.clan_id
+      LEFT JOIN community_profiles p ON p.user_id = u.id
+      WHERE cm.clan_id = ?
+      ORDER BY CASE WHEN c.owner_user_id = u.id THEN 0 WHEN cm.role = 'coleader' THEN 1 ELSE 2 END,
+               p.reputation DESC, u.nickname COLLATE NOCASE ASC
+      LIMIT 50
+    `).bind(ownClan.id).all() : Promise.resolve({ results: [] })
   ]);
   return {
     ok: true,
@@ -87,7 +100,9 @@ async function snapshot(db, session, channelValue) {
     },
     messages: [...(messagesResult.results || [])].reverse(),
     players: playersResult.results || [],
-    clans: clansResult.results || []
+    clans: clansResult.results || [],
+    clanMembers: clanMembersResult.results || [],
+    clanLimit: 50
   };
 }
 
@@ -137,7 +152,7 @@ export async function onRequestPost(context) {
       try {
         await db.batch([
           db.prepare("INSERT INTO clans (id, name, tag, owner_user_id, created_at) VALUES (?, ?, ?, ?, ?)").bind(id, name, tag, session.id, now),
-          db.prepare("INSERT INTO clan_members (user_id, clan_id, joined_at) VALUES (?, ?, ?)").bind(session.id, id, now)
+          db.prepare("INSERT INTO clan_members (user_id, clan_id, role, joined_at) VALUES (?, ?, 'leader', ?)").bind(session.id, id, now)
         ]);
       } catch {
         throw new RequestError("clan_name_or_tag_taken", 409);
@@ -147,10 +162,46 @@ export async function onRequestPost(context) {
 
     if (action === "join_clan") {
       if (ownClan) throw new RequestError("already_in_clan", 409);
-      const clan = await db.prepare("SELECT id FROM clans WHERE id = ? LIMIT 1").bind(String(body.clanId || "")).first();
+      const clan = await db.prepare(`
+        SELECT c.id, COUNT(cm.user_id) AS members
+        FROM clans c LEFT JOIN clan_members cm ON cm.clan_id = c.id
+        WHERE c.id = ? GROUP BY c.id LIMIT 1
+      `).bind(String(body.clanId || "")).first();
       if (!clan) throw new RequestError("clan_not_found", 404);
-      await db.prepare("INSERT INTO clan_members (user_id, clan_id, joined_at) VALUES (?, ?, ?)")
-        .bind(session.id, clan.id, Date.now()).run();
+      if (Number(clan.members || 0) >= 50) throw new RequestError("clan_full", 409);
+      try {
+        await db.prepare("INSERT INTO clan_members (user_id, clan_id, role, joined_at) VALUES (?, ?, 'member', ?)")
+          .bind(session.id, clan.id, Date.now()).run();
+      } catch (error) {
+        if (String(error?.message || error).includes("clan_full")) throw new RequestError("clan_full", 409);
+        throw error;
+      }
+      return json({ ok: true });
+    }
+
+    if (action === "set_role") {
+      if (!ownClan || ownClan.ownerUserId !== session.id) throw new RequestError("not_clan_owner", 403);
+      const userId = String(body.userId || "");
+      const role = String(body.role || "");
+      if (!userId || userId === session.id || !["coleader", "member"].includes(role)) throw new RequestError("invalid_clan_role");
+      const target = await db.prepare("SELECT user_id FROM clan_members WHERE user_id = ? AND clan_id = ? LIMIT 1")
+        .bind(userId, ownClan.id).first();
+      if (!target) throw new RequestError("clan_member_not_found", 404);
+      await db.prepare("UPDATE clan_members SET role = ? WHERE user_id = ? AND clan_id = ?")
+        .bind(role, userId, ownClan.id).run();
+      return json({ ok: true });
+    }
+
+    if (action === "kick_member") {
+      if (!ownClan) throw new RequestError("not_in_clan", 409);
+      const userId = String(body.userId || "");
+      if (!userId || userId === session.id || userId === ownClan.ownerUserId) throw new RequestError("invalid_clan_member");
+      const target = await db.prepare("SELECT role FROM clan_members WHERE user_id = ? AND clan_id = ? LIMIT 1")
+        .bind(userId, ownClan.id).first();
+      if (!target) throw new RequestError("clan_member_not_found", 404);
+      const mayKick = ownClan.ownerUserId === session.id || (ownClan.role === "coleader" && target.role === "member");
+      if (!mayKick) throw new RequestError("clan_permission_denied", 403);
+      await db.prepare("DELETE FROM clan_members WHERE user_id = ? AND clan_id = ?").bind(userId, ownClan.id).run();
       return json({ ok: true });
     }
 
