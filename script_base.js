@@ -106,6 +106,7 @@ function home(){
  render(`<div class="home"><div class="home-wall">${status()}<div class="home-top"><div><small>${dateText()}</small><div class="clock">${now()}</div></div><button class="sound" onclick="lockScreen()">🔒</button></div>${unread?`<div class="notification" onclick="messages();state.notifications=0;save()"><b>💬 AutoFlip Messages</b><span>${state.notifications} новых сообщения от продавцов</span></div>`:''}<div class="apps">
  <button onclick="market()"><div class="icon green">🚗</div><small>Авто</small></button>
  <button onclick="messages()"><div class="icon blue">💬</div><small>Сообщения${unread?' •':''}</small></button>
+ <button id="communityApp" onclick="openCommunity('global')"><div class="icon community-icon">◎</div><small>Сообщество</small></button>
  <button onclick="garage()"><div class="icon orange">🔧</div><small>Гараж</small></button>
  <button onclick="window.autoBankHome&&autoBankHome()"><div class="icon">🏦</div><small>Банк</small></button>
  <button onclick="mapApp()"><div class="icon blue">🗺️</div><small>Карты</small></button>
