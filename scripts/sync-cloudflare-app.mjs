@@ -14,6 +14,7 @@ const files = [
   'world-fixes.css',
   'negotiations-system.css',
   'mobile-first.css',
+  'community.css',
   'theme-polish.css',
   'account.css',
   'cloud-save.js',
@@ -28,6 +29,7 @@ const files = [
   'garage-system.js',
   'world-system.js',
   'negotiations-system.js',
+  'community.js',
   'photo-credits.html',
   'restoration-photo-credits.html'
 ];

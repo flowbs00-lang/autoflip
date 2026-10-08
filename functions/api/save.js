@@ -7,6 +7,7 @@ import {
   RequestError
 } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
+import { syncCommunityProfile } from "../_lib/community.js";
 
 const MAX_SAVE_BYTES = 6_000_000;
 const MAX_STORED_BYTES = 1_900_000;
@@ -142,6 +143,14 @@ export async function onRequestPut(context) {
     const saved = await context.env.DB.prepare(
       "SELECT revision FROM game_saves WHERE user_id = ? LIMIT 1"
     ).bind(session.id).first();
+
+    // Keep public ratings current with the same save that stores game progress.
+    // A temporary community failure must never block the player's cloud save.
+    try {
+      await syncCommunityProfile(context.env.DB, session.id, state.rep, state.city);
+    } catch (communityError) {
+      console.error("community_profile_sync_failed", communityError);
+    }
 
     return json({
       ok: true,

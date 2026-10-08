@@ -25,7 +25,12 @@
   }
   function carKey(c){return c&&(c._garageId||c.listingId||('car-'+c.id+'-'+c.buy));}
   function ownedCar(key){return (state.cars||[]).find(function(c){return carKey(c)===key;});}
-  function listingCar(){var l=state.activeListing;if(!l)return null;return ownedCar(l.carKey);}
+  function activeListings(){
+    if(!Array.isArray(state.activeListings))state.activeListings=state.activeListing&&state.activeListing.status==='active'?[state.activeListing]:[];
+    return state.activeListings.filter(function(l){return l&&l.status==='active';});
+  }
+  function listingById(id){return activeListings().find(function(l){return l.id===id;})||null;}
+  function listingCar(id){var l=id?listingById(id):state.activeListing;if(!l)return null;return ownedCar(l.carKey);}
   function findBuyer(id){return (state.buyerInbox||[]).find(function(x){return x.id===id;});}
   function scheduledFor(kind,sourceId){return meetings().find(function(m){return m.status==='scheduled'&&m.kind===kind&&m.sourceId===sourceId;});}
   function addMeeting(data){
@@ -38,7 +43,7 @@
   function statusLabel(m){return m.status==='completed'?'Завершена':m.status==='missed'?'Пропущена':m.status==='cancelled'?'Отменена':'Запланирована';}
   function isReady(m){var now=total();return m.status==='scheduled'&&now>=m.at&&now<=m.at+graceMinutes&&state.city===m.city;}
   function nextSlots(earliest){
-    var now=total(),base=roundHour(Math.max(now+60,earliest||0)),day=Math.floor(base/1440),candidates=[base,base+120,day*1440+18*60,(day+1)*1440+10*60,(day+1)*1440+14*60,(day+1)*1440+19*60];
+    var now=total(),base=roundHour(Math.max(now+1,earliest||0)),day=Math.floor(base/1440),candidates=[base,base+120,day*1440+18*60,(day+1)*1440+10*60,(day+1)*1440+14*60,(day+1)*1440+19*60];
     return candidates.filter(function(v,i,a){return v>=base&&a.indexOf(v)===i;}).slice(0,5);
   }
   function fastestTravel(fromName,toName){
@@ -46,8 +51,8 @@
     return Math.min.apply(null,api.transports.map(function(t){return api.trip(from,to,t).minutes;}));
   }
   function appointmentEarliest(city,side){
-    var now=total();if(city===state.city)return now+60;
-    var travel=fastestTravel(state.city,city);return now+Math.max(60,travel+30);
+    var now=total();if(city===state.city)return now+1;
+    var travel=fastestTravel(state.city,city);return now+Math.max(1,travel+30);
   }
   function draftHtml(d,message){
     var same=d.sellerCity===state.city;
@@ -55,7 +60,7 @@
       '<section class="meeting-hero"><small>ЦЕНА СОГЛАСОВАНА</small><h2>'+esc(d.carName)+'</h2><p>'+esc(d.person)+': «По цене решили. Теперь давайте без суеты выберем, где и когда смотреть машину.»</p></section>'+
       (message||'')+
       '<div class="meeting-route-card"><span class="meeting-pin">📍</span><div><small>ТЫ СЕЙЧАС</small><b>'+esc(state.city)+'</b></div><i>↔</i><div><small>АВТОМОБИЛЬ</small><b>'+esc(d.sellerCity)+'</b></div></div>'+
-      (same?'<button class="meeting-place selected" onclick="chooseMeetingPlace(\''+esc(d.sellerCity)+'\')"><span>✓</span><div><b>Встретиться в '+esc(d.sellerCity)+'</b><small>Вы в одном городе · встреча доступна через 1 игровой час</small></div></button>':
+      (same?'<button class="meeting-place selected" onclick="chooseMeetingPlace(\''+esc(d.sellerCity)+'\')"><span>✓</span><div><b>Встретиться в '+esc(d.sellerCity)+'</b><small>Вы в одном городе · можно выбрать любое будущее время</small></div></button>':
       '<button class="meeting-place" onclick="chooseMeetingPlace(\''+esc(d.sellerCity)+'\')"><span>🚗</span><div><b>Я приеду к продавцу</b><small>'+esc(d.sellerCity)+' · нужно успеть добраться к назначенному времени</small></div></button>'+
       '<button class="meeting-place" onclick="offerSellerMyCity()"><span>🤝</span><div><b>Предложить продавцу приехать ко мне</b><small>'+esc(state.city)+' · вероятность согласия продавца 50%</small></div></button>')+
       '<button class="action" onclick="returnToPurchaseNegotiation()">‹ Вернуться к разговору</button></div>';
@@ -69,7 +74,7 @@
   window.chooseMeetingPlace=function(city){if(!selectedDraft)return market();selectedDraft.city=city;selectedDraft.earliest=appointmentEarliest(city,selectedDraft.side);renderMeetingTimes();};
   window.offerSellerMyCity=function(){
     if(!selectedDraft)return market();
-    if(Math.random()<.5){selectedDraft.city=state.city;selectedDraft.sellerTravels=true;selectedDraft.earliest=total()+Math.max(60,fastestTravel(selectedDraft.sellerCity,state.city)+30);return renderMeetingTimes('<div class="meeting-answer yes"><b>Продавец согласился</b><span>«Ладно, подъеду в '+esc(state.city)+'. Только время заранее зафиксируем.»</span></div>');}
+    if(Math.random()<.5){selectedDraft.city=state.city;selectedDraft.sellerTravels=true;selectedDraft.earliest=total()+Math.max(1,fastestTravel(selectedDraft.sellerCity,state.city)+30);return renderMeetingTimes('<div class="meeting-answer yes"><b>Продавец согласился</b><span>«Ладно, подъеду в '+esc(state.city)+'. Только время заранее зафиксируем.»</span></div>');}
     render(draftHtml(selectedDraft,'<div class="meeting-answer no"><b>Продавец отказался ехать</b><span>«Не, дружище, в другой город не поеду. Машина здесь — приезжай, покажу как есть.»</span></div>'));
   };
   window.renderMeetingTimes=function(message){
@@ -77,13 +82,13 @@
     var rows=slots.map(function(t,i){return '<button class="meeting-time" onclick="confirmMeetingTime('+t+')"><span>'+(['Ближайшее','Позже','Вечером','Утром','Днём'][i]||'Время')+'</span><b>'+fmt(t)+'</b><i>›</i></button>';}).join('');
     render('<div class="app meeting-app">'+head('Время встречи')+(message||'')+
       '<section class="meeting-hero compact"><small>'+esc(d.city).toUpperCase()+'</small><h2>Когда встречаемся?</h2><p>'+esc(d.person)+': «Выбирай время. Если договорились — я это окно держу за тобой.»</p></section>'+
-      (d.city!==state.city?'<div class="meeting-travel-warning"><span>🧭</span><div><b>Учтено время на дорогу</b><small>Самое раннее безопасное время: '+fmt(earliest)+'</small></div></div>':'<div class="meeting-travel-ok">✓ Встречу можно назначить минимум через один игровой час</div>')+
+      (d.city!==state.city?'<div class="meeting-travel-warning"><span>🧭</span><div><b>Учтено время на дорогу</b><small>Самое раннее безопасное время: '+fmt(earliest)+'</small></div></div>':'<div class="meeting-travel-ok">✓ Ограничения в один час больше нет — выбери любое будущее время</div>')+
       '<div class="meeting-time-list">'+rows+'</div><div class="meeting-custom"><b>Другое время</b><div><label>День<input id="meetingDay" type="number" min="'+currentDay+'" value="'+Math.max(currentDay,Math.floor(earliest/1440)+1)+'"></label><label>Время<input id="meetingClock" type="time" value="'+timeOnly(earliest)+'"></label></div><button class="action" onclick="confirmCustomMeeting()">Назначить своё время</button></div><button class="action" onclick="returnMeetingPlace()">‹ Изменить место</button></div>');
   };
   window.returnMeetingPlace=function(){if(!selectedDraft)return market();selectedDraft.city='';selectedDraft.earliest=0;render(draftHtml(selectedDraft,''));};
   window.confirmCustomMeeting=function(){var day=Number(document.getElementById('meetingDay').value),clock=String(document.getElementById('meetingClock').value||'').split(':'),at=(day-1)*1440+Number(clock[0])*60+Number(clock[1]);confirmMeetingTime(at);};
   window.confirmMeetingTime=function(at){
-    var d=selectedDraft;if(!d)return market();at=Math.floor(Number(at)||0);if(at<Number(d.earliest||total()+60))return alert('К этому времени встречу не успеть. Выбери время позже.');
+    var d=selectedDraft;if(!d)return market();at=Math.floor(Number(at)||0);if(at<Number(d.earliest||total()+1))return alert('К этому времени встречу не успеть. Выбери время позже.');
     var m=addMeeting({kind:d.kind,side:d.side,sourceId:d.sourceId,carId:d.carId,carName:d.carName,person:d.person,city:d.city,at:at,price:d.price,payload:d.payload,sellerTravels:!!d.sellerTravels});selectedDraft=null;notify('Встреча назначена: '+m.carName+' · '+m.city+' · '+fmt(m.at)+'.');meetingBooked(m.id);
   };
   function meetingBooked(id){
@@ -109,7 +114,7 @@
     var c=meetingCar(m);if(!c)return '<div class="meeting-answer no"><b>Автомобиль недоступен</b><span>Объявление изменилось. Откажись от встречи без штрафа.</span></div>';
     var standard=diagnosticCost(c,'standard'),full=diagnosticCost(c,'full'),d=m.diagnostic||null;
     var diagButtons=!d?'<div class="meeting-diagnostic-grid"><button onclick="runMeetingDiagnostic(\''+m.id+'\',\'standard\')"><small>СТАНДАРТНАЯ</small><b>'+money(standard)+'</b><span>30% шанс найти скрытую поломку</span></button><button class="full" onclick="runMeetingDiagnostic(\''+m.id+'\',\'full\')"><small>ПОЛНАЯ</small><b>'+money(full)+'</b><span>Показывает точное состояние</span></button></div>':(d.mode==='standard'&&!d.found?'<button class="action" onclick="runMeetingDiagnostic(\''+m.id+'\',\'full\')">🧰 Провести полную диагностику · '+money(full)+'</button>':'');
-    return '<section class="meeting-car"><div class="meeting-car-photo" style="background-image:linear-gradient(180deg,#0000,#000a),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span>📍 '+esc(m.city)+'</span><b>'+esc(c.name)+'</b></div><div class="meeting-car-specs"><span><small>ГОД</small><b>'+Number(c.year||0)+'</b></span><span><small>ПРОБЕГ</small><b>'+Number(c.km||0).toLocaleString('ru-RU')+' км</b></span><span><small>ЦЕНА</small><b>'+money(m.price)+'</b></span></div></section><div class="bubble seller">'+esc(m.person)+': «Машина перед тобой. Смотри спокойно. Если всё устраивает — оформляем.»</div>'+diagnosticResultHtml(m)+diagButtons+(d&&d.found&&!m.counterTried?'<button class="action" onclick="meetingCounterOffer(\''+m.id+'\')">💬 Попросить скидку после диагностики</button>':'')+(m.counterText?'<div class="bubble seller">'+esc(m.person)+': «'+esc(m.counterText)+'»</div>':'')+'<button class="action green meeting-buy-confirm" onclick="completeMeeting(\''+m.id+'\')">✅ Подтвердить покупку · '+money(m.price)+'</button><button class="action meeting-decline" onclick="declineMeetingDeal(\''+m.id+'\')">Отказаться от автомобиля</button>';
+    return '<section class="meeting-car"><div class="meeting-car-photo" style="background-image:linear-gradient(180deg,#0000,#000a),url(\''+photo(c)+'\')"><span>📍 '+esc(m.city)+'</span><b>'+esc(c.name)+'</b></div><div class="meeting-car-specs"><span><small>ГОД</small><b>'+Number(c.year||0)+'</b></span><span><small>ПРОБЕГ</small><b>'+Number(c.km||0).toLocaleString('ru-RU')+' км</b></span><span><small>ЦЕНА</small><b>'+money(m.price)+'</b></span></div></section><div class="bubble seller">'+esc(m.person)+': «Машина перед тобой. Смотри спокойно. Если всё устраивает — оформляем.»</div>'+diagnosticResultHtml(m)+diagButtons+(d&&d.found&&!m.counterTried?'<button class="action" onclick="meetingCounterOffer(\''+m.id+'\')">💬 Попросить скидку после диагностики</button>':'')+(m.counterText?'<div class="bubble seller">'+esc(m.person)+': «'+esc(m.counterText)+'»</div>':'')+'<button class="action green meeting-buy-confirm" onclick="completeMeeting(\''+m.id+'\')">✅ Подтвердить покупку · '+money(m.price)+'</button><button class="action meeting-decline" onclick="declineMeetingDeal(\''+m.id+'\')">Отказаться от автомобиля</button>';
   }
   window.openMeeting=function(id){
     processMeetings(false);var m=meetingById(id);if(!m)return messages('meetings');var now=total(),left=m.at-now,ready=isReady(m),place=state.city===m.city;
@@ -138,6 +143,20 @@
   window.declineMeetingDeal=function(id){var m=meetingById(id);if(!m||!isReady(m))return openMeeting(id);m.status='cancelled';m.result='Ты осмотрел автомобиль и отказался от сделки. Деньги за машину не списаны.';saveMeetings();openMeeting(id);};
   window.cancelMeeting=function(id){var m=meetingById(id);if(!m||m.status!=='scheduled')return;m.status='cancelled';m.result='Ты заранее отменил встречу. Репутация не изменилась.';var buyer=findBuyer(m.sourceId);if(buyer&&buyer.status==='meeting')buyer.status='accepted';saveMeetings();openMeeting(id);};
   function successMeeting(m){m.status='completed';m.completedAt=total();m.result='Ты приехал вовремя и выполнил договорённость.';rep(m.side==='buyer'?3:1,'Встреча без опоздания · '+m.carName);}
+  function closeOtherCarMeetings(completed){
+    if(!completed||completed.side!=='buyer')return;
+    var listingId=completed.payload&&completed.payload.listingId;
+    if(!listingId){var source=findBuyer(completed.sourceId);listingId=source&&source.listingId;}
+    if(!listingId)return;
+    meetings().forEach(function(other){
+      if(other.id===completed.id||other.status!=='scheduled'||other.side!=='buyer')return;
+      var buyer=findBuyer(other.sourceId),otherListing=other.payload&&other.payload.listingId||buyer&&buyer.listingId;
+      if(otherListing!==listingId)return;
+      other.status='cancelled';
+      other.result='Автомобиль уже продан или обменян на другой встрече. Эта встреча закрыта автоматически.';
+      if(buyer&&buyer.status!=='sold')buyer.status='declined';
+    });
+  }
   window.completeMeeting=function(id){
     var m=meetingById(id);if(!m||!isReady(m))return openMeeting(id);var beforeCars=(state.cars||[]).slice();
     if(m.kind==='seller_purchase'){
@@ -147,7 +166,7 @@
     }else if(m.kind==='buyer_trade'){var tradeBuyer=findBuyer(m.sourceId);if(tradeBuyer)tradeBuyer.status='accepted';rawBuyerTrade(m.sourceId,m.price);}
     else{var saleBuyer=findBuyer(m.sourceId);if(saleBuyer)saleBuyer.status='accepted';rawBuyerSale(m.sourceId,m.price);}
     var after=state.cars||[],added=after.find(function(c){return beforeCars.indexOf(c)<0;});if(added)added.city=m.city;
-    successMeeting(m);var buyer=findBuyer(m.sourceId);if(buyer)buyer.status='sold';saveMeetings();
+    successMeeting(m);var buyer=findBuyer(m.sourceId);if(buyer)buyer.status='sold';closeOtherCarMeetings(m);saveMeetings();
     render('<div class="app meeting-app">'+head('Встреча завершена')+'<section class="meeting-success"><span>✓</span><small>РЕПУТАЦИЯ +'+(m.side==='buyer'?3:1)+'</small><h2>Договорённость выполнена</h2><p>'+esc(m.carName)+' · '+esc(m.city)+' · '+fmt(m.at)+'</p></section><button class="action green" onclick="garage()">Открыть гараж</button><button class="action" onclick="messages(\'meetings\')">История встреч</button></div>');
   };
   window.processMeetings=function(showNotice){
@@ -156,21 +175,23 @@
   };
 
   function scheduleBuyerMeeting(id){
-    var x=findBuyer(id),c=listingCar();if(!x||!c)return messages();var existing=scheduledFor(x.trade?'buyer_trade':'buyer_sale',id);if(existing)return openMeeting(existing.id);
+    var x=findBuyer(id),c=x&&listingCar(x.listingId);if(!x||!c)return messages();state.activeListing=listingById(x.listingId);var existing=scheduledFor(x.trade?'buyer_trade':'buyer_sale',id);if(existing)return openMeeting(existing.id);
     selectedDraft={kind:x.trade?'buyer_trade':'buyer_sale',side:'buyer',sourceId:id,carName:c.name,sellerCity:c.city,person:x.name,price:Number(x.offer),city:c.city,earliest:appointmentEarliest(c.city,'buyer'),payload:{listingId:x.listingId}};
     renderBuyerTimes();
   }
   function renderBuyerTimes(){
-    var d=selectedDraft,earliest=d.earliest,slots=nextSlots(earliest),rows=slots.map(function(t){return '<button class="meeting-time" onclick="confirmBuyerMeeting('+t+')"><span>'+timeOnly(t)+'</span><b>'+fmt(t)+'</b><i>›</i></button>';}).join('');
-    render('<div class="app meeting-app">'+head('Встреча с покупателем')+'<section class="meeting-hero"><small>'+esc((d.kind==='buyer_trade'?'ОБМЕН':'ПРОДАЖА'))+'</small><h2>'+esc(d.carName)+'</h2><p>'+esc(d.person)+': «По деньгам поняли друг друга. Когда можно подъехать посмотреть машину?»</p></section><div class="meeting-route-card"><span class="meeting-pin">🚘</span><div><small>МАШИНА НАХОДИТСЯ</small><b>'+esc(d.city)+'</b></div></div>'+(d.city!==state.city?'<div class="meeting-travel-warning"><span>⚠</span><div><b>Ты сейчас в '+esc(state.city)+'</b><small>Чтобы продать или обменять машину, к встрече нужно вернуться в '+esc(d.city)+'.</small></div></div>':'')+'<div class="meeting-time-list">'+rows+'</div><button class="action" onclick="openBuyerChat(\''+d.sourceId+'\')">‹ Назад к диалогу</button></div>');
+    var d=selectedDraft,earliest=d.earliest,slots=nextSlots(earliest),currentDay=Math.floor(total()/1440)+1,rows=slots.map(function(t){return '<button class="meeting-time" onclick="confirmBuyerMeeting('+t+')"><span>'+timeOnly(t)+'</span><b>'+fmt(t)+'</b><i>›</i></button>';}).join('');
+    render('<div class="app meeting-app">'+head('Встреча с покупателем')+'<section class="meeting-hero"><small>'+esc((d.kind==='buyer_trade'?'ОБМЕН':'ПРОДАЖА'))+'</small><h2>'+esc(d.carName)+'</h2><p>'+esc(d.person)+': «По деньгам поняли друг друга. Когда можно подъехать посмотреть машину?»</p></section><div class="meeting-route-card"><span class="meeting-pin">🚘</span><div><small>МАШИНА НАХОДИТСЯ</small><b>'+esc(d.city)+'</b></div></div>'+(d.city!==state.city?'<div class="meeting-travel-warning"><span>⚠</span><div><b>Ты сейчас в '+esc(state.city)+'</b><small>Чтобы продать или обменять машину, к встрече нужно вернуться в '+esc(d.city)+'.</small></div></div>':'<div class="meeting-travel-ok">✓ Можно назначить встречу на любое будущее время</div>')+'<div class="meeting-time-list">'+rows+'</div><div class="meeting-custom"><b>Точное время без ограничения в один час</b><div><label>День<input id="buyerMeetingDay" type="number" min="'+currentDay+'" value="'+Math.max(currentDay,Math.floor(earliest/1440)+1)+'"></label><label>Время<input id="buyerMeetingClock" type="time" value="'+timeOnly(earliest)+'"></label></div><button class="action" onclick="confirmCustomBuyerMeeting()">Назначить своё время</button></div><button class="action" onclick="openBuyerChat(\''+d.sourceId+'\')">‹ Назад к диалогу</button></div>');
   }
+  window.confirmCustomBuyerMeeting=function(){var day=Number(document.getElementById('buyerMeetingDay').value),clock=String(document.getElementById('buyerMeetingClock').value||'').split(':'),at=(day-1)*1440+Number(clock[0])*60+Number(clock[1]);confirmBuyerMeeting(at);};
   window.confirmBuyerMeeting=function(at){var d=selectedDraft;if(!d)return messages();at=Number(at);if(at<d.earliest)return alert('Ты не успеешь к этому времени.');var m=addMeeting({kind:d.kind,side:'buyer',sourceId:d.sourceId,carName:d.carName,person:d.person,city:d.city,at:at,price:d.price,payload:d.payload});var x=findBuyer(d.sourceId);if(x)x.status='meeting';selectedDraft=null;notify('Встреча с покупателем назначена: '+m.carName+' · '+fmt(m.at)+'.');meetingBooked(m.id);};
 
   var baseOpenBuyerChat=window.openBuyerChat;
   window.openBuyerChat=function(id){
     var x=findBuyer(id);if(!x)return messages();if(x.status!=='accepted'&&x.status!=='meeting')return baseOpenBuyerChat(id);if(!x.read){x.read=true;state.notifications=Math.max(0,Number(state.notifications||0)-1);saveMeetings();}
-    var c=listingCar(),m=scheduledFor(x.trade?'buyer_trade':'buyer_sale',id),trade='';
-    if(x.trade&&x.tradeCar&&typeof tradeCarCardHtml==='function')trade=tradeCarCardHtml(x.tradeCar,x.tradeValue,'МАШИНА ПОКУПАТЕЛЯ');
+    var c=listingCar(x.listingId),m=scheduledFor(x.trade?'buyer_trade':'buyer_sale',id),trade='';
+    if(c)state.activeListing=listingById(x.listingId);
+    if(x.trade&&x.tradeCar&&typeof tradeCarCardHtml==='function')trade='<div class="trade-context-title"><b>Какой автомобиль хотят получить</b><span>Покупатель отвечает именно на объявление ниже</span></div>'+tradeCarCardHtml(c,x.offer,'ТВОЙ АВТОМОБИЛЬ')+'<div class="trade-swap-arrow">⇅</div>'+tradeCarCardHtml(x.tradeCar,x.tradeValue,'АВТОМОБИЛЬ ПОКУПАТЕЛЯ');
     render('<div class="app meeting-app">'+head(x.name)+'<section class="meeting-hero compact"><small>'+esc(x.kind)+'</small><h2>'+esc((c&&c.name)||'Автомобиль')+'</h2><p>'+esc(x.name)+': «'+esc(x.text)+'»</p></section>'+trade+'<div class="meeting-price"><span>Согласованная цена</span><b>'+money(x.offer)+'</b></div>'+(m?'<div class="meeting-travel-ok">✓ Встреча назначена: '+fmt(m.at)+' · '+esc(m.city)+'</div><button class="action green" onclick="openMeeting(\''+m.id+'\')">Открыть встречу</button>':'<button class="action green" onclick="scheduleBuyerMeeting(\''+id+'\')">📅 Назначить встречу</button>')+'<button class="action" onclick="messages()">‹ К сообщениям</button></div>');
   };
   window.scheduleBuyerMeeting=scheduleBuyerMeeting;

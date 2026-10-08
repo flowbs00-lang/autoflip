@@ -653,17 +653,18 @@ function processPhoneLifeEvents(){
   var meta=state.phoneEventMeta||(state.phoneEventMeta={}),now=gameTotal(),day=Math.floor(now/1440);
   processScheduledMarketRefresh();
   syncBuyerNotifications();
-  var l=state.activeListing;
-  if(l&&l.status==='active'){
-    if(!Number.isFinite(Number(l.views)))l.views=0;if(!Number.isFinite(Number(l.favorites)))l.favorites=0;
-    if(!meta.listingId||meta.listingId!==l.id){meta.listingId=l.id;meta.listingStatsAt=Number(l.postedAt||now);}
-    if(now-Number(meta.listingStatsAt||now)>=90){
-      var blocks=Math.min(4,Math.max(1,Math.floor((now-Number(meta.listingStatsAt||now))/90))),views=0,favs=0;
+  var saleListings=typeof window.autoFlipActiveListings==='function'?window.autoFlipActiveListings():(state.activeListing?[state.activeListing]:[]);
+  if(!meta.listingStats||typeof meta.listingStats!=='object')meta.listingStats={};
+  saleListings.forEach(function(l){
+    if(!l||l.status!=='active')return;if(!Number.isFinite(Number(l.views)))l.views=0;if(!Number.isFinite(Number(l.favorites)))l.favorites=0;
+    var last=Number(meta.listingStats[l.id]||l.postedAt||now);
+    if(now-last>=90){
+      var blocks=Math.min(4,Math.max(1,Math.floor((now-last)/90))),views=0,favs=0;
       for(var k=0;k<blocks;k++){var v=3+Math.floor(Math.random()*8);views+=v;if(Math.random()<.38)favs++;}
-      l.views+=views;l.favorites+=favs;meta.listingStatsAt=Number(meta.listingStatsAt||now)+blocks*90;
-      pushPhoneNotification('AutoMarket','🚗','По объявлению: +'+views+' просмотров'+(favs?' · +'+favs+' в избранное':'')+'. Всего '+l.views+' просмотров.','listing','stats-'+l.id+'-'+Math.floor(meta.listingStatsAt/90));
+      l.views+=views;l.favorites+=favs;meta.listingStats[l.id]=last+blocks*90;
+      pushPhoneNotification('AutoMarket','🚗','По объявлению: +'+views+' просмотров'+(favs?' · +'+favs+' в избранное':'')+'. Всего '+l.views+' просмотров.','listing','stats-'+l.id+'-'+Math.floor(meta.listingStats[l.id]/90));
     }
-  }else{meta.listingId='';}
+  });
   if(Number(state.loan||0)>0){
     if(!state.bankDueAt)state.bankDueAt=now+2880;
     var left=Number(state.bankDueAt)-now;
@@ -685,7 +686,7 @@ function updateGameClockUI(){
   document.querySelectorAll('.clock').forEach(function(el){el.textContent=time;});
   document.querySelectorAll('.home-top small').forEach(function(el){el.textContent=date;});
 }
-setInterval(function(){updateGameClockUI();updateMarketCountdownUI();if(gameTotal()%10===0){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));}},1000);
+setInterval(function(){updateGameClockUI();updateMarketCountdownUI();if(typeof window.updateBankCooldownUI==='function')window.updateBankCooldownUI();if(gameTotal()%10===0){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));}},1000);
 window.addEventListener('beforeunload',function(){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));});
 function advanceGameMinutes(mins){
   clockAnchorTotal=gameTotal()+Math.max(0,Math.round(Number(mins)||0));
@@ -694,13 +695,16 @@ function advanceGameMinutes(mins){
   updateGameClockUI();
 }
 window.advanceGameMinutes=advanceGameMinutes;
-window.sleepGame=function(){
+window.sleepUntilGame=function(clock){
   var total=gameTotal(),minute=((total%1440)+1440)%1440,canSleep=minute>=1260||minute<480;
   if(!canSleep){
     alert('Лечь спать можно только с 21:00 до 08:00. Сейчас '+gameTimeText()+'.');
     return realty();
   }
-  var mins=minute<480?480-minute:(1440-minute)+480;
+  var parts=String(clock||'08:00').split(':'),wakeMinute=Math.max(0,Math.min(480,Number(parts[0]||0)*60+Number(parts[1]||0)));
+  var dayStart=total-minute,target=minute>=1260?dayStart+1440+wakeMinute:dayStart+wakeMinute;
+  if(target<=total)return alert('Время пробуждения должно быть позже текущего времени и не позднее 08:00.');
+  var mins=target-total;
   if(mins<=0)return realty();
   var sleepStart=gameTotal();
   advanceGameMinutes(mins);
@@ -712,14 +716,26 @@ window.sleepGame=function(){
   if(sleepMarketUpdates.length)state.lifeEvents.unshift({time:gameTimeText(),day:gameDateText(),text:'Пока ты спал, AutoMarket обновился '+sleepMarketUpdates.length+' раз.'});
   state.lifeEvents=state.lifeEvents.slice(0,10);
   persist();
-  render('<div class="app">'+head('Утро')+'<div class="note"><small>СОН ДО 08:00</small><h3>☀️ '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">Ночь закончилась. Пока ты спал, игровой мир продолжил жить.</p></div>'+(sleepMarketUpdates.length?'<div class="notification"><b>🚗 AutoMarket</b><span>За время сна рынок обновился '+sleepMarketUpdates.length+' раз. Подробности уже в уведомлениях.</span></div>':'')+(sleepBuyerCount?'<div class="notification"><b>💬 Покупатели</b><span>Пока ты спал, пришло сообщений по объявлению: '+sleepBuyerCount+'.</span></div>':'<div class="notification"><b>🔔 Телефон</b><span>За ночь новых сообщений от покупателей не было.</span></div>')+'<button class="action green" onclick="home()">📱 Взять телефон</button></div>');
+  render('<div class="app">'+head('Пробуждение')+'<div class="note"><small>СОН ЗАВЕРШЁН</small><h3>☀️ '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">Ты проснулся в выбранное время. Встречи, рынок и сообщения учитывают прошедшие часы.</p></div>'+(sleepMarketUpdates.length?'<div class="notification"><b>🚗 AutoMarket</b><span>За время сна рынок обновился '+sleepMarketUpdates.length+' раз. Подробности уже в уведомлениях.</span></div>':'')+(sleepBuyerCount?'<div class="notification"><b>💬 Покупатели</b><span>Пока ты спал, пришло сообщений: '+sleepBuyerCount+'.</span></div>':'<div class="notification"><b>🔔 Телефон</b><span>За время сна новых сообщений от покупателей не было.</span></div>')+'<button class="action green" onclick="home()">📱 Взять телефон</button></div>');
 };
+window.sleepGame=function(){return sleepUntilGame('08:00');};
 window.realty=function(){
   var total=gameTotal(),minute=((total%1440)+1440)%1440,canSleep=minute>=1260||minute<480;
+  var nextMeeting=(state.meetings||[]).filter(function(m){return m.status==='scheduled'&&m.at>total;}).sort(function(a,b){return a.at-b.at;})[0];
+  var meetingHint=nextMeeting?'<div class="meeting-travel-warning"><span>📅</span><div><b>Ближайшая встреча · '+nextMeeting.carName+'</b><small>'+((window.autoFlipMeetings&&window.autoFlipMeetings.format(nextMeeting.at))||nextMeeting.at)+' · '+nextMeeting.city+'</small></div></div>':'';
+  var wakeValue=minute<420&&minute>=0?String(Math.max(Math.floor(minute/60)+1,6)).padStart(2,'0')+':00':'07:00';
   var sleepBlock=canSleep
-    ?'<button class="action green" onclick="sleepGame()">🛏️ Лечь спать до 08:00</button><div class="note" style="margin-top:10px"><b>🌙 Ночной сон</b><p class="muted">Сон всегда заканчивается в 08:00. Если лечь в 07:30, пройдёт только 30 игровых минут.</p></div>'
+    ?meetingHint+'<div class="sleep-wake-card"><b>Во сколько проснуться?</b><p>Выбери любое время до 08:00, чтобы успеть на встречу.</p><div class="sleep-wake-presets"><button onclick="sleepUntilGame(\'06:00\')">06:00</button><button onclick="sleepUntilGame(\'07:00\')">07:00</button><button onclick="sleepUntilGame(\'08:00\')">08:00</button></div><label>Другое время<input id="sleepWakeTime" type="time" min="00:00" max="08:00" value="'+wakeValue+'"></label><button class="action green" onclick="sleepUntilGame(document.getElementById(\'sleepWakeTime\').value)">🛏️ Лечь спать</button></div>'
     :'<div class="note" style="margin-top:10px"><b>🔒 Спать пока рано</b><p class="muted">Лечь спать можно только с 21:00 до 08:00. Днём занимайся рынком, ремонтом, поездками и сделками.</p></div><button class="action" disabled>😴 Сон откроется в 21:00</button>';
-  render('<div class="app">'+head('Дом')+'<div class="note"><small>СЕЙЧАС</small><h3>🏠 '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">'+(canSleep?'Можно закончить день. Подъём всегда в 08:00.':'Сейчас дневное время — спать нельзя.')+'</p></div>'+sleepBlock+'<div class="note" style="margin-top:10px"><b>⏱ Игровое время</b><p class="muted">1 реальная минута = 1 игровой час.</p></div></div>');
+  render('<div class="app">'+head('Дом')+'<div class="note"><small>СЕЙЧАС</small><h3>🏠 '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">'+(canSleep?'Можно закончить день и выбрать время пробуждения.':'Сейчас дневное время — спать нельзя.')+'</p></div>'+sleepBlock+'<div class="note" style="margin-top:10px"><b>⏱ Игровое время</b><p class="muted">1 реальная минута = 1 игровой час.</p></div></div>');
+};
+
+// Keep the currently selected garage car linked to its own sale listing.
+var autoFlipSelectGarageCar=window.selectGarageCar;
+if(typeof autoFlipSelectGarageCar==='function')window.selectGarageCar=function(index){
+  var c=Array.isArray(state.cars)?state.cars[index]:null;
+  if(c&&typeof window.activeListingForCar==='function')state.activeListing=window.activeListingForCar(c)||((state.activeListings||[])[0]||null);
+  return autoFlipSelectGarageCar.apply(this,arguments);
 };
 var oldHome=window.home;if(typeof oldHome==='function'&&!oldHome.__v79live){window.home=function(){oldHome.apply(this,arguments);setTimeout(function(){var apps=document.querySelector('.apps'),appBtn=[].slice.call(document.querySelectorAll('.apps button')).find(function(b){return b.textContent.indexOf('Авто')>=0;});if(appBtn&&!document.getElementById('v79RefreshHint')){var h=document.createElement('small');h.id='v79RefreshHint';h.textContent=' LIVE';h.style.opacity='.65';appBtn.appendChild(h);}if(apps&&!document.getElementById('phoneNotificationsApp')){var btn=document.createElement('button');btn.id='phoneNotificationsApp';btn.setAttribute('onclick','notificationCenter()');btn.innerHTML='<div class="icon red">🔔</div><small>Уведомления</small>';apps.appendChild(btn);}updateNotificationBadge();},120);};window.home.__v79live=true;}
 persist();}install();})();

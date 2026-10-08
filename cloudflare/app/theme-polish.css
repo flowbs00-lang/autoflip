@@ -198,6 +198,17 @@
 #screen .meeting-app .condition-card.unknown :is(h3,p,small){color:var(--os-text)}
 #screen .meeting-app .meeting-decline{background:var(--os-danger-bg);border-color:color-mix(in srgb,var(--os-danger) 35%,var(--os-line));color:var(--os-danger)!important}
 
+/* Negotiations, sleep and community additions use the same contrast system. */
+#screen .app :is(.trade-car-card,.trade-owned-choice,.trade-deal-summary,.trade-context-box,.sleep-wake-card,.community-panel,.community-message,.community-rank-row,.community-clan-card){
+  background:var(--os-surface)!important;
+  border-color:var(--os-line)!important;
+  color:var(--os-text)!important;
+}
+#screen .app :is(.trade-car-card,.trade-owned-choice,.trade-deal-summary,.trade-context-box,.sleep-wake-card,.community-panel,.community-message,.community-rank-row,.community-clan-card) :is(b,strong,h2,h3,h4){color:var(--os-text)!important}
+#screen .app :is(.trade-car-card,.trade-owned-choice,.trade-deal-summary,.trade-context-box,.sleep-wake-card,.community-panel,.community-message,.community-rank-row,.community-clan-card) :is(p,small,span,em){color:var(--os-muted)}
+#screen .app :is(.trade-context-title,.community-kicker,.community-message-name,.community-rank-score){color:var(--os-accent)!important}
+#screen .app .trade-swap-arrow{background:var(--os-raised);border-color:var(--os-line);color:var(--os-text)}
+
 /* Games intentionally stay cinematic dark in both themes, now with readable type. */
 #screen .games-app{background:#090d13;color:#f2f5f8}
 #screen .games-app .os-head b,#screen .games-app .os-status{color:#f2f5f8}
