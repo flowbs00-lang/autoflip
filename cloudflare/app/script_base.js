@@ -81,6 +81,13 @@ function photo(c){return c&&c.photoUrl?c.photoUrl:(exactPhotos[c.name]||fallback
 const initial={money:100000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 100 000 ₽. Найди первую выгодную машину.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
 let state=JSON.parse(localStorage.getItem(KEY)||'null')||structuredClone(initial);
 if(Number(state.money||0)===50000&&Number(state.deals||0)===0&&!state.car&&(!Array.isArray(state.cars)||state.cars.length===0)&&Number(state.loan||0)===0)state.money=100000;
+// Older preview builds started an empty profile with 1.5M. Migrate only a
+// completely untouched profile so real earnings and existing progress remain intact.
+if(Number(state.money||0)===1500000&&Number(state.rep||0)===0&&Number(state.deals||0)===0&&!state.car&&(!Array.isArray(state.cars)||state.cars.length===0)&&Number(state.loan||0)===0){
+ state.money=100000;
+ state.logs=['Старт: капитал 100 000 ₽. Найди первую выгодную машину.'];
+ state.economyVersion=2;
+}
 if(state.notifications===undefined)state.notifications=2;if(!state.notes)state.notes=[];if(!state.seen)state.seen={};
 const screen=document.getElementById('screen'),objective=document.getElementById('objective'),objectiveSub=document.getElementById('objectiveSub'),journal=document.getElementById('journal');
 function money(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}

@@ -89,6 +89,11 @@ test('migration keeps money, owned cars, favourite identity and diagnostics whil
  const second=game(saved);assert.equal(second.run('makes.length'),2000);assert.equal(second.run('state.money'),123456);assert.equal(second.run('makes[0].listingId'),saved.marketFavorites[0]);assert.equal(second.run('makes[0].marketFlipCondition.name'),'Двигатель');
  assert.equal(second.run('state.marketFavorites[0]'),saved.marketFavorites[0]);
 });
+test('empty preview profile returns to the intended 100,000 start without touching progressed profiles',()=>{
+ const empty={money:1500000,rep:0,deals:0,city:'Москва',car:null,cars:[],loan:0,logs:['preview'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:[]};
+ const migrated=game(empty);assert.equal(migrated.run('state.money'),100000);assert.equal(migrated.run('state.economyVersion'),2);
+ const progressed=game({...empty,deals:1});assert.equal(progressed.run('state.money'),1500000);
+});
 test('exchange generator works with the actual loaded catalogue and purchase removal is idempotent',()=>{
  const g=game();const trade=g.c.makeExchangeCar({name:'Example',market:1200000});assert.ok(trade&&trade.photoUrl);assert.ok(g.c.marketTemplates.some(c=>c.name===trade.name));
  const id=g.run('makes[0].listingId');g.c.removePurchasedListing(id);const before=g.run('makes.length');g.c.removePurchasedListing(id);assert.equal(g.run('makes.length'),before);assert.equal(g.run('makes.some(c=>c.listingId==='+JSON.stringify(id)+')'),false);
