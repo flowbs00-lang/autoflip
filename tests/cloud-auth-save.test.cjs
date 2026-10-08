@@ -11,6 +11,8 @@ test('cloud save API is authenticated, same-origin and size bounded', () => {
   assert.match(source, /getSession/);
   assert.match(source, /assertSameOrigin/);
   assert.match(source, /MAX_SAVE_BYTES/);
+  assert.match(source, /CompressionStream\("gzip"\)/);
+  assert.match(source, /DecompressionStream\("gzip"\)/);
   assert.match(source, /ON CONFLICT\(user_id\)/);
 });
 

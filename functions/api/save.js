@@ -8,7 +8,8 @@ import {
 } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
 
-const MAX_SAVE_BYTES = 4_000_000;
+const MAX_SAVE_BYTES = 6_000_000;
+const MAX_STORED_BYTES = 1_900_000;
 
 async function requireUser(context) {
   if (!context.env.DB) throw new RequestError("database_not_configured", 503);
@@ -18,10 +19,42 @@ async function requireUser(context) {
   return session;
 }
 
-function parseStoredSave(row) {
+function bytesToBase64(bytes) {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+async function encodeStoredSave(dataJson) {
+  const compressed = new Blob([dataJson])
+    .stream()
+    .pipeThrough(new CompressionStream("gzip"));
+  const bytes = new Uint8Array(await new Response(compressed).arrayBuffer());
+  const stored = `gz:${bytesToBase64(bytes)}`;
+  if (new TextEncoder().encode(stored).byteLength > MAX_STORED_BYTES) {
+    throw new RequestError("save_too_large", 413);
+  }
+  return stored;
+}
+
+async function parseStoredSave(row) {
   if (!row) return null;
   try {
-    return JSON.parse(row.data_json);
+    if (!row.data_json.startsWith("gz:")) return JSON.parse(row.data_json);
+    const bytes = base64ToBytes(row.data_json.slice(3));
+    const decompressed = new Blob([bytes])
+      .stream()
+      .pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(decompressed).text());
   } catch {
     throw new RequestError("save_corrupted", 500);
   }
@@ -36,7 +69,7 @@ export async function onRequestGet(context) {
 
     return json({
       ok: true,
-      save: parseStoredSave(row),
+      save: await parseStoredSave(row),
       revision: Number(row?.revision || 0),
       updatedAt: Number(row?.updated_at || 0)
     });
@@ -59,6 +92,7 @@ export async function onRequestPut(context) {
     if (new TextEncoder().encode(dataJson).byteLength > MAX_SAVE_BYTES - 1024) {
       throw new RequestError("save_too_large", 413);
     }
+    const storedSave = await encodeStoredSave(dataJson);
 
     const updatedAt = Date.now();
     await context.env.DB.prepare(`
@@ -68,7 +102,7 @@ export async function onRequestPut(context) {
         revision = game_saves.revision + 1,
         data_json = excluded.data_json,
         updated_at = excluded.updated_at
-    `).bind(session.id, dataJson, updatedAt).run();
+    `).bind(session.id, storedSave, updatedAt).run();
 
     const saved = await context.env.DB.prepare(
       "SELECT revision FROM game_saves WHERE user_id = ? LIMIT 1"
