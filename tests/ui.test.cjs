@@ -6,10 +6,11 @@ const path=require('node:path');
 const ui=fs.readFileSync(path.join(__dirname,'../ui.js'),'utf8');
 function game(saved){
   let output='',stored;
-  const root={dataset:{},style:{setProperty(){}}};
+  const properties={};
+  const root={dataset:{},style:{setProperty(key,value){properties[key]=value;}}};
   const c={state:saved||{money:123456,cars:[{id:1}],city:'Киров',sound:false},document:{documentElement:root,querySelectorAll:()=>[],getElementById:()=>null},render:v=>output=v,money:n=>n+' ₽',now:()=> '07:30',dateText:()=> 'День 1',persist:()=>stored=JSON.parse(JSON.stringify(c.state)),setInterval(){},toggleSound(){c.state.sound=!c.state.sound;}};
   c.window=c;vm.createContext(c);vm.runInContext(ui,c);
-  return {c,root,html:()=>output,saved:()=>stored};
+  return {c,root,properties,html:()=>output,saved:()=>stored};
 }
 test('appearance persists across reload without altering economic state',()=>{
   const g=game();g.c.setAppearance('wallpaper','ocean');g.c.setAppearance('theme','light');g.c.setAppearance('accent','violet');g.c.setAppearance('motion',false);
@@ -25,4 +26,16 @@ test('balance privacy, widget toggle and quick settings work together',()=>{
   g.c.setAppearance('widgets',false);g.c.home();assert.doesNotMatch(g.html(),/class="os-widgets"/);
   g.c.toggleQuickSetting('sound');assert.equal(g.c.state.sound,true);
   g.c.toggleQuickSetting('theme');assert.equal(g.root.dataset.theme,'light');
+});
+test('launcher renders every app in one compact grid and exposes personal wallpaper picker',()=>{
+  const g=game();g.c.home();
+  assert.equal((g.html().match(/class="os-app"/g)||[]).length,18);
+  assert.match(g.html(),/os-home-glance/);
+  g.c.settings();assert.match(g.html(),/accept="image\/\*"/);assert.match(g.html(),/Выбрать своё фото/);
+});
+test('saved custom wallpaper is restored as the active phone background',()=>{
+  const image='data:image/jpeg;base64,abc123';
+  const g=game({money:20,cars:[],city:'Киров',appearance:{wallpaper:'custom',customWallpaper:image,theme:'dark',accent:'mint',motion:true,widgets:true,privateBalance:false}});
+  assert.equal(g.root.dataset.wallpaper,'custom');assert.match(g.properties['--os-wallpaper'],/data:image\/jpeg;base64,abc123/);
+  g.c.clearCustomWallpaper();assert.equal(g.c.state.appearance.wallpaper,'aurora');assert.equal(g.c.state.appearance.customWallpaper,'');
 });
