@@ -87,3 +87,24 @@ test('clans are limited to 50 and expose managed member roles', () => {
   assert.match(client, /СОСТАВ КЛАНА/);
   assert.match(client, /\/50 участников/);
 });
+
+test('chat authors and clan members open a safe public player inventory', () => {
+  const api = read('functions/api/community.js');
+  const client = read('community.js');
+  const css = read('community-profile.css');
+  assert.match(api, /url\.searchParams\.has\("profile"\)/);
+  assert.match(api, /publicPlayerProfile/);
+  assert.match(api, /readGameSave/);
+  assert.match(api, /garageLevel/);
+  assert.match(api, /garageValue/);
+  assert.match(api, /PUBLIC_CAR_LIMIT/);
+  assert.match(api, /PUBLIC_PLATE_LIMIT/);
+  assert.doesNotMatch(api.match(/return \{\n    ok: true,\n    player:[\s\S]*?\n  \};/)[0], /businessHistory|repHistory|loan|money:/);
+  assert.match(client, /communityOpenProfile/);
+  assert.match(client, /community-member-profile/);
+  assert.match(client, /community-author/);
+  assert.match(client, /КОЛЛЕКЦИЯ НОМЕРОВ/);
+  assert.match(client, /Уникальный ID/);
+  assert.match(css, /community-profile-car/);
+  assert.match(css, /community-plate-face/);
+});

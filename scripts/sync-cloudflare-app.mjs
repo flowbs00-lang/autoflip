@@ -15,6 +15,7 @@ const files = [
   'negotiations-system.css',
   'mobile-first.css',
   'community.css',
+  'community-profile.css',
   'theme-polish.css',
   'account.css',
   'cloud-save.js',

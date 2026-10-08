@@ -3,6 +3,8 @@ import { getSession } from "../_lib/session.js";
 import { communityCities, ensureCommunitySchema, syncCommunityProfile, validCommunityCity } from "../_lib/community.js";
 
 const MESSAGE_LIMIT = 400;
+const PUBLIC_CAR_LIMIT = 30;
+const PUBLIC_PLATE_LIMIT = 120;
 
 async function requireUser(context) {
   if (!context.env.DB) throw new RequestError("database_not_configured", 503);
@@ -30,7 +32,97 @@ async function membership(db, userId) {
 async function profile(db, userId) {
   await db.prepare("INSERT OR IGNORE INTO community_profiles (user_id, reputation, city, updated_at) VALUES (?, 0, 'Москва', ?)")
     .bind(userId, Date.now()).run();
-  return db.prepare("SELECT reputation, city FROM community_profiles WHERE user_id = ? LIMIT 1").bind(userId).first();
+  return db.prepare("SELECT reputation, city, updated_at AS updatedAt FROM community_profiles WHERE user_id = ? LIMIT 1").bind(userId).first();
+}
+
+function base64ToBytes(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+async function readGameSave(row) {
+  if (!row?.data_json) return {};
+  try {
+    if (!row.data_json.startsWith("gz:")) return JSON.parse(row.data_json);
+    const decompressed = new Blob([base64ToBytes(row.data_json.slice(3))])
+      .stream()
+      .pipeThrough(new DecompressionStream("gzip"));
+    const value = JSON.parse(await new Response(decompressed).text());
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function publicText(value, limit = 80) {
+  return String(value == null ? "" : value).trim().slice(0, limit);
+}
+
+function publicPhoto(value) {
+  const photo = publicText(value, 180);
+  return /^(?:\.\/)?assets\/cars\/[a-z0-9._/-]+\.webp$/i.test(photo) ? photo.replace(/^\.\//, "") : "";
+}
+
+function publicCar(car) {
+  return {
+    name: publicText(car?.name || "Автомобиль"),
+    year: Math.max(1950, Math.min(2100, Math.floor(Number(car?.year) || 2000))),
+    km: Math.max(0, Math.floor(Number(car?.km) || 0)),
+    city: validCommunityCity(car?.city) ? String(car.city) : "",
+    value: Math.max(0, Math.floor(Number(car?.market || car?.sale || car?.buy) || 0)),
+    repaired: Boolean(car?.repaired),
+    tuningStage: Math.max(0, Math.min(3, Math.floor(Number(car?.tuningStage) || 0))),
+    photo: publicPhoto(car?.photoUrl)
+  };
+}
+
+function publicPlate(plate) {
+  const region = plate?.region && typeof plate.region === "object" ? plate.region : {};
+  return {
+    number: publicText(plate?.number, 12).toUpperCase(),
+    region: publicText(region.code, 3),
+    city: publicText(region.city, 40),
+    rarity: ["common", "uncommon", "rare", "superrare", "forbidden", "priceless"].includes(plate?.rarity) ? plate.rarity : "common",
+    value: Math.max(0, Math.floor(Number(plate?.value) || 0))
+  };
+}
+
+async function publicPlayerProfile(db, viewerId, userId) {
+  const targetId = publicText(userId, 80);
+  if (!targetId) throw new RequestError("player_not_found", 404);
+  const user = await db.prepare("SELECT id, nickname, created_at AS createdAt FROM users WHERE id = ? LIMIT 1").bind(targetId).first();
+  if (!user) throw new RequestError("player_not_found", 404);
+  const [targetProfile, targetClan, saveRow] = await Promise.all([
+    profile(db, targetId),
+    membership(db, targetId),
+    db.prepare("SELECT data_json, updated_at AS updatedAt FROM game_saves WHERE user_id = ? LIMIT 1").bind(targetId).first()
+  ]);
+  const state = await readGameSave(saveRow);
+  const savedCars = Array.isArray(state.cars) ? state.cars : (state.car ? [state.car] : []);
+  const cars = savedCars.slice(0, PUBLIC_CAR_LIMIT).map(publicCar);
+  const savedPlates = Array.isArray(state?.plates?.items) ? state.plates.items : [];
+  const plates = savedPlates.slice(0, PUBLIC_PLATE_LIMIT).map(publicPlate).filter((plate) => plate.number);
+  const level = Math.max(1, Math.min(10, Math.floor(Number(state?.garageProgress?.level || state?.garageLevel) || 1)));
+  return {
+    ok: true,
+    player: {
+      id: user.id,
+      nickname: user.nickname,
+      createdAt: Number(user.createdAt || 0),
+      updatedAt: Number(saveRow?.updatedAt || 0),
+      city: targetProfile?.city || "Москва",
+      reputation: Number(targetProfile?.reputation || 0),
+      clan: targetClan ? { id: targetClan.id, name: targetClan.name, tag: targetClan.tag, role: targetClan.role } : null,
+      garageLevel: level,
+      garageValue: cars.reduce((total, car) => total + car.value, 0),
+      cars,
+      plates,
+      online: Date.now() - Math.max(Number(targetProfile?.updatedAt || 0), Number(saveRow?.updatedAt || 0)) < 5 * 60_000,
+      isMe: targetId === viewerId
+    }
+  };
 }
 
 function channelFrom(value, ownClan) {
@@ -110,6 +202,9 @@ export async function onRequestGet(context) {
   try {
     const session = await requireUser(context);
     const url = new URL(context.request.url);
+    if (url.searchParams.has("profile")) {
+      return json(await publicPlayerProfile(context.env.DB, session.id, url.searchParams.get("profile")));
+    }
     return json(await snapshot(context.env.DB, session, url.searchParams.get("channel")));
   } catch (error) {
     return handleError(error);

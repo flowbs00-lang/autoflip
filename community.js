@@ -19,6 +19,15 @@
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   }
 
+  function formatDate(value) {
+    var date = new Date(Number(value || 0));
+    return Number.isFinite(date.getTime()) && Number(value) > 0 ? date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Недавно';
+  }
+
+  function formatMoney(value) {
+    return Math.max(0, Number(value || 0)).toLocaleString('ru-RU') + ' ₽';
+  }
+
   function displayName(row) {
     return (row && row.clanTag ? '[' + row.clanTag + '] ' : '') + (row && row.nickname || 'Игрок');
   }
@@ -53,7 +62,8 @@
       clan_full: 'В этом клане уже 50 участников.',
       clan_permission_denied: 'У тебя недостаточно прав для этого действия.',
       clan_member_not_found: 'Участник уже покинул клан.',
-      invalid_clan_role: 'Эту должность назначить нельзя.'
+      invalid_clan_role: 'Эту должность назначить нельзя.',
+      player_not_found: 'Профиль игрока больше недоступен.'
     }[code] || 'Не удалось выполнить действие. Попробуй ещё раз.';
   }
 
@@ -73,7 +83,7 @@
   function messageRows(data) {
     var rows = (data.messages || []).map(function (message) {
       var mine = message.userId === data.me.id;
-      return '<article class="community-message ' + (mine ? 'mine' : '') + '"><div><b>' + esc(displayName(message)) + '</b><time>' + formatTime(message.createdAt) + '</time></div><p>' + esc(message.body) + '</p></article>';
+      return '<article class="community-message ' + (mine ? 'mine' : '') + '"><div><button class="community-author" data-user-id="' + esc(message.userId) + '" onclick="communityOpenProfile(this.dataset.userId)">' + esc(displayName(message)) + '</button><time>' + formatTime(message.createdAt) + '</time></div><p>' + esc(message.body) + '</p></article>';
     }).join('');
     return rows || '<div class="community-empty">Пока сообщений нет. Начни разговор первым.</div>';
   }
@@ -93,7 +103,7 @@
 
   function ratingHtml(data) {
     var players = (data.players || []).map(function (player, index) {
-      return '<div class="community-rank ' + (player.id === data.me.id ? 'me' : '') + '"><strong>' + (index + 1) + '</strong><div><b>' + esc(displayName(player)) + '</b><small>📍 ' + esc(player.city) + '</small></div><em>' + Number(player.reputation || 0).toLocaleString('ru-RU') + ' реп.</em></div>';
+      return '<button class="community-rank ' + (player.id === data.me.id ? 'me' : '') + '" data-user-id="' + esc(player.id) + '" onclick="communityOpenProfile(this.dataset.userId)"><strong>' + (index + 1) + '</strong><div><b>' + esc(displayName(player)) + '</b><small>📍 ' + esc(player.city) + '</small></div><em>' + Number(player.reputation || 0).toLocaleString('ru-RU') + ' реп.</em></button>';
     }).join('');
     return '<section class="community-title"><small>РЕЙТИНГ ИГРОКОВ</small><h3>Лучшие перекупы</h3><p>Позиция определяется текущей репутацией аккаунта.</p></section><div class="community-ranking">' + (players || '<div class="community-empty">Рейтинг пока пуст.</div>') + '</div>';
   }
@@ -127,9 +137,31 @@
         ? '<button onclick="communitySetRole(\'' + member.id + '\',\'' + (member.role === 'coleader' ? 'member' : 'coleader') + '\')">' + (member.role === 'coleader' ? 'Сделать участником' : 'Назначить соруководителем') + '</button>'
         : '';
       var mayKick = !mine && member.role !== 'leader' && (canLead || (canAssist && member.role === 'member'));
-      return '<article class="community-member ' + (mine ? 'me' : '') + '"><span class="community-member-avatar">' + esc(String(member.nickname || '?').slice(0, 1).toUpperCase()) + '</span><div><b>' + esc(member.nickname) + (mine ? ' · ты' : '') + '</b><small>📍 ' + esc(member.city || 'Москва') + ' · ' + Number(member.reputation || 0).toLocaleString('ru-RU') + ' реп.</small><em class="role-' + esc(member.role) + '">' + roleLabel(member.role) + '</em></div>' + ((roleActions || mayKick) ? '<section>' + roleActions + (mayKick ? '<button class="danger" onclick="communityKickMember(\'' + member.id + '\')">Исключить</button>' : '') + '</section>' : '') + '</article>';
+      return '<article class="community-member ' + (mine ? 'me' : '') + '"><button class="community-member-profile" data-user-id="' + esc(member.id) + '" onclick="communityOpenProfile(this.dataset.userId)"><span class="community-member-avatar">' + esc(String(member.nickname || '?').slice(0, 1).toUpperCase()) + '</span><span class="community-member-copy"><b>' + esc(member.nickname) + (mine ? ' · ты' : '') + '</b><small>📍 ' + esc(member.city || 'Москва') + ' · ' + Number(member.reputation || 0).toLocaleString('ru-RU') + ' реп.</small><em class="role-' + esc(member.role) + '">' + roleLabel(member.role) + '</em></span><i>›</i></button>' + ((roleActions || mayKick) ? '<section>' + roleActions + (mayKick ? '<button class="danger" onclick="communityKickMember(\'' + member.id + '\')">Исключить</button>' : '') + '</section>' : '') + '</article>';
     }).join('');
     return '<section class="community-roster-head"><small>СОСТАВ КЛАНА</small><h3>[' + esc(own.tag) + '] ' + esc(own.name) + '</h3><p>' + Number((data.clanMembers || []).length) + '/50 участников · глава назначает соруководителей</p></section><div class="community-members">' + rows + '</div>';
+  }
+
+  function publicCarRows(player) {
+    var cars = (player.cars || []).map(function (car) {
+      var visual = car.photo ? '<img src="' + esc(car.photo) + '" alt="" loading="lazy">' : '<span>🚘</span>';
+      return '<article class="community-profile-car"><div class="community-profile-car-photo">' + visual + '<small>' + (car.repaired ? 'ГОТОВА' : 'ТРЕБУЕТ РАБОТ') + '</small></div><div><b>' + esc(car.name) + '</b><span>' + Number(car.year || 0) + ' · ' + Number(car.km || 0).toLocaleString('ru-RU') + ' км</span><em>' + esc(car.city || player.city) + '</em><strong>' + formatMoney(car.value) + '</strong>' + (car.tuningStage ? '<i>Тюнинг · ' + Number(car.tuningStage) + '/3</i>' : '') + '</div></article>';
+    }).join('');
+    return cars || '<div class="community-empty">В гараже пока нет автомобилей.</div>';
+  }
+
+  function publicPlateRows(player) {
+    var rarity = { common: 'Обычный', uncommon: 'Необычный', rare: 'Редкий', superrare: 'Сверхредкий', forbidden: 'Запретный', priceless: 'Бесценный' };
+    var plates = (player.plates || []).map(function (plate) {
+      return '<article class="community-profile-plate"><div class="community-plate-face"><b>' + esc(plate.number) + '</b><span><strong>' + esc(plate.region) + '</strong><small>RUS 🇷🇺</small></span></div><div><b>' + esc(rarity[plate.rarity] || rarity.common) + '</b><span>' + esc(plate.city || 'Россия') + '</span><strong>' + formatMoney(plate.value) + '</strong></div></article>';
+    }).join('');
+    return plates || '<div class="community-empty">Коллекция номеров пока пустая.</div>';
+  }
+
+  function renderPlayerProfile(player) {
+    var clan = player.clan;
+    var name = displayName({ nickname: player.nickname, clanTag: clan && clan.tag });
+    render('<div class="app community-app community-profile-app">' + head('Профиль игрока') + '<button class="community-back" onclick="communityCloseProfile()">‹ Вернуться назад</button><section class="community-player-hero"><div class="community-player-avatar">' + esc(String(player.nickname || '?').slice(0, 1).toUpperCase()) + '</div><div><small>' + (player.isMe ? 'ТВОЙ ПУБЛИЧНЫЙ ПРОФИЛЬ' : 'ИГРОК AUTOFLIP') + '</small><h2>' + esc(name) + '</h2><p>📍 ' + esc(player.city) + (clan ? ' · ' + esc(roleLabel(clan.role)) : '') + '</p></div><span class="' + (player.online ? '' : 'offline') + '">● ' + (player.online ? 'ONLINE' : 'OFFLINE') + '</span></section><section class="community-player-id"><span>Уникальный ID</span><button data-player-id="' + esc(player.id) + '" onclick="communityCopyId(this.dataset.playerId)">' + esc(player.id) + ' ⧉</button><small>В игре с ' + esc(formatDate(player.createdAt)) + '</small></section><div class="community-player-stats"><div><small>РЕПУТАЦИЯ</small><b>' + Number(player.reputation || 0).toLocaleString('ru-RU') + '</b></div><div><small>ГАРАЖ</small><b>' + Number(player.garageLevel || 1) + ' уровень</b></div><div><small>ИНВЕНТАРЬ</small><b>' + Number((player.cars || []).length) + ' авто · ' + Number((player.plates || []).length) + ' ном.</b></div></div>' + (clan ? '<section class="community-player-clan"><small>КЛАН</small><b>[' + esc(clan.tag) + '] ' + esc(clan.name) + '</b><span>' + esc(roleLabel(clan.role)) + '</span></section>' : '') + '<section class="community-profile-section"><div><span>ГАРАЖ · УРОВЕНЬ ' + Number(player.garageLevel || 1) + '</span><b>' + formatMoney(player.garageValue) + '</b></div><main>' + publicCarRows(player) + '</main></section><section class="community-profile-section"><div><span>КОЛЛЕКЦИЯ НОМЕРОВ</span><b>' + Number((player.plates || []).length) + ' шт.</b></div><main class="community-profile-plates">' + publicPlateRows(player) + '</main></section></div>');
   }
 
   function renderCommunity(data) {
@@ -188,6 +220,23 @@
   };
   window.communityKickMember = function (userId) {
     if (confirm('Исключить участника из клана?')) action({ action: 'kick_member', userId: userId });
+  };
+  window.communityOpenProfile = async function (userId) {
+    if (!userId || loading) return;
+    loading = true;
+    render('<div class="app community-app">' + head('Профиль игрока') + '<div class="community-loading"><span></span><b>Открываем гараж игрока…</b></div></div>');
+    try {
+      var data = await api('GET', null, '?profile=' + encodeURIComponent(userId));
+      renderPlayerProfile(data.player);
+    } catch (error) {
+      render('<div class="app community-app">' + head('Профиль игрока') + '<button class="community-back" onclick="communityCloseProfile()">‹ Вернуться назад</button><div class="community-error"><b>Профиль не открылся</b><p>' + esc(errorText(error.message)) + '</p></div></div>');
+    } finally {
+      loading = false;
+    }
+  };
+  window.communityCloseProfile = function () { load(tab); };
+  window.communityCopyId = function (id) {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(String(id || '')).catch(function () {});
   };
 
   async function pollMessages() {
