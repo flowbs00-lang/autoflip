@@ -67,8 +67,7 @@
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: body,
-        keepalive: true
+        body: body
       });
       if (!response.ok) throw new Error(await responseError(response));
       var payload = await response.json();
