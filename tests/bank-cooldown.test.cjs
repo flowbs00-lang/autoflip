@@ -9,7 +9,7 @@ function game(saved) {
   let now = 450, output = '', persisted, tick;
   const ctx = {
     state: saved || { money: 100000, loan: 0 },
-    gameTotal: () => now,
+    getGameTotal: () => now,
     money: String, status: () => '', head: () => '',
     render: value => { output = value; },
     persist: () => { persisted = JSON.parse(JSON.stringify(ctx.state)); },
@@ -106,4 +106,17 @@ test('open credit list refreshes and unlocks when countdown expires', () => {
   g.tick();
   assert.match(g.html(), /onclick="bankLoanPreview\(25000\)"/);
   assert.doesNotMatch(g.html(), /data-bank-cooldown/);
+});
+
+test('bank clock uses the public live game-time bridge used by the browser', () => {
+  assert.match(bank, /window\.getGameTotal/);
+  const g = game(), c = g.ctx;
+  c.bankIssueLoan(25000);
+  c.bankPayLoan();
+  c.bankCredits();
+  const text = {};
+  c.document.querySelector = () => ({ querySelector: () => text, getAttribute: () => 'credits' });
+  g.time(510);
+  g.tick();
+  assert.equal(text.textContent, '47 ч. 00 мин.');
 });

@@ -1383,7 +1383,11 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   ];
 
   function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
-  function nowGame(){return typeof gameTotal==='function'?gameTotal():Math.max(0,(Number(state.day||1)-1)*BANK_DAY);}
+  function nowGame(){
+    if(typeof window.getGameTotal==='function')return Number(window.getGameTotal()||0);
+    if(typeof gameTotal==='function')return Number(gameTotal()||0);
+    return Math.max(0,(Number(state.day||1)-1)*BANK_DAY);
+  }
   function saveBank(){if(typeof persist==='function')persist();else localStorage.setItem(KEY,JSON.stringify(state));}
   function notifyBank(icon,text,key){if(typeof pushPhoneNotification==='function')pushPhoneNotification('Банк',icon,text,'bank',key);}
   function bm(n){return money(Math.max(0,Math.round(Number(n)||0)));}
@@ -1833,7 +1837,7 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js"></script>
+<script src="ui.js?v=20261008-2"></script>
 <script src="plates.js?v=20261006-4"></script>
 <script src="garage-system.js?v=20261006-1"></script>
 <script src="world-system.js?v=20261007-6"></script>
