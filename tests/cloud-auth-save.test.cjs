@@ -22,6 +22,9 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /encoding: 'gzip-base64'/);
   assert.match(client, /compressed: bytesToBase64/);
   assert.doesNotMatch(client, /keepalive:\s*true/);
+  assert.match(client, /lastUploadedRaw/);
+  assert.match(client, /uploadInFlight/);
+  assert.match(client, /}, 5000\)/);
   assert.match(server, /decodeUploadedSave/);
   assert.match(server, /body\?\.encoding !== "gzip-base64"/);
 });

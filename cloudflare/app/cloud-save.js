@@ -14,6 +14,8 @@
   var applyingRemote = false;
   var hydrated = false;
   var pendingUpload = false;
+  var uploadInFlight = false;
+  var lastUploadedRaw = '';
   var revision = 0;
 
   function emit(status, detail) {
@@ -58,10 +60,15 @@
       return;
     }
     var raw = localStorage.getItem(SAVE_KEY);
-    if (!raw || applyingRemote) return;
+    if (!raw || applyingRemote || raw === lastUploadedRaw) return;
+    if (uploadInFlight) {
+      pendingUpload = true;
+      return;
+    }
+    uploadInFlight = true;
     try {
       var state = JSON.parse(raw);
-      emit('syncing', 'Сохраняем прогресс');
+      if (!revision) emit('syncing', 'Сохраняем прогресс');
       var body = await createUploadBody(raw, state);
       var response = await fetch('/api/save', {
         method: 'PUT',
@@ -72,16 +79,26 @@
       if (!response.ok) throw new Error(await responseError(response));
       var payload = await response.json();
       revision = Number(payload.revision || revision + 1);
+      lastUploadedRaw = raw;
       originalSetItem.call(localStorage, STAMP_KEY, String(payload.updatedAt || Date.now()));
       emit('saved', 'Прогресс сохранён в облаке');
     } catch (error) {
       emit('offline', 'Прогресс сохранён на устройстве. Ошибка облака: ' + (error && error.message ? error.message : 'unknown'));
+    } finally {
+      uploadInFlight = false;
+      if (pendingUpload) {
+        pendingUpload = false;
+        scheduleUpload();
+      }
     }
   }
 
   function scheduleUpload() {
-    clearTimeout(uploadTimer);
-    uploadTimer = setTimeout(uploadNow, 800);
+    if (uploadTimer) return;
+    uploadTimer = setTimeout(function () {
+      uploadTimer = null;
+      uploadNow();
+    }, 5000);
   }
 
   storagePrototype.setItem = function (key, value) {
@@ -108,6 +125,7 @@
         applyingRemote = true;
         originalSetItem.call(localStorage, SAVE_KEY, JSON.stringify(payload.save));
         originalSetItem.call(localStorage, STAMP_KEY, String(remoteStamp));
+        lastUploadedRaw = JSON.stringify(payload.save);
         applyingRemote = false;
         hydrated = true;
         emit('saved', 'Облачный прогресс загружен');
@@ -139,6 +157,7 @@
   addEventListener('pagehide', function () {
     if (uploadTimer) {
       clearTimeout(uploadTimer);
+      uploadTimer = null;
       uploadNow();
     }
   });
