@@ -12,13 +12,14 @@
 <link rel="stylesheet" href="world-fixes.css?v=20261007-6">
 <link rel="stylesheet" href="negotiations-system.css?v=20261007-2">
 <link rel="stylesheet" href="mobile-first.css?v=20261007-1">
+<link rel="stylesheet" href="account.css?v=20261008-1">
 <link rel="stylesheet" href="theme-polish.css?v=20261008-4">
 </head>
 <body>
 <header>
   <a class="logo" href="#game"><span>●</span> AutoFlip</a>
   <nav><a href="#game">Игра</a><a href="#about">Система</a></nav>
-  <div class="hdr"><button id="soundBtn" class="sound" onclick="toggleSound()">🔊</button><span id="saveState">Сохранено</span></div>
+  <div class="hdr"><button id="soundBtn" class="sound" onclick="toggleSound()">🔊</button><span id="saveState">Проверяем облако…</span><span class="account-chip"><strong id="accountName">Профиль</strong><button id="accountLogout" type="button">Выйти</button></span></div>
 </header>
 <main>
 <section class="hero">
@@ -1829,5 +1830,6 @@ if(typeof window.autoBankHome==='function'){
 <script src="garage-system.js?v=20261006-1"></script>
 <script src="world-system.js?v=20261007-6"></script>
 <script src="negotiations-system.js?v=20261007-2"></script>
+<script src="game-account.js?v=20261008-1"></script>
 </body>
 </html>

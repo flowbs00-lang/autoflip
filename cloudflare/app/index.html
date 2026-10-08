@@ -1,28 +1,1835 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#070b13">
-  <title>AutoFlip — закрытая разработка</title>
-  <link rel="stylesheet" href="/assets/auth.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AutoFlip — твой следующий ход</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="ui.css">
+<link rel="stylesheet" href="plates.css?v=20261006-4">
+<link rel="stylesheet" href="garage-system.css?v=20261006-1">
+<link rel="stylesheet" href="world-system.css?v=20261006-1">
+<link rel="stylesheet" href="world-fixes.css?v=20261007-6">
+<link rel="stylesheet" href="negotiations-system.css?v=20261007-2">
+<link rel="stylesheet" href="mobile-first.css?v=20261007-1">
+<link rel="stylesheet" href="account.css?v=20261008-1">
+<link rel="stylesheet" href="theme-polish.css?v=20261008-4">
 </head>
 <body>
-  <main class="shell">
-    <div class="brand"><img src="/assets/autoflip-vk-icon.png" alt=""><span>AutoFlip</span></div>
-    <section class="card" aria-labelledby="title">
-      <p class="eyebrow">Профиль защищён</p>
-      <h1 id="title">Вход работает</h1>
-      <p class="lead" id="profile">Проверяем профиль…</p>
-      <ul class="features">
-        <li>VK ID привязан к профилю AutoFlip</li>
-        <li>Сессия хранится в защищённой HttpOnly cookie</li>
-        <li>Игра останется закрытой до завершения доработки</li>
-      </ul>
-      <button class="button" id="logout" type="button">Выйти</button>
-      <p class="status" id="status" role="status" aria-live="polite"></p>
-    </section>
-  </main>
-  <script src="/assets/app-shell.js" defer></script>
+<header>
+  <a class="logo" href="#game"><span>●</span> AutoFlip</a>
+  <nav><a href="#game">Игра</a><a href="#about">Система</a></nav>
+  <div class="hdr"><button id="soundBtn" class="sound" onclick="toggleSound()">🔊</button><span id="saveState">Проверяем облако…</span><span class="account-chip"><strong id="accountName">Профиль</strong><button id="accountLogout" type="button">Выйти</button></span></div>
+</header>
+<main>
+<section class="hero">
+  <div><small>CAR DEALER SIMULATOR · V7</small><h1>Твой первый<br><b>автобизнес.</b></h1><p>Теперь это не просто рынок: внутри игры появился полноценный смартфон с приложениями, уведомлениями, чатами, банком, картой, СТО, гаражом и бизнес-профилем.</p><a class="start" href="#game">Открыть телефон ↓</a></div>
+  <div class="hero-card"><small>КАПИТАЛ</small><b id="heroMoney">1 500 000 ₽</b><div class="hero-line"><span>Репутация</span><strong id="heroRep">0</strong></div><div class="hero-line"><span>Сделки</span><strong id="heroDeals">0</strong></div><div class="hero-line"><span>Город</span><strong id="heroCity">Москва</strong></div></div>
+</section>
+<section id="game" class="game">
+  <div class="game-title"><small>AUTOFLIP · ТВОЙ СЛЕДУЮЩИЙ ХОД</small><h2>Большие сделки. В твоих руках.</h2><p>Находи автомобили, договаривайся и развивай свой автобизнес.</p></div>
+  <div class="layout">
+    <div class="phone"><div class="notch"></div><div id="screen"></div><div class="homebar"></div></div>
+    <aside><div class="objective"><small>ЦЕЛЬ</small><b id="objective">Найди выгодный автомобиль</b><span id="objectiveSub">Открой рынок и изучи объявления.</span></div><div id="statsbox" class="statsbox"></div><div id="journal" class="journal"></div><div class="side-buttons"><button onclick="randomEvent()">🎲 Событие</button><button onclick="resetGame()">↻ Сброс</button></div></aside>
+  </div>
+</section>
+<section id="about" class="about"><small>AUTOFLIP OS</small><h2>Телефон стал частью игрового мира.</h2><div class="features">
+<article><b>01</b><h3>10+ приложений</h3><p>Рынок, сообщения, банк, карта, СТО, гараж, недвижимость, профиль и настройки.</p></article>
+<article><b>02</b><h3>Единый мир</h3><p>Купил авто на рынке — оно появляется в гараже. Ремонт влияет на продажу, деньги идут через банк.</p></article>
+<article><b>03</b><h3>Живой интерфейс</h3><p>Статус-бар, уведомления, чаты, карточки, нижняя панель и плавные переходы создают ощущение телефона.</p></article>
+<article><b>04</b><h3>Сохранение</h3><p>Прогресс автоматически хранится в браузере. Обои и оформление тоже сохраняются автоматически.</p></article>
+</div></section>
+</main>
+<footer>AutoFlip · Твой следующий ход · 2026 · <a href="photo-credits.html" target="_blank" rel="noopener">Авторы фотографий</a> · <a href="restoration-photo-credits.html" target="_blank" rel="noopener">Фото проектов</a></footer>
+<script src="cloud-save.js?v=20261007-1"></script>
+<script src="world-data.js?v=20261006-1"></script>
+<script src="script_base.js?v=20261007-5"></script>
+<script src="car-catalog.js?v=20261006-4"></script>
+<script src="v79_market.js"></script>
+<script src="script.js?v=20261006-5"></script>
+<script>
+// V7.2 — у каждого продавца свой характер и поведение в торге.
+let negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0};
+const sellerTypes=[
+ {type:'Спокойный',icon:'😐',min:.91,flex:.55,patience:3,open:'«Здравствуйте. Машина ещё в продаже. Готов обсудить разумный торг.»',reject:'«Это слишком далеко от моей цены. Давайте без крайностей.»'},
+ {type:'Упрямый',icon:'😤',min:.965,flex:.22,patience:2,open:'«Цена указана не просто так. Машина хорошая, сильно уступать не собираюсь.»',reject:'«Нет. Я уже и так поставил адекватную цену.»'},
+ {type:'Срочно нужны деньги',icon:'🔥',min:.86,flex:.72,patience:4,open:'«Если заберёте быстро, можем нормально поговорить. Деньги нужны в ближайшее время.»',reject:'«Меньше уже не получится. Мне нужно закрыть вопрос сегодня.»'},
+ {type:'Уверенный',icon:'😎',min:.94,flex:.4,patience:3,open:'«Я знаю рынок и цену своей машины. Торг возможен, но аргументы должны быть вескими.»',reject:'«За такую цену я просто оставлю объявление висеть.»'},
+ {type:'Адекватный',icon:'🤝',min:.895,flex:.62,patience:4,open:'«Давайте спокойно обсудим. Если цена будет честной для обоих — договоримся.»',reject:'«Предложение низковато. Сделайте шаг навстречу, и я тоже уступлю.»'}
+];
+function deal(id){
+  const c=makes[id],p=sellerTypes[id%sellerTypes.length],sellers=['Алексей','Дмитрий','Илья','Максим','Роман'],inspection=(state.marketInspections&&state.marketInspections[marketInspectionKey(c)])||null,inspectionBonus=inspection?Number(inspection.negotiationBonus||0):0,sellerName=c.sellerName||sellers[id%sellers.length];
+  negotiation={id,asking:c.price,minimum:Math.round(c.price*Math.max(.82,p.min-inspectionBonus)),seller:sellerName,round:0,lastOffer:0,personality:p,counter:0,inspection:inspection};
+  objective.textContent='Переговоры с продавцом';
+  objectiveSub.textContent=inspection?`Осмотр дал аргумент для торга: ${inspection.risk}.`:`${p.icon} ${p.type}: можно торговаться и без осмотра, но позиция слабее.`;
+  renderNegotiation('start');
+}
+function cancelPurchaseNegotiation(reason){
+  var text=reason||'По условиям не сошлись. Машина остаётся у продавца.';
+  negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0,inspection:null};
+  render(`<div class="app deal-ended-page">${head('Переговоры завершены')}<section class="deal-ended-card"><div class="deal-ended-mark"><span>↩</span></div><small>ДОГОВОРИТЬСЯ НЕ ПОЛУЧИЛОСЬ</small><h3>Ищем следующий вариант</h3><p>${text}</p><div class="deal-ended-safe"><span>✓</span><div><b>Без последствий</b><small>Деньги не списаны, место в гараже не изменилось.</small></div></div></section><button class="action green deal-ended-action" onclick="market('all',0)">🚗 Смотреть объявления</button></div>`);
+  setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav('listings');},130);
+}
+function returnToPurchaseNegotiation(){
+  if(!negotiation||negotiation.id===null||negotiation.id===undefined||!makes[negotiation.id])return market('all',0);
+  return renderNegotiation(Number(negotiation.lastOffer||0)>=10000?'accept':'start');
+}
+function renderNegotiation(mode,counter=0){
+  const n=negotiation;
+  if(!n||n.id===null||n.id===undefined||!makes[n.id])return market('all',0);
+  if(mode==='accept'&&Number(n.lastOffer||0)<10000)return cancelPurchaseNegotiation('Переговоры завершились без согласованной цены.');
+  const c=makes[n.id],p=n.personality,inspection=n.inspection||null,tradeReady=Array.isArray(state.cars)&&state.cars.some(function(x){return x&&!x.listed;});
+  let sellerText=p.open;
+  if(mode==='counter')sellerText=`«${money(n.lastOffer)} мало. Могу пойти навстречу и отдать за ${money(counter)}. Это уже близко к моему пределу.»`;
+  if(mode==='reject')sellerText=p.reject;
+  if(mode==='accept')sellerText=`«Хорошо, ${money(n.lastOffer)} меня устраивает. Договорились.»`;
+  if(mode==='angry')sellerText=`«Я же сказал, что слишком низко. Если хотите купить — давайте серьёзнее.»`;
+  let extra='';
+  if(mode==='start')extra=`${inspection?(inspection.found?'<div class="note negotiation-evidence"><b>🔎 Аргумент после диагностики</b><p class="muted">Обнаружено: '+inspection.faultName+' · ремонт '+money(inspection.faultCost)+'. Используй это в торге.</p></div>':'<div class="note negotiation-evidence"><b>🔎 Диагностика проведена</b><p class="muted">'+(inspection.healthyConfirmed?'Автомобиль подтверждён как исправный.':'Поломок не обнаружено, но стандартная диагностика не даёт полной гарантии.')+'</p></div>'):'<div class="warning">⚠ Ты начал торг без диагностики. Техническое состояние машины неизвестно.</div>'}<p class="muted">${p.icon} ${p.type}. Можно сразу торговаться деньгами или начать разговор с обмена своей машины.</p>`;
+  if(mode==='reject')extra='<p class="muted">Предложение отвергнуто. Попробуй поднять цену или закончить разговор.</p>';
+  if(mode==='counter')extra='<p class="muted">Продавец сделал встречное предложение. Теперь можно принять его или попробовать улучшить цену.</p>';
+  if(mode==='angry')extra='<p class="muted">Продавец начинает раздражаться. Следующее слишком низкое предложение может закончить разговор.</p>';
+  if(mode==='accept')extra='<p class="muted">Цена согласована. Покупать необязательно — ты можешь уйти.</p>';
+  let controls='';
+  if(mode!=='accept'){
+    const suggested=mode==='counter'?counter:(n.lastOffer?Math.round((n.lastOffer+n.asking)/2):Math.round(n.asking*.90));
+    controls=`<div class="note" style="margin:12px 0"><b>Твоя цена</b><input id="offerPrice" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><div class="negotiation-choice-row"><button class="action green" onclick="makeOffer()">💬 Предложить цену</button>${mode==='start'&&tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}</div>${mode==='counter'?`<button class="action" onclick="acceptCounter(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="cancelPurchaseNegotiation()">🚪 Закончить переговоры</button>`;
+  }else{const after=Number(state.money||0)-Number(n.lastOffer||0);controls=`<div class="note purchase-summary"><small>ЦЕНА СОГЛАСОВАНА</small><div class="hero-line"><span>ID объявления</span><strong>${c.listingId||('M-'+c.id)}</strong></div><div class="hero-line"><span>Цена в объявлении</span><strong>${money(n.asking)}</strong></div><div class="hero-line"><span>Договорились</span><strong>${money(n.lastOffer)}</strong></div><div class="hero-line"><span>Сейчас на руках</span><strong>${money(state.money)}</strong></div><div class="hero-line"><span>После покупки</span><strong class="${after>=0?'profit':'market-bad'}">${money(after)}</strong></div></div><button class="action green" ${after<0?'disabled':''} onclick="startSellerMeeting(${n.id},${n.lastOffer})">📅 Договориться о встрече</button>${tradeReady?'<button class="action trade-action" onclick="sellerTradeIn('+n.id+')">🔄 Предложить обмен</button>':''}<button class="action" onclick="cancelPurchaseNegotiation()">Отказаться от сделки</button>`;}
+  render(`<div class="app">${head('Переговоры')}${purchaseFlowHtml(mode==='accept'?4:3)}<div class="note"><small>Продавец</small><h3>${p.icon} ${n.seller} · ${c.name}</h3><span class="muted">${p.type} · Раунд ${n.round+1}</span></div><div class="bubble seller">${n.seller}: ${sellerText}</div>${n.lastOffer?`<div class="bubble you">Ты: «Моя цена — ${money(n.lastOffer)}.»</div>`:''}${extra}${controls}</div>`);
+}
+function acceptCounter(counter){negotiation.lastOffer=counter;renderNegotiation('accept');}
+function makeOffer(){
+  const input=document.getElementById('offerPrice'),offer=Math.round(Number(input&&input.value)),n=negotiation,p=n.personality;
+  if(!n||n.id===null||!offer||offer<10000)return alert('Введи корректную цену от 10 000 ₽.');
+  n.lastOffer=offer;n.round++;
+  const gap=offer/n.minimum;
+  if(offer>=n.minimum){log(`Переговоры: ${n.seller} (${p.type}) согласился на ${money(offer)} за ${makes[n.id].name}.`);renderNegotiation('accept');return;}
+  if(n.round>=p.patience&&gap<.96){log(`${n.seller} устал от торга и завершил разговор.`);return cancelPurchaseNegotiation('Продавец отказался продолжать торг. Договориться по цене не получилось.');}
+  if(gap>=.90){const step=(n.asking-offer)*p.flex,counter=Math.round(Math.max(n.minimum,offer+step)/1000)*1000;n.counter=counter;log(`Переговоры: ${n.seller} сделал встречное предложение ${money(counter)}.`);renderNegotiation('counter',counter);return;}
+  if(n.round>=2){log(`Переговоры: ${n.seller} раздражён слишком низкой ценой.`);renderNegotiation('angry');return;}
+  log(`Переговоры: ${n.seller} отклонил предложение ${money(offer)}.`);renderNegotiation('reject');
+}
+</script>
+<script>
+// V7.3 — подробный гараж.
+function garage(){
+  const c=state.car;
+  if(!c){render(`<div class="app">${head('Гараж')}<div class="note"><b>Гараж пока пуст</b><p class="muted">Купи первый автомобиль на рынке — он появится здесь.</p></div><button class="action green" onclick="market()">🚗 Открыть рынок</button></div>`);return;}
+  const current=c.repaired?Math.round(c.market*1.02):c.market;
+  const potential=Math.round(current-c.buy-(c.repaired?0:c.repair));
+  render(`<div class="app">${head('Гараж')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><div class="note"><small>ТВОЙ АВТОМОБИЛЬ</small><h3>${c.name}</h3><p class="muted">${c.city} · ${c.year} · ${c.km.toLocaleString('ru-RU')} км</p></div><div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>РАЗНИЦА<b class="profit">${money(potential)}</b></span></div><div class="warning">${c.repaired?'✅ Автомобиль подготовлен к продаже.':'⚠ Найден риск: '+c.risk+'. Перед продажей желательно провести ремонт.'}</div><button class="action" onclick="garageDetails()">🔎 Подробнее</button><button class="action green" onclick="market()">🚗 Вернуться на рынок</button></div>`);
+}
+function garageDetails(){
+  const c=state.car;if(!c)return garage();
+  render(`<div class="app">${head('Автомобиль')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><h3>${c.name}</h3><div class="note"><div class="hero-line"><span>Год</span><strong>${c.year}</strong></div><div class="hero-line"><span>Пробег</span><strong>${c.km.toLocaleString('ru-RU')} км</strong></div><div class="hero-line"><span>Город</span><strong>${c.city}</strong></div><div class="hero-line"><span>Цена покупки</span><strong>${money(c.buy)}</strong></div><div class="hero-line"><span>Рыночная цена</span><strong>${money(c.market)}</strong></div></div><div class="warning">${c.repaired?'✅ Основной дефект устранён.':'⚠ Диагностика: возможная проблема — '+c.risk+'. Ориентир ремонта: '+money(c.repair)+'.'}</div><button class="action" onclick="garage()">‹ В гараж</button></div>`);
+}
+</script>
+<script>
+/* V7.4 — полноценная диагностика автомобиля. */
+const diagnosticParts=[['Двигатель','engine',85000],['Коробка','gearbox',95000],['Подвеска','suspension',65000],['Тормоза','brakes',38000],['Электрика','electric',30000],['Кузов','body',55000],['Жидкости и обслуживание','fluids',18000]];
+const diagnosticLabels={'двигатель':'Двигатель','турбина':'Двигатель / турбина','коробка':'Коробка','подвеска':'Подвеска','ходовая':'Подвеска','вариатор':'Коробка / вариатор','электрика':'Электрика','кузов':'Кузов','документы':'Документы','кондиционер':'Кондиционер','сцепление':'Коробка / сцепление','пневма':'Подвеска / пневма','мультимедиа':'Электрика / мультимедиа','тормоза':'Тормоза'};
+function buildDiagnostics(c){const key=diagnosticLabels[c.risk]||c.risk,seed=c.id*17+c.year;return diagnosticParts.map((part,i)=>{const severity=(seed+i*13)%100;let status='good',wear=92-(severity%28),cost=part[2];if(part[0]===key||key.includes(part[0])){status=severity%2?'critical':'warning';wear=28+(severity%22);cost=c.repair;}else if(severity<34){status='warning';wear=48+(severity%20);cost=Math.round(cost*(.85+(severity%20)/100));}return{name:part[0],status,wear,cost};});}
+function statusIcon(x){return x==='good'?'🟢':x==='warning'?'🟠':'🔴'}
+function diagnose(){const c=state.car;if(!c)return garage();if(state.money<5000)return alert('Для полной диагностики нужно 5 000 ₽.');state.money-=5000;c.diagnosed=true;c.diagnosticCost=5000;c.diagnostics=buildDiagnostics(c);c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);const bad=c.diagnostics.filter(x=>x.status!=='good').length;objective.textContent='Диагностика завершена';objectiveSub.textContent=bad?`Найдено проблем: ${bad}. Решай, во что вкладываться.`:'Автомобиль в хорошем состоянии.';log(`Полная диагностика ${c.name}: найдено проблем — ${bad}. Стоимость диагностики 5 000 ₽.`);garageDetails();}
+function service(){const c=state.car;if(!c){render(`<div class="app">${head('СТО')}<div class="note"><b>Нет автомобиля</b><p class="muted">Сначала купи машину, затем приезжай на СТО.</p></div><button class="action green" onclick="market()">🚗 Найти автомобиль</button></div>`);return;}if(!c.diagnosed){render(`<div class="app">${head('СТО')}<div class="note"><small>ПОЛНАЯ ДИАГНОСТИКА</small><h3>${c.name}</h3><p class="muted">Проверим двигатель, коробку, подвеску, тормоза, электрику, кузов и жидкости.</p><div class="hero-line"><span>Стоимость</span><strong>5 000 ₽</strong></div></div><button class="action orange" onclick="diagnose()">🔍 Провести диагностику</button><button class="action" onclick="garage()">‹ В гараж</button></div>`);return;}garageDetails();}
+function repairPart(index){const c=state.car;if(!c||!c.diagnosed||!c.diagnostics)return garageDetails();const d=c.diagnostics[index];if(!d||d.status==='good')return garageDetails();if(d.repaired)return alert('Этот узел уже отремонтирован.');if(state.money<d.cost)return alert(`Не хватает ${money(d.cost-state.money)} на этот ремонт.`);state.money-=d.cost;d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88);c.repairSpent=(c.repairSpent||0)+d.cost;c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);if(c.diagnostics.every(x=>x.status==='good')){c.repaired=true;c.condition=100;}log(`СТО: ${c.name} — отремонтировано: ${d.name}. Стоимость ${money(d.cost)}.`);garageDetails();}
+function repairAll(){const c=state.car;if(!c||!c.diagnosed)return garageDetails();const pending=c.diagnostics.filter(x=>x.status!=='good'&&!x.repaired),total=pending.reduce((sum,x)=>sum+x.cost,0);if(!pending.length)return alert('Все обнаруженные проблемы уже устранены.');if(state.money<total)return alert(`На полный ремонт не хватает ${money(total-state.money)}.`);state.money-=total;pending.forEach(d=>{d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88)});c.repairSpent=(c.repairSpent||0)+total;c.totalRepair=0;c.repaired=true;c.condition=100;log(`СТО: ${c.name} полностью отремонтирован. Потрачено ${money(total)}.`);garageDetails();}
+function garageDetails(){const c=state.car;if(!c)return garage();const current=c.repaired?Math.round(c.market*1.02):c.market;const profit=Math.round(current-c.buy-(c.repaired?0:(c.totalRepair||c.repair)));const diagnostics=c.diagnostics||[];const diagHtml=c.diagnosed?`<div class="note"><small>РЕЗУЛЬТАТ ДИАГНОСТИКИ</small><div class="hero-line"><span>Диагностика</span><strong>${money(c.diagnosticCost||5000)}</strong></div><div class="hero-line"><span>Ремонт ориентировочно</span><strong>${money(c.totalRepair||0)}</strong></div>${diagnostics.map((d,i)=>`<div class="hero-line"><span>${statusIcon(d.status)} ${d.name} <small>${d.wear}%</small></span><strong>${d.status==='good'?'Норма':money(d.cost)}</strong></div>${d.status!=='good'?`<button class="action" onclick="repairPart(${i})">🔧 Отремонтировать за ${money(d.cost)}</button>`:''}`).join('')}</div>`:`<div class="warning">⚠ Диагностика ещё не проведена. Часть проблем скрыта.</div>`;render(`<div class="app">${head('Автомобиль')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><h3>${c.name}</h3><div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>РАЗНИЦА<b class="profit">${money(profit)}</b></span></div>${diagHtml}${c.repaired?'<div class="warning">✅ Все обнаруженные проблемы устранены. Автомобиль готов к продаже.</div>':''}${c.diagnosed&&!c.repaired&&(c.totalRepair||0)>0?`<button class="action orange" onclick="repairAll()">🛠️ Отремонтировать всё за ${money(c.totalRepair)}</button>`:''}<button class="action" onclick="garage()">‹ В гараж</button></div>`);}
+</script>
+<script>
+/* V7.6 — продажа автомобиля: объявление, покупатели и переговоры. */
+const buyerTypes=[
+ {name:'Антон',icon:'👨‍💼',style:'Спокойный',factor:.96,patience:3,text:'«Машина мне нравится. Но хочу уложиться в свой бюджет.»'},
+ {name:'Максим',icon:'😎',style:'Торгаш',factor:.90,patience:4,text:'«Хороший вариант, но цена высоковата. Давайте торговаться.»'},
+ {name:'Игорь',icon:'⚡',style:'Срочно ищет',factor:1.00,patience:2,text:'«Если машина действительно в таком состоянии, готов быстро оформить сделку.»'},
+ {name:'Денис',icon:'🔍',style:'Придирчивый',factor:.93,patience:3,text:'«Есть интерес, но я хочу учесть пробег и состояние.»'}
+];
+let saleDeal={buyer:null,price:0,offer:0,round:0};
+function saleValue(c){const base=c.repaired?Math.round(c.market*1.02):Math.round(c.market*.94);return Math.max(c.buy+50000,base);}
+function sellCar(){const c=state.car;if(!c)return garage();const ask=saleValue(c);render(`<div class="app">${head('Продажа')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><div class="note"><small>ОБЪЯВЛЕНИЕ</small><h3>${c.name}</h3><p class="muted">${c.year} · ${c.km.toLocaleString('ru-RU')} км · ${c.city}</p><div class="hero-line"><span>Цена покупки</span><strong>${money(c.buy)}</strong></div><div class="hero-line"><span>Цена продажи</span><strong>${money(ask)}</strong></div><div class="hero-line"><span>Ремонт</span><strong>${money(c.repairSpent||0)}</strong></div></div><p class="muted">Покупатели увидят объявление и предложат свои условия. Можно принять предложение или торговаться.</p><button class="action green" onclick="showBuyers(${ask})">📨 Получить предложения</button><button class="action" onclick="garage()">‹ Назад в гараж</button></div>`);}
+function showBuyers(ask){const c=state.car;const buyers=buyerTypes.map((b)=>({...b,offer:Math.round(ask*b.factor/1000)*1000}));render(`<div class="app">${head('Покупатели')}<div class="note"><small>ТВОЁ ОБЪЯВЛЕНИЕ</small><h3>${c.name}</h3><p class="muted">Цена: ${money(ask)}</p></div>${buyers.map((b,i)=>`<div class="market"><b>${b.icon} ${b.name} · ${b.style}</b><small>${b.text}</small><strong>${money(b.offer)}</strong><button class="action green" onclick="startSale(${i},${b.offer},${ask})">💬 Переговоры</button></div>`).join('')}<button class="action" onclick="garage()">‹ Отменить продажу</button></div>`);}
+function startSale(index,offer,ask){const b=buyerTypes[index];saleDeal={buyer:{...b,index},price:ask,offer,round:0};renderSale('start');}
+function renderSale(mode,counter=0){const s=saleDeal,b=s.buyer,c=state.car;let text=b.text;if(mode==='counter')text=`«${money(s.offer)} я не дам. Могу предложить ${money(counter)} и забрать машину сегодня.»`;if(mode==='accept')text=`«Договорились за ${money(s.offer)}. Оформляем?»`;if(mode==='reject')text=`«Нет, для меня ${money(s.offer)} слишком дорого. Тогда я откажусь.»`;const suggested=mode==='counter'?counter:Math.round(s.offer*1.05/1000)*1000;const controls=mode==='accept'?`<button class="action green" onclick="completeSale(${s.offer})">🤝 Продать за ${money(s.offer)}</button><button class="action" onclick="showBuyers(${s.price})">Другой покупатель</button>`:`<div class="note"><b>Твоя цена</b><input id="saleOffer" type="number" min="10000" step="1000" value="${suggested}" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div><button class="action green" onclick="makeSaleOffer()">💬 Предложить цену</button>${mode==='counter'?`<button class="action" onclick="completeSale(${counter})">🤝 Принять ${money(counter)}</button>`:''}<button class="action" onclick="showBuyers(${s.price})">🚪 Закончить</button>`;render(`<div class="app">${head('Переговоры о продаже')}<div class="note"><small>ПОКУПАТЕЛЬ</small><h3>${b.icon} ${b.name} · ${b.style}</h3><span class="muted">Раунд ${s.round+1}</span></div><div class="bubble seller">${b.name}: ${text}</div>${s.offer?`<div class="bubble you">Ты: «Моя цена — ${money(s.offer)}.»</div>`:''}<p class="muted">Ты вложил в автомобиль ${money(c.repairSpent||0)} на ремонт.</p>${controls}</div>`);}
+function makeSaleOffer(){const input=document.getElementById('saleOffer'),offer=Math.round(Number(input&&input.value)),s=saleDeal,b=s.buyer;if(!offer||offer<10000)return alert('Введи корректную цену от 10 000 ₽.');s.offer=offer;s.round++;const buyerMax=Math.round(s.price*b.factor);if(offer<=buyerMax){log(`${b.name} согласился купить ${state.car.name} за ${money(offer)}.`);renderSale('accept');return;}if(s.round>=b.patience){log(`${b.name} отказался от сделки из-за цены.`);renderSale('reject');return;}const counter=Math.round((buyerMax+(offer-buyerMax)*.25)/1000)*1000;log(`${b.name} сделал встречное предложение ${money(counter)}.`);renderSale('counter',counter);}
+function completeSale(price){const c=state.car;if(!c)return garage();const profit=Math.round(price-c.buy-(c.repairSpent||0));state.money+=price;state.rep+=profit>0?5:1;state.deals++;state.notifications++;log(`Продажа: ${c.name} продан за ${money(price)}. Результат сделки: ${profit>=0?'+':''}${money(profit)}.`);state.car=null;saleDeal={buyer:null,price:0,offer:0,round:0};objective.textContent='Сделка завершена';objectiveSub.textContent='Найди следующий автомобиль.';render(`<div class="app">${head('Сделка завершена')}<div class="note"><h3>🎉 Автомобиль продан</h3><p>${c.name}</p><div class="hero-line"><span>Цена продажи</span><strong>${money(price)}</strong></div><div class="hero-line"><span>Покупка + ремонт</span><strong>${money(c.buy+(c.repairSpent||0))}</strong></div><div class="hero-line"><span>Результат</span><strong class="profit">${profit>=0?'+':''}${money(profit)}</strong></div></div><button class="action green" onclick="market()">🚗 Искать следующий автомобиль</button><button class="action" onclick="home()">⌂ На главный экран</button></div>`);}
+const garageBase=garage;
+garage=function(){const c=state.car;if(!c)return garageBase();const current=c.repaired?Math.round(c.market*1.02):c.market;const potential=Math.round(saleValue(c)-c.buy-(c.repairSpent||0));render(`<div class="app">${head('Гараж')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><div class="note"><small>ТВОЙ АВТОМОБИЛЬ</small><h3>${c.name}</h3><p class="muted">${c.city} · ${c.year} · ${c.km.toLocaleString('ru-RU')} км</p></div><div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>ПРИБЫЛЬ<b class="profit">${money(potential)}</b></span></div><div class="warning">${c.repaired?'✅ Автомобиль подготовлен к продаже.':'⚠ Перед продажей желательно проверить и отремонтировать автомобиль.'}</div><button class="action" onclick="garageDetails()">🔎 Подробнее</button><button class="action orange" onclick="service()">🛠️ СТО</button><button class="action green" onclick="sellCar()">🏷️ Выставить на продажу</button></div>`);};
+</script>
+
+<script>
+// V7.9 — скрытые дефекты и риск дешёвых автомобилей.
+(function(){
+  const hiddenCatalog=[
+    ['Течь масла','двигатель'],['Генератор','электрика'],['Сцепление','коробка'],
+    ['Ступичный подшипник','ходовая'],['Радиатор','охлаждение'],['Стартер','электрика'],
+    ['Тормозные суппорты','тормоза'],['Коррозия днища','кузов'],['Помпа','двигатель']
+  ];
+  function hiddenCost(car,index){
+    const buy=Math.max(10000,Number(car.buy||car.price||50000));
+    const factor=.08+(((car.id||0)*13+index*17)%10)/100;
+    return Math.round(Math.max(4000,Math.min(60000,buy*factor))/1000)*1000;
+  }
+  function prepareHidden(car){
+    if(!car||Array.isArray(car.hiddenDefects))return;
+    const buy=Number(car.buy||car.price||0);
+    let chance=.25,max=1;
+    if(buy<100000){chance=.78;max=3}
+    else if(buy<300000){chance=.60;max=2}
+    else if(buy<700000){chance=.42;max=2}
+    else if(buy<1500000){chance=.30;max=1}
+    let count=0;
+    if(Math.random()<chance){
+      count=1;
+      if(max>=2&&Math.random()<.38)count++;
+      if(max>=3&&Math.random()<.18)count++;
+    }
+    const used=[];
+    car.hiddenDefects=[];
+    for(let i=0;i<count;i++){
+      let pick=((car.id||0)*7+i*3+Math.floor(Math.random()*hiddenCatalog.length))%hiddenCatalog.length;
+      while(used.includes(pick))pick=(pick+1)%hiddenCatalog.length;
+      used.push(pick);
+      car.hiddenDefects.push({name:hiddenCatalog[pick][0],group:hiddenCatalog[pick][1],cost:hiddenCost(car,i),revealed:false,repaired:false});
+    }
+    car.hiddenSaleChecks=0;
+    car.hiddenScanCount=0;
+  }
+  function addRevealedToDiagnostics(car){
+    if(!car||!car.diagnosed||!Array.isArray(car.diagnostics))return;
+    (car.hiddenDefects||[]).filter(x=>x.revealed&&!x.repaired).forEach(function(h){
+      if(car.diagnostics.some(d=>d.hiddenDefectName===h.name))return;
+      car.diagnostics.push({name:'Скрытый дефект · '+h.name,status:'critical',wear:25,cost:h.cost,hidden:true,hiddenDefectName:h.name});
+    });
+    car.totalRepair=car.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+Number(x.cost||0),0);
+  }
+  function revealHidden(car,source){
+    prepareHidden(car);
+    const h=(car.hiddenDefects||[]).find(x=>!x.revealed&&!x.repaired);
+    if(!h)return null;
+    h.revealed=true;
+    car.repaired=false;
+    car.condition=Math.min(Number(car.condition||100),70);
+    addRevealedToDiagnostics(car);
+    if(typeof log==='function')log('⚠ '+source+': у '+car.name+' обнаружен скрытый дефект — '+h.name+' ('+money(h.cost)+').');
+    if(typeof save==='function')save();
+    return h;
+  }
+
+  const oldBuy=window.buy;
+  if(typeof oldBuy==='function'&&!oldBuy.__hiddenDefects){
+    const wrapped=function(id,price){
+      const before=state.car;
+      const result=oldBuy.apply(this,arguments);
+      const car=state.car;
+      if(car&&car!==before){
+        prepareHidden(car);
+        if(typeof save==='function')save();
+      }
+      return result;
+    };
+    wrapped.__hiddenDefects=true;
+    window.buy=wrapped;
+  }
+
+  const oldDiagnose=window.diagnose;
+  if(typeof oldDiagnose==='function'&&!oldDiagnose.__hiddenDefects){
+    window.diagnose=function(){
+      const car=state.car;
+      if(!car)return oldDiagnose.apply(this,arguments);
+      prepareHidden(car);
+      const result=oldDiagnose.apply(this,arguments);
+      car.hiddenScanCount=Number(car.hiddenScanCount||0)+1;
+      let found=null;
+      const pending=(car.hiddenDefects||[]).some(x=>!x.revealed&&!x.repaired);
+      if(pending&&(Math.random()<.35||car.hiddenScanCount>=2))found=revealHidden(car,'Диагностика');
+      addRevealedToDiagnostics(car);
+      if(found){
+        objectiveSub.textContent='Диагностика нашла скрытую проблему: '+found.name+'.';
+        alert('⚠ Обнаружен скрытый дефект: '+found.name+'. Дополнительный ремонт: '+money(found.cost)+'.');
+      }else if(pending){
+        objectiveSub.textContent='Найдены видимые проблемы. Но диагностика не даёт 100% гарантии.';
+      }
+      if(typeof save==='function')save();
+      garageDetails();
+      return result;
+    };
+    window.diagnose.__hiddenDefects=true;
+  }
+
+  const oldSellCar=window.sellCar;
+  if(typeof oldSellCar==='function'&&!oldSellCar.__hiddenDefects){
+    window.sellCar=function(){
+      const car=state.car;
+      if(!car)return oldSellCar.apply(this,arguments);
+      prepareHidden(car);
+      car.hiddenSaleChecks=Number(car.hiddenSaleChecks||0)+1;
+      const pending=(car.hiddenDefects||[]).some(x=>!x.revealed&&!x.repaired);
+      if(pending&&(Math.random()<.60||car.hiddenSaleChecks>=2)){
+        const found=revealHidden(car,'Проверка перед продажей');
+        if(found){
+          alert('⚠ Перед продажей всплыл скрытый дефект: '+found.name+'. Ориентир ремонта: '+money(found.cost)+'. Машину можно оставить как есть или поехать на СТО.');
+          if(car.diagnosed)addRevealedToDiagnostics(car);
+          garageDetails();
+          return;
+        }
+      }
+      if(typeof save==='function')save();
+      return oldSellCar.apply(this,arguments);
+    };
+    window.sellCar.__hiddenDefects=true;
+  }
+})();
+</script>
+
+
+<script>
+// V7.9 — обмен автомобилей и trade-in.
+(function(){
+  window.tradeRound=function(n){return Math.max(10000,Math.round(Number(n||0)/1000)*1000);};
+
+  window.makeExchangeCar=function(reference){
+    var templates=(typeof marketTemplates!=='undefined'&&Array.isArray(marketTemplates))?marketTemplates.slice():[];
+    if(!templates.length)return null;
+    var refValue=Number(reference&&reference.market||reference&&reference.buy||500000);
+    var targetValue=refValue*(.58+Math.random()*.78);
+    var ranked=templates.filter(function(t){return !reference||t.name!==reference.name;}).sort(function(a,b){
+      return Math.abs(Number(a.market||0)-targetValue)-Math.abs(Number(b.market||0)-targetValue);
+    });
+    var pick=ranked[Math.floor(Math.random()*Math.min(6,ranked.length))]||templates[0],car;
+    if(typeof createMarketListing==='function')car=createMarketListing(pick,Number(state.marketListingSeq||0)+17);
+    else car=Object.assign({},pick);
+    car.listingId='EX-'+String(Date.now()).slice(-6)+'-'+Math.floor(Math.random()*900+100);
+    car.basePrice=Number(car.market||car.price||0);
+    car.price=Number(car.market||car.price||0);
+    car.sale=Number(car.market||car.sale||car.price||0);
+    car.repaired=false;car.repairSpent=0;car.listed=false;car.tradeOnly=true;
+    return car;
+  };
+
+  window.tradeSaleCashText=function(dealValue,tradeValue){
+    var diff=Math.round(Math.abs(Number(dealValue||0)-Number(tradeValue||0))/1000)*1000;
+    if(Math.abs(Number(dealValue||0)-Number(tradeValue||0))<500)return 'Без доплаты';
+    return Number(dealValue||0)>=Number(tradeValue||0)?'Покупатель доплачивает '+money(Math.abs(diff)):'Ты доплачиваешь '+money(Math.abs(diff));
+  };
+
+  window.tradePurchaseCashText=function(price,tradeValue){
+    var raw=Number(price||0)-Number(tradeValue||0),diff=Math.max(0,Math.round(Math.abs(raw)/1000)*1000);
+    if(Math.abs(raw)<500)return 'Без доплаты';
+    return raw>=0?'Твоя доплата '+money(diff):'Продавец доплачивает '+money(diff);
+  };
+
+  window.tradeCarCardHtml=function(car,valuation,label){
+    if(!car)return '';
+    return '<div class="trade-car-card"><div class="trade-car-photo" style="background-image:linear-gradient(180deg,#0000 48%,#0008),url(\''+photo(car)+'\'),url(\''+fallbackPhoto(car)+'\')"><span>'+label+'</span></div>'+
+      '<div class="trade-car-info"><div class="auto-market-title"><b>'+car.name+'</b><strong>'+money(car.market||car.price||0)+'</strong></div>'+
+      '<div class="auto-market-specs"><span>📅 '+car.year+'</span><span>🛣️ '+Number(car.km||0).toLocaleString('ru-RU')+' км</span><span>📍 '+car.city+'</span><span>🚘 '+(car.body||'—')+'</span></div>'+
+      '<div class="trade-values"><span>Рынок <b>'+money(car.market||car.price||0)+'</b></span>'+(valuation?'<span>Оценка в обмене <b>'+money(valuation)+'</b></span>':'')+'</div></div></div>';
+  };
+
+  var purchaseTradeDeal=null;
+  window.cancelSellerTrade=function(reason){
+    purchaseTradeDeal=null;
+    if(typeof negotiation!=='undefined'&&negotiation){
+      negotiation.lastOffer=0;
+      negotiation.counter=0;
+    }
+    return typeof cancelPurchaseNegotiation==='function'?cancelPurchaseNegotiation(reason||'Ты отказался от обмена. Сделка по этой машине завершена.'):market('all',0);
+  };
+  function ownedTradeCars(){return (Array.isArray(state.cars)?state.cars:[]).filter(function(c){
+    return c&&!c.listed&&!(state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===ownedCarKey(c));
+  });}
+  function ownedCarKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
+
+  window.sellerTradeIn=function(targetId){
+    var target=makes[targetId],cars=ownedTradeCars();
+    if(!target)return market();
+    if(!cars.length)return alert('Для обмена нужна хотя бы одна твоя машина без активного объявления.');
+    var html=cars.map(function(c,i){
+      return '<button class="trade-owned-choice" onclick="startSellerTradeIn('+targetId+','+i+')">'+
+        '<div class="trade-owned-photo" style="background-image:url(\''+photo(c)+'\')"></div><div><small>ТВОЯ МАШИНА</small><b>'+c.name+'</b><span>'+c.year+' · '+Number(c.km||0).toLocaleString('ru-RU')+' км</span><strong>Рынок ~ '+money(c.market||c.sale||0)+'</strong></div><em>›</em></button>';
+    }).join('');
+    render('<div class="app">'+head('Предложить обмен')+
+      '<div class="note"><small>ПОКУПКА С TRADE-IN</small><h3>'+target.name+'</h3><p class="muted">Выбери свою машину. Продавец оценит её и назовёт доплату в одну из сторон.</p></div>'+html+
+      '<button class="action" onclick="returnToPurchaseNegotiation()">‹ Назад к покупке</button></div>');
+  };
+
+  window.startSellerTradeIn=function(targetId,index){
+    var target=makes[targetId],cars=ownedTradeCars(),own=cars[index];
+    if(!target||!own)return sellerTradeIn(targetId);
+    var purchasePrice=(typeof negotiation!=='undefined'&&negotiation&&negotiation.id===targetId&&Number(negotiation.lastOffer||0)>0)?Number(negotiation.lastOffer):Number(target.price||0);
+    var ownMarket=Number(own.market||own.sale||own.buy||0);
+    var base=tradeRound(ownMarket*(own.repaired?.96:.89)*(.98+Math.random()*.04));
+    var max=tradeRound(ownMarket*(own.repaired?1.01:.96));
+    if(typeof ensureMarketFlipCondition==='function')ensureMarketFlipCondition(target);
+    purchaseTradeDeal={accepted:false,target:Object.assign({},target),targetId:targetId,targetListingId:target.listingId||'',ownKey:ownedCarKey(own),purchasePrice:purchasePrice,valuation:Math.min(base,max),maxValue:max,round:0,seller:(typeof negotiation!=='undefined'&&negotiation&&negotiation.seller)||target.sellerName||'Продавец'};
+    renderSellerTradeIn('start');
+  };
+
+  window.renderSellerTradeIn=function(mode,counter){
+    var d=purchaseTradeDeal;if(!d)return market();
+    var own=(state.cars||[]).find(function(c){return ownedCarKey(c)===d.ownKey;});
+    if(!own)return sellerTradeIn(d.targetId);
+    var val=mode==='counter'?Number(counter||d.valuation):Number(d.valuation||0),cash=Number(d.purchasePrice)-val;
+    var sellerText='«Могу принять вашу машину в зачёт за '+money(val)+'. '+tradePurchaseCashText(d.purchasePrice,val)+'.»';
+    if(mode==='counter')sellerText='«Так высоко вашу машину не оценю. Могу зачесть её за '+money(val)+'.»';
+    if(mode==='accept')sellerText='«Договорились. Вашу машину считаем за '+money(val)+'. Оформляем обмен.»';
+    if(mode==='reject')sellerText='«Нет, по такой оценке обмен мне неинтересен.»';
+    var controls='';
+    d.accepted=mode==='accept';
+    if(mode==='accept'){
+      controls='<button class="action green" onclick="completeSellerTrade()">✅ Оформить обмен</button><button class="action" onclick="cancelSellerTrade()">Отказаться от сделки</button>';
+    }else if(mode==='reject'){
+      controls='<button class="action" onclick="cancelSellerTrade()">‹ Вернуться к объявлениям</button>';
+    }else{
+      var suggested=mode==='counter'?val:tradeRound(Math.min(d.maxValue,val*1.05));
+      controls='<div class="note"><b>Как оценить твою машину</b><input id="sellerTradeValue" type="number" min="10000" step="1000" value="'+suggested+'" style="display:block;width:100%;margin-top:8px;padding:12px"></div>'+
+        '<button class="action green" onclick="makeSellerTradeOffer()">💬 Предложить эту оценку</button>'+
+        (mode==='counter'?'<button class="action" onclick="acceptSellerTradeCounter('+val+')">🤝 Принять оценку '+money(val)+'</button>':'')+
+        '<button class="action" onclick="cancelSellerTrade()">🚪 Отказаться от сделки</button>';
+    }
+    render('<div class="app">'+head('Обмен с продавцом')+
+      tradeCarCardHtml(d.target,d.purchasePrice,'ПОКУПАЕШЬ')+
+      '<div class="trade-swap-arrow">⇅</div>'+tradeCarCardHtml(own,val,'ОТДАЁШЬ')+
+      '<div class="note trade-deal-summary"><small>РАСЧЁТ ОБМЕНА</small><div class="hero-line"><span>Цена покупаемой машины</span><strong>'+money(d.purchasePrice)+'</strong></div><div class="hero-line"><span>Оценка твоей машины</span><strong>'+money(val)+'</strong></div><div class="hero-line"><span>Доплата</span><strong class="'+(cash<=0?'profit':'')+'">'+tradePurchaseCashText(d.purchasePrice,val)+'</strong></div></div>'+
+      '<div class="bubble seller">'+d.seller+': '+sellerText+'</div>'+controls+'</div>');
+  };
+
+  window.makeSellerTradeOffer=function(){
+    var d=purchaseTradeDeal,input=document.getElementById('sellerTradeValue');if(!d)return;
+    var raw=Number(input&&input.value);
+    if(!Number.isFinite(raw)||raw<10000)return alert('Введи корректную оценку машины.');
+    var ask=tradeRound(raw);d.round++;
+    if(ask<=d.maxValue){d.valuation=ask;return renderSellerTradeIn('accept',ask);}
+    if(d.round>=3)return cancelSellerTrade('Продавец отказался от обмена: по оценке твоей машины договориться не получилось.');
+    var counter=tradeRound(Math.min(d.maxValue,d.valuation+(d.maxValue-d.valuation)*.7));
+    d.valuation=counter;renderSellerTradeIn('counter',counter);
+  };
+  window.acceptSellerTradeCounter=function(value){if(!purchaseTradeDeal||Number(value)!==purchaseTradeDeal.valuation)return;renderSellerTradeIn('accept',purchaseTradeDeal.valuation);};
+
+  window.getSellerTradeDeal=function(){return purchaseTradeDeal?JSON.parse(JSON.stringify(purchaseTradeDeal)):null;};
+  window.restoreSellerTradeDeal=function(value){purchaseTradeDeal=value?JSON.parse(JSON.stringify(value)):null;return purchaseTradeDeal;};
+
+  window.completeSellerTrade=function(){
+    var d=purchaseTradeDeal;if(!d)return market();
+    var own=(state.cars||[]).find(function(c){return ownedCarKey(c)===d.ownKey;});
+    if(!own||ownedTradeCars().indexOf(own)<0)return alert('Твоя машина для обмена больше недоступна.');
+    if(!d.accepted)return alert('Сначала согласуй условия обмена.');
+    if(d.targetListingId&&!makes.some(function(c){return c.listingId===d.targetListingId;}))return cancelSellerTrade('Объявление больше недоступно.');
+    var need=typeof requiredRepForCar==='function'?requiredRepForCar(d.target):0;
+    if(Number(state.rep||0)<need)return alert('Для этой машины нужно '+need+' репутации.');
+    if(!Number.isFinite(d.purchasePrice)||d.purchasePrice<10000||!Number.isFinite(d.valuation)||d.valuation<10000||d.valuation>d.maxValue)return alert('Условия обмена недействительны.');
+    var cash=Number(d.purchasePrice)-Number(d.valuation);
+    if(cash>0&&Number(state.money||0)<cash)return alert('Не хватает '+money(cash-Number(state.money||0))+' для доплаты.');
+    state.money=Number(state.money||0)-cash;
+    var repairSpent=Number(own.repairSpent||0),tradeProfit=Number(d.valuation)-Number(own.buy||0)-repairSpent;
+    if(!Array.isArray(state.businessHistory))state.businessHistory=[];
+    state.businessHistory.unshift({car:own.name,buy:Number(own.buy||0),repair:repairSpent,sale:Number(d.valuation),profit:tradeProfit,rep:0,day:state.day,city:own.city,year:own.year,exchange:true});
+    state.businessHistory=state.businessHistory.slice(0,30);
+    state.cars=(state.cars||[]).filter(function(c){return ownedCarKey(c)!==d.ownKey;});
+    var added=Object.assign({},d.target,{buy:Number(d.purchasePrice),repaired:false,repairSpent:0,listed:false,_garageId:'car-ex-'+Date.now()+'-'+Math.floor(Math.random()*999)});
+    if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(added);
+    state.cars.push(added);state.car=added;state.deals=Number(state.deals||0)+1;
+    if(typeof removePurchasedListing==='function')removePurchasedListing(d.targetListingId||d.target.listingId,d.target);
+    log('Обмен: '+own.name+' зачтён за '+money(d.valuation)+', получен '+added.name+'. '+tradePurchaseCashText(d.purchasePrice,d.valuation)+'.');
+    if(typeof persist==='function')persist();else save();
+    purchaseTradeDeal=null;
+    render('<div class="app">'+head('Обмен завершён')+
+      '<div class="note"><h3>🔄 '+added.name+' теперь в твоём гараже</h3><div class="hero-line"><span>Цена машины</span><strong>'+money(d.purchasePrice)+'</strong></div><div class="hero-line"><span>Твоя машина в зачёт</span><strong>'+money(d.valuation)+'</strong></div><div class="hero-line"><span>Доплата</span><strong>'+tradePurchaseCashText(d.purchasePrice,d.valuation)+'</strong></div></div>'+
+      '<button class="action green" onclick="garage()">🚗 Открыть гараж</button><button class="action" onclick="market()">Объявления</button></div>');
+  };
+})();
+</script>
+
+<script>
+// V7.9 — входящие покупатели: объявление живёт само, люди пишут в течение игрового дня.
+(function(){
+  const buyerProfiles=[
+    {name:'Артём',icon:'👤',kind:'Обычный покупатель',offer:.93,max:.99,patience:3,text:'Здравствуйте. Машина ещё в продаже?'},
+    {name:'Максим',icon:'⚡',kind:'Заберу сегодня',offer:.96,max:1.01,patience:2,text:'Добрый день. Если договоримся по цене, могу приехать сегодня.'},
+    {name:'Сергей',icon:'🤝',kind:'Любит торговаться',offer:.89,max:.97,patience:4,text:'Посмотрел объявление. Готов обсудить цену.'},
+    {name:'Иван',icon:'🚗',kind:'Ищет для себя',offer:.94,max:1.00,patience:3,text:'Здравствуйте. Автомобиль интересен, хотел бы посмотреть.'},
+    {name:'Денис',icon:'💬',kind:'Сравнивает варианты',offer:.91,max:.985,patience:3,text:'Добрый день. Смотрю несколько машин, ваша тоже заинтересовала.'}
+  ];
+  function gt(){return typeof window.getGameTotal==='function'?window.getGameTotal():Number((state.gameClock&&state.gameClock.total)||0);}
+  function listingCar(){
+    const l=state.activeListing;if(!l||!l.carKey)return null;
+    if(Array.isArray(state.cars)){
+      const found=state.cars.find(c=>(c._garageId||('car-'+c.id+'-'+c.buy))===l.carKey);
+      if(found)return found;
+    }
+    if(state.car&&carKey(state.car)===l.carKey)return state.car;
+    return null;
+  }
+  function activeBuyer(x){
+    var l=state.activeListing;
+    return !!(x&&l&&l.status==='active'&&x.listingId===l.id&&['new','accepted'].indexOf(x.status)>=0&&listingCar());
+  }
+  function carKey(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
+  function clockText(total){
+    const m=((Math.round(total)%1440)+1440)%1440,h=Math.floor(m/60),mm=m%60;
+    return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  function saveLife(){if(typeof save==='function')save();else localStorage.setItem(KEY,JSON.stringify(state));}
+  function round1000(n){return Math.max(10000,Math.round(Number(n||0)/1000)*1000);}
+  function nextDelay(car,ask,first){
+    const fair=(car.repaired?Number(car.market||ask)*1.02:Number(car.market||ask)*.94);
+    const ratio=ask/Math.max(1,fair);
+    if(first){
+      if(ratio<=.98)return 30+Math.floor(Math.random()*61);
+      if(ratio<=1.08)return 45+Math.floor(Math.random()*76);
+      return 90+Math.floor(Math.random()*121);
+    }
+    if(ratio<=.98)return 60+Math.floor(Math.random()*121);
+    if(ratio<=1.08)return 90+Math.floor(Math.random()*181);
+    return 180+Math.floor(Math.random()*301);
+  }
+  function addDiagForHidden(car,h){
+    if(!car.diagnosed)return;
+    if(!Array.isArray(car.diagnostics))car.diagnostics=[];
+    if(!car.diagnostics.some(d=>d.hiddenDefectName===h.name)){
+      car.diagnostics.push({name:'Скрытый дефект · '+h.name,status:'critical',wear:25,cost:h.cost,hidden:true,hiddenDefectName:h.name});
+    }
+    car.totalRepair=car.diagnostics.filter(x=>x.status!=='good').reduce((s,x)=>s+Number(x.cost||0),0);
+  }
+  function maybeRevealBeforeListing(car){
+    if(!car)return false;
+    car.hiddenSaleChecks=Number(car.hiddenSaleChecks||0)+1;
+    const h=(car.hiddenDefects||[]).find(x=>!x.revealed&&!x.repaired);
+    if(!h)return false;
+    if(Math.random()<.45||car.hiddenSaleChecks>=2){
+      h.revealed=true;car.repaired=false;addDiagForHidden(car,h);
+      log('⚠ Проверка перед объявлением: у '+car.name+' всплыл скрытый дефект — '+h.name+' ('+money(h.cost)+').');
+      saveLife();
+      alert('⚠ Перед публикацией всплыл скрытый дефект: '+h.name+'. Ориентир ремонта: '+money(h.cost)+'.');
+      garageDetails();
+      return true;
+    }
+    return false;
+  }
+
+  window.sellCar=function(){
+    const c=state.car;if(!c)return garage();
+    if(state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===carKey(c)){
+      const l=state.activeListing,threads=(state.buyerInbox||[]).filter(x=>x.listingId===l.id&&x.status!=='declined').length,views=Number(l.views||0),favorites=Number(l.favorites||0);
+      render('<div class="app">'+head('Моё объявление')+
+        '<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div>'+
+        '<div class="note"><small>ОБЪЯВЛЕНИЕ АКТИВНО</small><h3>'+c.name+'</h3><div class="hero-line"><span>Цена</span><strong>'+money(l.ask)+'</strong></div><div class="hero-line"><span>Опубликовано</span><strong>'+clockText(l.postedAt)+'</strong></div><div class="hero-line"><span>Просмотры</span><strong>'+views+'</strong></div><div class="hero-line"><span>В избранном</span><strong>'+favorites+'</strong></div><div class="hero-line"><span>Сообщений</span><strong>'+threads+'</strong></div></div>'+
+        '<p class="muted">Покупатели сами увидят машину и напишут в «Сообщения». Чем адекватнее цена, тем быстрее появляется интерес.</p>'+
+        '<button class="action green" onclick="messages()">💬 Открыть сообщения</button>'+
+        '<button class="action" onclick="editListingPrice()">✏️ Изменить цену</button>'+
+        '<button class="action" onclick="cancelCarListing()">🗑️ Снять объявление</button>'+
+        '<button class="action" onclick="garage()">‹ В гараж</button></div>');
+      return;
+    }
+    if(maybeRevealBeforeListing(c))return;
+    const suggested=typeof saleValue==='function'?saleValue(c):round1000((c.market||c.buy)*1.02);
+    render('<div class="app">'+head('Продажа')+
+      '<div class="pic" style="background-image:linear-gradient(#0002,#0008),url(\''+photo(c)+'\')">🚘</div>'+
+      '<div class="note"><small>СОЗДАТЬ ОБЪЯВЛЕНИЕ</small><h3>'+c.name+'</h3><p class="muted">'+c.year+' · '+c.km.toLocaleString('ru-RU')+' км · '+c.city+'</p>'+
+      '<div class="hero-line"><span>Покупка</span><strong>'+money(c.buy)+'</strong></div>'+
+      '<div class="hero-line"><span>Рынок</span><strong>'+money(c.market)+'</strong></div></div>'+
+      '<div class="note"><b>Цена объявления</b><input id="listingPrice" type="number" min="10000" step="1000" value="'+suggested+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div>'+
+      '<p class="muted">После публикации ты не выбираешь покупателя. Люди сами будут писать в течение игрового дня.</p>'+
+      '<button class="action green" onclick="publishCarListing()">📤 Опубликовать объявление</button>'+
+      '<button class="action" onclick="garage()">‹ Назад</button></div>');
+  };
+
+  window.publishCarListing=function(){
+    const c=state.car,input=document.getElementById('listingPrice'),ask=round1000(input&&input.value);
+    if(!c||ask<10000)return alert('Укажи корректную цену.');
+    const now=gt();
+    if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
+    state.activeListing={id:'listing-'+Date.now(),carKey:carKey(c),ask:ask,postedAt:now,nextBuyerAt:now+nextDelay(c,ask,true),status:'active'};
+    c.listed=true;
+    saveLife();
+    render('<div class="app">'+head('Объявление опубликовано')+
+      '<div class="note"><h3>✅ '+c.name+' выставлен на продажу</h3><div class="hero-line"><span>Цена</span><strong>'+money(ask)+'</strong></div><div class="hero-line"><span>Время</span><strong>'+clockText(now)+'</strong></div></div>'+
+      '<p class="muted">Теперь занимайся другими делами. Если кто-то заинтересуется машиной, на телефон придёт сообщение.</p>'+
+      '<button class="action green" onclick="home()">📱 На главный экран</button>'+
+      '<button class="action" onclick="sellCar()">🏷️ Моё объявление</button></div>');
+  };
+
+  window.editListingPrice=function(){
+    const l=state.activeListing,c=listingCar();
+    if(!l||l.status!=='active'||!c)return sellCar();
+    render('<div class="app">'+head('Изменить цену')+
+      '<div class="note"><small>АКТИВНОЕ ОБЪЯВЛЕНИЕ</small><h3>'+c.name+'</h3><div class="hero-line"><span>Текущая цена</span><strong>'+money(l.ask)+'</strong></div><div class="hero-line"><span>Рыночная цена</span><strong>'+money(c.market)+'</strong></div></div>'+
+      '<div class="note"><b>Новая цена</b><input id="listingEditPrice" type="number" min="10000" step="1000" value="'+l.ask+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid #3a4350;background:#0b1016;color:#fff;font-size:16px"></div>'+
+      '<p class="muted">Снижение цены обычно ускоряет интерес. Уже написавшие покупатели сохранят свои старые предложения.</p>'+
+      '<button class="action green" onclick="saveListingPrice()">💾 Сохранить цену</button>'+
+      '<button class="action" onclick="sellCar()">‹ Назад к объявлению</button></div>');
+  };
+
+  window.saveListingPrice=function(){
+    const l=state.activeListing,c=listingCar(),input=document.getElementById('listingEditPrice');
+    if(!l||l.status!=='active'||!c)return sellCar();
+    const next=round1000(input&&input.value),old=Number(l.ask||0);
+    if(next<10000)return alert('Укажи корректную цену.');
+    if(next===old)return sellCar();
+    l.ask=next;
+    l.priceChangedAt=gt();
+    l.nextBuyerAt=gt()+nextDelay(c,next,true);
+    if(!Array.isArray(l.priceHistory))l.priceHistory=[];
+    l.priceHistory.unshift({from:old,to:next,time:gt()});
+    l.priceHistory=l.priceHistory.slice(0,10);
+    log('Объявление '+c.name+': цена изменена с '+money(old)+' на '+money(next)+'.');
+    saveLife();
+    render('<div class="app">'+head('Цена изменена')+
+      '<div class="note"><h3>'+(next<old?'🔻 Цена снижена':'🔺 Цена повышена')+'</h3><p>'+c.name+'</p><div class="hero-line"><span>Было</span><strong>'+money(old)+'</strong></div><div class="hero-line"><span>Стало</span><strong>'+money(next)+'</strong></div></div>'+
+      '<p class="muted">Следующие покупатели будут ориентироваться уже на новую цену.</p>'+
+      '<button class="action green" onclick="sellCar()">🏷️ Вернуться к объявлению</button></div>');
+  };
+
+  window.cancelCarListing=function(){
+    const c=listingCar();
+    if(c)c.listed=false;
+    state.activeListing=null;
+    saveLife();
+    garage();
+  };
+
+  function buyerOffer(car,l,p){
+    const fair=car.repaired?Number(car.market||l.ask)*1.02:Number(car.market||l.ask)*.92;
+    let offer=Math.min(l.ask*p.offer,fair*(.96+Math.random()*.06));
+    if(l.ask<=fair*.96)offer=Math.min(l.ask,l.ask*(.96+Math.random()*.035));
+    offer=round1000(offer);
+    let max=Math.min(l.ask,Math.max(offer+3000,fair*p.max));
+    max=round1000(max);
+    if(max<offer)max=offer;
+    return {offer,max};
+  }
+  function buyerMessage(p,offer){
+    const variants=[
+      p.text+' '+money(offer)+' устроит?',
+      p.text+' Если '+money(offer)+', готов обсуждать встречу.',
+      p.text+' Мой бюджет около '+money(offer)+'.',
+      p.text+' За '+money(offer)+' смог бы забрать.'
+    ];
+    return variants[Math.floor(Math.random()*variants.length)];
+  }
+  function scheduleNext(l,car,fromTotal){l.nextBuyerAt=(fromTotal===undefined?gt():Number(fromTotal))+nextDelay(car,l.ask,false);}
+  function activeBuyerCount(l){
+    return (state.buyerInbox||[]).filter(x=>x.listingId===l.id&&x.status!=='declined'&&x.status!=='sold').length;
+  }
+  function enqueueBuyerAt(total,showHomeNotification){
+    const l=state.activeListing;if(!l||l.status!=='active')return false;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return false;}
+    if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
+    if(activeBuyerCount(l)>=6){l.nextBuyerAt=Number(total)+240;saveLife();return false;}
+    const p=buyerProfiles[Math.floor(Math.random()*buyerProfiles.length)],prices=buyerOffer(car,l,p);
+    const wantsTrade=Math.random()<.36&&typeof makeExchangeCar==='function',tradeCar=wantsTrade?makeExchangeCar(car):null,tradeValue=tradeCar?round1000(Number(tradeCar.market||tradeCar.price||0)*(.94+Math.random()*.08)):0;
+    const tradeText=tradeCar?('Предлагаю обмен на '+tradeCar.name+'. '+tradeSaleCashText(prices.offer,tradeValue)+'. Рассмотрим?'):buyerMessage(p,prices.offer);
+    const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:tradeCar?'🔄':p.icon,kind:tradeCar?'Обмен + доплата':p.kind,text:tradeText,offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(total),trade:!!tradeCar,tradeCar:tradeCar,tradeValue:tradeValue};
+    state.buyerInbox.unshift(msg);
+    state.notifications=Number(state.notifications||0)+1;
+    scheduleNext(l,car,total);
+    saveLife();
+    if(showHomeNotification&&document.querySelector('.home')){
+      const wall=document.querySelector('.home-wall');
+      if(wall){
+        const n=document.createElement('div');n.className='notification';n.onclick=function(){messages();};
+        n.innerHTML='<b>💬 '+p.name+' · '+car.name+'</b><span>'+msg.text+'</span>';
+        const apps=wall.querySelector('.apps');if(apps)wall.insertBefore(n,apps);
+      }
+    }
+    return true;
+  }
+  function checkBuyerEvents(){
+    const l=state.activeListing;if(!l||l.status!=='active')return;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return;}
+    const now=gt();
+    if(now<Number(l.nextBuyerAt||0))return;
+    enqueueBuyerAt(now,true);
+  }
+  window.processBuyerSleep=function(startTotal,endTotal,maxMessages){
+    const l=state.activeListing;if(!l||l.status!=='active')return 0;
+    const car=listingCar();if(!car){state.activeListing=null;saveLife();return 0;}
+    const limit=Math.max(0,Math.min(2,Number(maxMessages)||2));
+    let count=0,next=Number(l.nextBuyerAt||0),guard=0;
+    if(!next)next=Number(startTotal)+nextDelay(car,l.ask,true);
+    while(count<limit&&next<=Number(endTotal)&&guard<6){
+      if(enqueueBuyerAt(next,false))count++;
+      next=Number(state.activeListing&&state.activeListing.nextBuyerAt||0);
+      guard++;
+      if(!next)break;
+    }
+    if(state.activeListing&&Number(state.activeListing.nextBuyerAt||0)<=Number(endTotal)){
+      state.activeListing.nextBuyerAt=Number(endTotal)+nextDelay(car,state.activeListing.ask,false);
+      saveLife();
+    }
+    return count;
+  };
+  setInterval(checkBuyerEvents,1000);
+
+  function buyerThreads(){
+    const l=state.activeListing;
+    return (state.buyerInbox||[]).filter(x=>!l||x.listingId===l.id||x.status==='sold');
+  }
+  window.messages=function(){
+    const items=buyerThreads(),unread=items.filter(x=>!x.read&&x.status!=='declined').length;
+    let html='<div class="app">'+head('Сообщения');
+    if(items.length){
+      html+=items.map(function(x){
+        const muted=x.status==='declined'?' · разговор завершён':x.status==='accepted'?' · договорились':x.status==='sold'?(x.trade?' · обмен завершён':' · продано'):'';
+        return '<div class="contact '+(x.trade?'trade-thread':'')+'" onclick="openBuyerChat(\''+x.id+'\')"><div class="mini">'+x.icon+'</div><div><b>'+x.name+' · '+x.kind+'</b><small>'+x.text+muted+'</small></div>'+(x.read?'':'<span class="unread">1</span>')+'</div>';
+      }).join('');
+    }else{
+      html+='<div class="note"><b>Пока тишина</b><p class="muted">'+(state.activeListing?'Объявление опубликовано. Покупатели напишут сами, когда заинтересуются машиной.':'Сначала выставь автомобиль на продажу.')+'</p></div>';
+    }
+    html+='<div class="note" style="margin-top:10px"><b>💬 Диалоги с продавцами</b><p class="muted">Переговоры о покупке по-прежнему открываются из карточки автомобиля на рынке.</p></div>';
+    if(state.activeListing)html+='<button class="action" onclick="sellCar()">🏷️ Моё объявление</button>';
+    html+='</div>';
+    render(html);
+  };
+
+  window.openBuyerChat=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!x)return messages();
+    if(!x.read){x.read=true;state.notifications=Math.max(0,Number(state.notifications||0)-1);saveLife();}
+    const c=listingCar(),sold=x.status==='sold';
+    let controls='',tradeBlock='';
+    if(x.trade&&x.tradeCar){
+      tradeBlock=tradeCarCardHtml(x.tradeCar,x.tradeValue,'МАШИНА ПОКУПАТЕЛЯ')+
+        '<div class="note trade-deal-summary"><small>ПРЕДЛОЖЕНИЕ ПО ОБМЕНУ</small><div class="hero-line"><span>Оценка твоей машины</span><strong>'+money(x.offer)+'</strong></div><div class="hero-line"><span>Машина покупателя</span><strong>'+money(x.tradeValue)+'</strong></div><div class="hero-line"><span>Доплата</span><strong>'+tradeSaleCashText(x.offer,x.tradeValue)+'</strong></div></div>';
+    }
+    if(sold)controls='<div class="note"><b>✅ '+(x.trade?'Обмен завершён':'Сделка завершена')+'</b></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
+    else if(!activeBuyer(x))controls='<div class="note"><b>Разговор завершён</b><p class="muted">Этот покупатель отказался от сделки.</p></div><button class="action" onclick="messages()">‹ К сообщениям</button>';
+    else if(x.status==='accepted')controls='<div class="note"><b>🤝 Договорились: '+money(x.offer)+'</b></div><button class="action green" onclick="'+(x.trade?'completeBuyerTrade(\''+x.id+'\','+x.offer+')':'completeBuyerSale(\''+x.id+'\','+x.offer+')')+'">'+(x.trade?'🔄 Оформить обмен':'🚗 Продать автомобиль')+'</button><button class="action" onclick="messages()">Пока не оформлять</button>';
+    else controls='<div class="note"><b>'+(x.trade?'Твоя оценка своей машины':'Твоя встречная цена')+'</b><input id="buyerCounterPrice" type="number" min="10000" step="1000" value="'+round1000(Math.min((state.activeListing&&state.activeListing.ask)||x.max,x.offer*1.05))+'" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px"></div><button class="action green" onclick="acceptBuyerOffer(\''+x.id+'\')">🤝 Принять '+money(x.offer)+'</button><button class="action" onclick="counterBuyer(\''+x.id+'\')">💬 Предложить свою цену</button><button class="action" onclick="declineBuyer(\''+x.id+'\')">Отказать</button>';
+    render('<div class="app">'+head(x.name)+'<div class="note"><small>'+x.kind+'</small><h3>'+x.icon+' '+x.name+(c?' · '+c.name:'')+'</h3><span class="muted">'+x.time+'</span></div><div class="bubble seller">'+x.name+': «'+x.text+'»</div>'+tradeBlock+(!x.trade?'<div class="bubble seller">Предложение: '+money(x.offer)+'</div>':'')+controls+'</div>');
+  };
+
+  window.acceptBuyerOffer=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!activeBuyer(x))return;
+    x.status='accepted';saveLife();openBuyerChat(id);
+  };
+  window.counterBuyer=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id),input=document.getElementById('buyerCounterPrice');
+    if(!activeBuyer(x))return;
+    const raw=Number(input&&input.value);if(!Number.isFinite(raw)||raw<10000)return alert('Введи корректную цену.');
+    const ask=round1000(raw);if(ask<10000)return alert('Введи корректную цену.');
+    x.round=Number(x.round||0)+1;
+    if(ask<=x.max){
+      x.offer=ask;x.status='accepted';x.text=x.trade?('Хорошо, считаем вашу машину за '+money(ask)+'. По обмену договорились.'):('Хорошо, '+money(ask)+' меня устраивает. Договорились.');
+      saveLife();openBuyerChat(id);return;
+    }
+    if(x.round>=x.patience){
+      x.status='declined';x.text='Нет, выше уже не готов. Тогда продолжу искать другую машину.';
+      saveLife();openBuyerChat(id);return;
+    }
+    const step=Math.max(1000,Math.round((x.max-x.offer)*.6/1000)*1000);
+    x.offer=Math.min(x.max,x.offer+step);
+    x.text=x.trade?('Могу поднять оценку вашей машины до '+money(x.offer)+'. Выше уже тяжело.'):('Могу немного подняться. '+money(x.offer)+' — мой вариант.');
+    saveLife();openBuyerChat(id);
+  };
+  window.declineBuyer=function(id){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id);if(!activeBuyer(x))return;
+    x.status='declined';x.text='Понял. Тогда продолжу искать другой вариант.';saveLife();openBuyerChat(id);
+  };
+
+  window.completeBuyerSale=function(id,price){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id),c=listingCar();
+    if(!activeBuyer(x)||!c||x.trade||x.status!=='accepted'||Number(price)!==Number(x.offer)||!Number.isFinite(Number(price))||Number(price)<10000)return messages();
+    const finalPrice=round1000(price),repairSpent=Number(c.repairSpent||0),profit=finalPrice-Number(c.buy||0)-repairSpent;
+    const beforeRep=Number(state.rep||0),invested=Math.max(1,Number(c.buy||0)+repairSpent),margin=profit/invested;
+    let delta=0,streakBonus=0;
+    if(profit<0){delta=-6;state.profitStreak=0;}
+    else{
+      state.profitStreak=Number(state.profitStreak||0)+1;
+      if(margin<.05)delta=4;else if(margin<.12)delta=7;else if(margin<.20)delta=10;else delta=14;
+      if(state.profitStreak>=3)streakBonus=Math.min(6,Math.floor(state.profitStreak/3)*2);
+      delta+=streakBonus;
+    }
+    state.money=Number(state.money||0)+finalPrice;
+    state.rep=Math.max(0,beforeRep+delta);
+    state.deals=Number(state.deals||0)+1;
+    if(!Array.isArray(state.repHistory))state.repHistory=[];
+    state.repHistory.unshift({delta:delta,reason:(profit<0?'Убыточная продажа ':'Прибыль '+money(profit)+' на ')+c.name+(streakBonus?' · серия +'+streakBonus:''),day:state.day});
+    state.repHistory=state.repHistory.slice(0,20);
+    if(!Array.isArray(state.businessHistory))state.businessHistory=[];
+    state.businessHistory.unshift({car:c.name,buy:Number(c.buy||0),repair:repairSpent,sale:finalPrice,profit:profit,rep:delta,day:state.day,city:c.city,year:c.year});
+    state.businessHistory=state.businessHistory.slice(0,30);
+    x.status='sold';x.offer=finalPrice;
+    (state.buyerInbox||[]).forEach(v=>{if(v.listingId===x.listingId&&v.id!==x.id&&v.status!=='sold')v.status='declined';});
+    c.listed=false;
+    if(Array.isArray(state.cars))state.cars=state.cars.filter(v=>carKey(v)!==carKey(c));
+    if(state.car===c)state.car=(state.cars&&state.cars[0])||null;
+    state.activeListing=null;
+    log('Продан '+c.name+' за '+money(finalPrice)+'. Прибыль '+money(profit)+'.');
+    saveLife();
+    render('<div class="app">'+head('Сделка завершена')+'<div class="note"><h3>🎉 '+c.name+' продан</h3><div class="hero-line"><span>Цена продажи</span><strong>'+money(finalPrice)+'</strong></div><div class="hero-line"><span>Покупка + ремонт</span><strong>'+money(Number(c.buy||0)+repairSpent)+'</strong></div><div class="hero-line"><span>Результат</span><strong class="profit">'+(profit>=0?'+':'')+money(profit)+'</strong></div><div class="hero-line"><span>Репутация</span><strong>'+(delta>=0?'+':'')+delta+'</strong></div></div><button class="action green" onclick="market()">🚗 Искать следующий автомобиль</button><button class="action" onclick="home()">📱 На главный экран</button></div>');
+  };
+
+  window.completeBuyerTrade=function(id,dealValue){
+    const x=(state.buyerInbox||[]).find(v=>v.id===id),c=listingCar();
+    if(!activeBuyer(x)||!c||!x.trade||!x.tradeCar||x.status!=='accepted'||Number(dealValue)!==Number(x.offer))return messages();
+    if(!Number.isFinite(Number(dealValue))||Number(dealValue)<10000||!Number.isFinite(Number(x.tradeValue))||Number(x.tradeValue)<10000)return alert('Условия обмена недействительны.');
+    const finalValue=round1000(dealValue),tradeValue=round1000(x.tradeValue),cash=finalValue-tradeValue;
+    if(cash<0&&Number(state.money||0)<Math.abs(cash))return alert('Для обмена нужно доплатить '+money(Math.abs(cash))+'. На руках недостаточно денег.');
+    const repairSpent=Number(c.repairSpent||0),profit=finalValue-Number(c.buy||0)-repairSpent;
+    const beforeRep=Number(state.rep||0),invested=Math.max(1,Number(c.buy||0)+repairSpent),margin=profit/invested;
+    let delta=0,streakBonus=0;
+    if(profit<0){delta=-6;state.profitStreak=0;}
+    else{
+      state.profitStreak=Number(state.profitStreak||0)+1;
+      if(margin<.05)delta=4;else if(margin<.12)delta=7;else if(margin<.20)delta=10;else delta=14;
+      if(state.profitStreak>=3)streakBonus=Math.min(6,Math.floor(state.profitStreak/3)*2);
+      delta+=streakBonus;
+    }
+    state.money=Number(state.money||0)+cash;
+    state.rep=Math.max(0,beforeRep+delta);
+    state.deals=Number(state.deals||0)+1;
+    if(!Array.isArray(state.repHistory))state.repHistory=[];
+    state.repHistory.unshift({delta:delta,reason:'Обмен '+c.name+' · оценка '+money(finalValue)+(profit>=0?' · прибыль '+money(profit):' · убыток '+money(Math.abs(profit))),day:state.day});
+    state.repHistory=state.repHistory.slice(0,20);
+    if(!Array.isArray(state.businessHistory))state.businessHistory=[];
+    state.businessHistory.unshift({car:c.name,buy:Number(c.buy||0),repair:repairSpent,sale:finalValue,profit:profit,rep:delta,day:state.day,city:c.city,year:c.year,exchange:true,received:x.tradeCar.name});
+    state.businessHistory=state.businessHistory.slice(0,30);
+
+    x.status='sold';x.offer=finalValue;x.tradeCompleted=true;
+    (state.buyerInbox||[]).forEach(v=>{if(v.listingId===x.listingId&&v.id!==x.id&&v.status!=='sold')v.status='declined';});
+    c.listed=false;
+    if(Array.isArray(state.cars))state.cars=state.cars.filter(v=>carKey(v)!==carKey(c));
+    const received=Object.assign({},x.tradeCar,{buy:tradeValue,repaired:false,repairSpent:0,listed:false,_garageId:'car-trade-'+Date.now()+'-'+Math.floor(Math.random()*999)});
+    if(!Array.isArray(state.cars))state.cars=[];
+    if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(received);
+    state.cars.push(received);state.car=received;state.activeListing=null;
+    log('Обмен: '+c.name+' оценён в '+money(finalValue)+'. Получен '+received.name+' за '+money(tradeValue)+'. '+tradeSaleCashText(finalValue,tradeValue)+'.');
+    saveLife();
+    render('<div class="app">'+head('Обмен завершён')+
+      tradeCarCardHtml(received,tradeValue,'ТЕПЕРЬ ТВОЯ')+
+      '<div class="note"><h3>🔄 Обмен оформлен</h3><div class="hero-line"><span>Твоя машина оценена</span><strong>'+money(finalValue)+'</strong></div><div class="hero-line"><span>Полученная машина</span><strong>'+money(tradeValue)+'</strong></div><div class="hero-line"><span>Доплата</span><strong>'+tradeSaleCashText(finalValue,tradeValue)+'</strong></div><div class="hero-line"><span>Результат старой сделки</span><strong class="'+(profit>=0?'profit':'market-bad')+'">'+(profit>=0?'+':'')+money(profit)+'</strong></div></div>'+
+      '<button class="action green" onclick="garage()">🚗 Открыть гараж</button><button class="action" onclick="messages()">Сообщения</button></div>');
+  };
+
+  // Disable old instant-sale flow from earlier V7 screens.
+  window.sell=function(){return window.sellCar();};
+  window.showBuyers=function(){return state.activeListing?window.messages():window.sellCar();};
+  window.startSale=function(){return state.activeListing?window.messages():window.sellCar();};
+  window.renderSale=function(){return state.activeListing?window.messages():window.sellCar();};
+
+  const priorHome=window.home;
+  if(typeof priorHome==='function'&&!priorHome.__buyerInbox){
+    window.home=function(){
+      priorHome.apply(this,arguments);
+      setTimeout(function(){
+        const unread=(state.buyerInbox||[]).filter(x=>!x.read&&x.status!=='declined').length;
+        if(unread){
+          const note=document.querySelector('.home .notification span');
+          if(note)note.textContent=unread+' новых сообщений от покупателей';
+        }
+      },130);
+    };
+    window.home.__buyerInbox=true;
+  }
+})();
+</script>
+
+<script>
+// V7.9 — новая механика технического состояния, диагностики и ремонта.
+(function(){
+  var CONDITION_VERSION=2;
+  var mediumFaults=[
+    'Шаровая опора','Ступичный подшипник','Тормозные диски и колодки',
+    'Стойка стабилизатора','Рулевой наконечник','Приводной ремень','Датчик ABS'
+  ];
+  var cheapFaults=[
+    'Перегорела лампочка фары','Сел аккумулятор','Отвалился колпак со штампа',
+    'Изношены дворники','Заедает ручка двери','Не работает кнопка стеклоподъёмника',
+    'Треснул корпус зеркала','Перегорел предохранитель','Не горит габарит',
+    'Не работает омыватель','Заедает замок багажника','Подклинивает стеклоподъёмник',
+    'Не работает звуковой сигнал','Не горит подсветка номера','Оторвался брызговик'
+  ];
+  var faultTiers=[
+    {weight:5,name:'Двигатель',loss:.35},
+    {weight:7,name:'Коробка передач',loss:.25},
+    {weight:10,name:'Рулевая рейка',loss:.20},
+    {weight:15,name:'Подвеска',loss:.15},
+    {weight:30,names:mediumFaults,loss:.05},
+    {weight:40,names:cheapFaults,loss:.02}
+  ];
+
+  function rubles(n){return Math.max(1,Math.floor(Number(n||0)));}
+  function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+  function faultRoll(){
+    if(Math.random()<.60)return null;
+    var total=faultTiers.reduce(function(sum,x){return sum+x.weight;},0),r=Math.random()*total;
+    for(var i=0;i<faultTiers.length;i++){
+      r-=faultTiers[i].weight;
+      if(r<=0){
+        var t=faultTiers[i];
+        return {name:t.names?pick(t.names):t.name,loss:t.loss};
+      }
+    }
+    return {name:'Мелкая неисправность',loss:.02};
+  }
+  function carKeyV2(c){return c?(c._garageId||('car-'+c.id+'-'+c.buy)):'';}
+
+  window.ensureFlipCondition=function(car){
+    if(!car)return null;
+    if(car.marketFlipCondition||car.prePurchaseDiagnostic)return applyMarketConditionToOwned(car);
+    if(Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&car.flipCondition)return car.flipCondition;
+    var healthyMarket=Math.max(10000,rubles(car.healthyMarket||car.market||car.sale||car.buy||50000));
+    var fault=faultRoll();
+    car.healthyMarket=healthyMarket;
+    car.diagnosticSpent=Number(car.diagnosticSpent||0);
+    car.hiddenDefects=[];
+    car.hiddenSaleChecks=0;
+    car.hiddenScanCount=0;
+    car.diagnostics=[];
+    car.diagnosed=false;
+    car.totalRepair=0;
+    if(!fault){
+      car.flipCondition={healthy:true,name:'Исправный автомобиль',loss:0,cost:0,discovered:false,repaired:true};
+      car.market=healthyMarket;
+      car.sale=healthyMarket;
+      car.repaired=true;
+    }else{
+      var cost=rubles(healthyMarket*fault.loss);
+      car.flipCondition={healthy:false,name:fault.name,loss:fault.loss,cost:cost,discovered:false,repaired:false};
+      car.market=rubles(healthyMarket*(1-fault.loss));
+      car.sale=car.market;
+      car.repaired=false;
+    }
+    car.flipConditionVersion=CONDITION_VERSION;
+    return car.flipCondition;
+  };
+
+  window.ensureMarketFlipCondition=function(car){
+    if(!car)return null;
+    if(Number(car.marketConditionVersion||0)>=CONDITION_VERSION&&car.marketFlipCondition)return car.marketFlipCondition;
+    var healthyMarket=Math.max(10000,rubles(car.market||car.sale||car.price||50000));
+    if(car.restorationProject){
+      var restorationCost=Math.max(1,rubles(car.repair||healthyMarket*.25)),restorationLoss=Math.min(.48,Math.max(.12,restorationCost/healthyMarket));
+      car.marketHealthyValue=healthyMarket;
+      car.marketFlipCondition={healthy:false,name:car.risk||car.damageSummary||'Кузов под восстановление',loss:restorationLoss,cost:restorationCost,healthyMarket:healthyMarket};
+      car.marketConditionVersion=CONDITION_VERSION;
+      if(typeof state!=='undefined'&&typeof makes!=='undefined')state.marketListings=makes;
+      return car.marketFlipCondition;
+    }
+    var fault=faultRoll();
+    car.marketHealthyValue=healthyMarket;
+    car.marketFlipCondition=fault
+      ?{healthy:false,name:fault.name,loss:fault.loss,cost:rubles(healthyMarket*fault.loss),healthyMarket:healthyMarket}
+      :{healthy:true,name:'Исправный автомобиль',loss:0,cost:0,healthyMarket:healthyMarket};
+    car.marketConditionVersion=CONDITION_VERSION;
+    if(typeof state!=='undefined'&&typeof makes!=='undefined')state.marketListings=makes;
+    return car.marketFlipCondition;
+  };
+
+  window.applyMarketConditionToOwned=function(car){
+    if(!car)return null;
+    var preview=car.marketFlipCondition||null,preDiag=car.prePurchaseDiagnostic||null;
+    // Recover diagnostic evidence from saves that lost the market preview.
+    if(!preview&&preDiag&&preDiag.found){
+      preview={healthy:false,name:preDiag.faultName,loss:Number(preDiag.loss||0),cost:Number(preDiag.faultCost||0),healthyMarket:car.marketHealthyValue||car.healthyMarket||car.market};
+      car.marketFlipCondition=preview;
+    }
+    var existing=car.flipCondition;
+    // An old healthy roll must never erase a diagnosed fault. Preserve real repairs.
+    var conflict=preview&&!preview.healthy&&existing&&existing.healthy;
+    if(Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&existing&&!conflict)return existing;
+    if(!preview){
+      car.flipConditionVersion=0;
+      ensureMarketFlipCondition(car);
+      return applyMarketConditionToOwned(car);
+    }
+    var healthyMarket=Math.max(10000,rubles(preview.healthyMarket||car.marketHealthyValue||car.market||car.sale||car.buy||50000));
+    car.healthyMarket=healthyMarket;
+    car.diagnosticSpent=Number(preDiag&&preDiag.totalSpent||car.diagnosticSpent||0);
+    car.hiddenDefects=[];car.hiddenSaleChecks=0;car.hiddenScanCount=0;car.diagnostics=[];car.totalRepair=0;
+    if(preview.healthy){
+      car.flipCondition={healthy:true,name:'Исправный автомобиль',loss:0,cost:0,discovered:true,repaired:true};
+      car.market=healthyMarket;car.sale=healthyMarket;car.repaired=true;
+    }else{
+      car.flipCondition={healthy:false,name:preview.name,loss:Number(preview.loss||0),cost:Number(preview.cost||0),discovered:true,repaired:false};
+      car.market=rubles(healthyMarket*(1-Number(preview.loss||0)));car.sale=car.market;car.repaired=false;
+    }
+    car.diagnosed=true;
+    car.lastDiagnostic=preDiag?{
+      mode:preDiag.mode,
+      cost:Number(preDiag.cost||0),
+      found:!!preDiag.found,
+      healthyConfirmed:!!preDiag.healthyConfirmed,
+      at:(typeof gameTotal==='function'?gameTotal():0),
+      beforePurchase:true
+    }:null;
+    car.flipConditionVersion=CONDITION_VERSION;
+    return car.flipCondition;
+  };
+
+  window.standardDiagnosticCost=function(car){
+    ensureFlipCondition(car);
+    return rubles(Number(car.market||0)*.10);
+  };
+  window.fullDiagnosticCost=function(car){
+    ensureFlipCondition(car);
+    // По конкретным примерам: 50 000 → 16 666, 250 000 → 83 333.
+    return rubles(Number(car.market||0)/3);
+  };
+
+  window.runGarageDiagnostic=function(mode){
+    var c=state.car;if(!c)return garage();
+    var issue=ensureFlipCondition(c),full=mode==='full',cost=full?fullDiagnosticCost(c):standardDiagnosticCost(c);
+    if(Number(state.money||0)<cost)return alert('Не хватает '+money(cost-Number(state.money||0))+' на диагностику.');
+    state.money=Number(state.money||0)-cost;
+    c.diagnosticSpent=Number(c.diagnosticSpent||0)+cost;
+    var found=!issue.healthy&&(full||Math.random()<.30);
+    if(found)issue.discovered=true;
+    c.diagnosed=true;
+    c.lastDiagnostic={
+      mode:full?'full':'standard',
+      cost:cost,
+      found:found,
+      healthyConfirmed:full&&issue.healthy,
+      at:(typeof gameTotal==='function'?gameTotal():0)
+    };
+    if(found){
+      objective.textContent='Поломка обнаружена';
+      objectiveSub.textContent=issue.name+' · ремонт '+money(issue.cost)+'.';
+      log((full?'Полная':'Стандартная')+' диагностика '+c.name+': обнаружено — '+issue.name+'. Ремонт '+money(issue.cost)+'.');
+    }else if(full&&issue.healthy){
+      objective.textContent='Автомобиль исправен';
+      objectiveSub.textContent='Полная диагностика не обнаружила поломок.';
+      log('Полная диагностика '+c.name+': автомобиль исправен.');
+    }else{
+      objective.textContent='Диагностика завершена';
+      objectiveSub.textContent=full?'Поломок не обнаружено.':'Поломок не обнаружено, но стандартная проверка находит скрытую неисправность только с шансом 30%.';
+      log((full?'Полная':'Стандартная')+' диагностика '+c.name+': поломок не обнаружено.');
+    }
+    if(typeof persist==='function')persist();else if(typeof save==='function')save();
+    garageDetails();
+  };
+
+  window.repairDetectedIssue=function(){
+    var c=state.car;if(!c)return garage();
+    var issue=(c.marketFlipCondition||c.prePurchaseDiagnostic)?applyMarketConditionToOwned(c):ensureFlipCondition(c);
+    if(c.prePurchaseDiagnostic&&c.prePurchaseDiagnostic.found&&issue&&!issue.healthy)issue.discovered=true;
+    if(c.lastDiagnostic&&c.lastDiagnostic.found&&issue&&!issue.healthy)issue.discovered=true;
+    if(issue.healthy)return alert('Автомобиль исправен — ремонт не требуется.');
+    if(!issue.discovered)return alert('Сначала нужно обнаружить поломку диагностикой.');
+    if(issue.repaired)return alert('Эта поломка уже устранена.');
+    if(Number(state.money||0)<Number(issue.cost||0))return alert('Не хватает '+money(Number(issue.cost||0)-Number(state.money||0))+' на ремонт.');
+    state.money=Number(state.money||0)-Number(issue.cost||0);
+    c.repairSpent=Number(c.repairSpent||0)+Number(issue.cost||0);
+    issue.repaired=true;
+    c.repaired=true;
+    c.market=Number(c.healthyMarket||c.market||0);
+    c.sale=c.market;
+    objective.textContent='Автомобиль восстановлен';
+    objectiveSub.textContent=issue.name+' устранена. Рыночная стоимость восстановлена.';
+    log('Ремонт '+c.name+': '+issue.name+' — '+money(issue.cost)+'. Рыночная стоимость восстановлена до '+money(c.market)+'.');
+    if(typeof persist==='function')persist();else if(typeof save==='function')save();
+    garageDetails();
+  };
+
+  window.saleValue=function(c){
+    if(!c)return 0;
+    ensureFlipCondition(c);
+    return Math.max(10000,Math.round(Number(c.market||c.buy||0)/1000)*1000);
+  };
+
+  function ownedConditionHtml(c,issue){
+    if(issue.repaired&&!issue.healthy){
+      return '<div class="condition-card repaired"><small>ТЕХНИЧЕСКОЕ СОСТОЯНИЕ</small><h3>✅ Поломка устранена</h3><p>'+issue.name+' отремонтирована. Рыночная стоимость автомобиля восстановлена.</p><div class="hero-line"><span>Рыночная цена</span><strong>'+money(c.market)+'</strong></div></div>';
+    }
+    if(issue.healthy){
+      return '<div class="condition-card healthy"><small>ТЕХНИЧЕСКОЕ СОСТОЯНИЕ</small><h3>✅ Автомобиль исправен</h3><p>После покупки технических поломок не обнаружено. Ремонт не требуется.</p></div>';
+    }
+    return '<div class="condition-card broken"><small>ОБНАРУЖЕНА ПОЛОМКА</small><h3>⚠️ '+issue.name+'</h3><p>После покупки обнаружена неисправность. Из-за неё рыночная стоимость автомобиля ниже на '+Math.round(issue.loss*100)+'%.</p><div class="hero-line"><span>Цена ремонта</span><strong>'+money(issue.cost)+'</strong></div><div class="hero-line"><span>Текущий рынок</span><strong>'+money(c.market)+'</strong></div><div class="hero-line"><span>После ремонта</span><strong>'+money(c.healthyMarket)+'</strong></div><button class="action green" onclick="repairDetectedIssue()">🔧 '+issue.name+' · '+money(issue.cost)+'</button></div>';
+  }
+
+  window.garageCarDetails=function(index){
+    var cars=Array.isArray(state.cars)?state.cars:[],c=cars[index];
+    if(!c)return garage();
+    state.car=c;
+    var issue=(c.marketFlipCondition||c.prePurchaseDiagnostic)?applyMarketConditionToOwned(c):ensureFlipCondition(c);
+    if(issue&&!issue.healthy)issue.discovered=true;
+    c.diagnosed=true;
+    var key=carKeyV2(c),listed=state.activeListing&&state.activeListing.status==='active'&&state.activeListing.carKey===key;
+    var preDiagSpent=Number(c.diagnosticSpent||0);
+    render('<div class="app">'+head(c.name)+
+      '<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\'),url(\''+fallbackPhoto(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span><span class="car-year-badge">'+c.year+'</span></div>'+
+      '<div class="note"><div class="hero-line"><span>Пробег</span><strong>'+Number(c.km||0).toLocaleString('ru-RU')+' км</strong></div><div class="hero-line"><span>Цена покупки</span><strong>'+money(c.buy)+'</strong></div><div class="hero-line"><span>Рыночная цена сейчас</span><strong>'+money(c.market)+'</strong></div>'+(preDiagSpent?'<div class="hero-line"><span>Диагностика до покупки</span><strong>'+money(preDiagSpent)+'</strong></div>':'')+'<div class="hero-line"><span>Потрачено на ремонт</span><strong>'+money(c.repairSpent||0)+'</strong></div></div>'+
+      (listed?'<div class="note"><b>🟢 Объявление активно</b><p class="muted">Цена: '+money(state.activeListing.ask)+'. Покупатели могут написать в «Сообщения».</p></div>':'')+
+      ownedConditionHtml(c,issue)+
+      '<button class="action green" onclick="sellCar()">'+(listed?'💬 Моё объявление':'🏷️ Выставить на продажу')+'</button>'+
+      '<button class="action" onclick="garage()">‹ Назад к моим машинам</button></div>');
+    if(typeof persist==='function')persist();
+  };
+
+  window.garageDetails=function(){
+    var cars=Array.isArray(state.cars)?state.cars:[],idx=cars.indexOf(state.car);
+    if(idx<0&&state.car){idx=cars.findIndex(function(c){return carKeyV2(c)===carKeyV2(state.car);});}
+    return idx>=0?garageCarDetails(idx):garage();
+  };
+
+  window.garage=function(){
+    var cars=Array.isArray(state.cars)?state.cars:[];
+    cars.forEach(function(c){return (c.marketFlipCondition||c.prePurchaseDiagnostic)?applyMarketConditionToOwned(c):ensureFlipCondition(c);});
+    if(!cars.length){
+      render('<div class="app">'+head('Мои машины')+'<div class="note"><b>Гараж пуст</b><p class="muted">Купи автомобиль в объявлениях — он появится здесь.</p></div><button class="action green" onclick="market()">🚗 Смотреть объявления</button></div>');
+      return;
+    }
+    var cards=cars.map(function(c,i){
+      var issue=(c.marketFlipCondition||c.prePurchaseDiagnostic)?applyMarketConditionToOwned(c):ensureFlipCondition(c);
+      if(issue&&!issue.healthy)issue.discovered=true;
+      c.diagnosed=true;
+      var status=issue&&issue.healthy?'🟢 Исправна':(issue&&issue.repaired?'🟢 Поломка устранена':'🔴 '+(issue?issue.name:'Неисправность'));
+      return '<div class="note garage-v2-card" onclick="garageCarDetails('+i+')"><div class="row"><span><b>🚗 '+c.name+'</b><small>'+c.year+' · '+Number(c.km||0).toLocaleString('ru-RU')+' км</small></span><b>'+money(c.market)+'</b></div><div class="muted">'+status+'</div><div class="row"><span>Куплена за</span><b>'+money(c.buy)+'</b></div></div>';
+    }).join('');
+    render('<div class="app">'+head('Мои машины')+'<div class="statsbox"><div class="stat"><b>'+cars.length+'/'+(typeof window.garageCapacity==='function'?window.garageCapacity():2)+'</b><small>машин</small></div><div class="stat"><b>'+money(state.money)+'</b><small>деньги</small></div><div class="stat"><b>'+money(cars.reduce(function(a,c){return a+Number(c.market||0);},0))+'</b><small>рынок авто</small></div></div>'+cards+'<button class="action green" onclick="market()">🚗 Найти ещё автомобиль</button></div>');
+    if(typeof persist==='function')persist();
+  };
+
+  // СТО удалена из новой механики.
+  window.service=function(){return garageDetails();};
+  window.diagnose=function(){return runGarageDiagnostic('standard');};
+  window.repair=function(){return repairDetectedIssue();};
+
+  // Normal purchase: roll exactly one outcome (healthy OR one fault) immediately after acquisition.
+  var previousBuy=window.buy;
+  if(typeof previousBuy==='function'&&!previousBuy.__conditionV2){
+    var buyV2=function(){
+      var before=state.car,result=previousBuy.apply(this,arguments),car=state.car;
+      if(car&&car!==before){
+        if(!Array.isArray(state.cars))state.cars=[];
+        if(!car._garageId)car._garageId='car-buy-'+Date.now()+'-'+Math.floor(Math.random()*999);
+        if(!state.cars.some(function(x){return x===car||x._garageId===car._garageId;}))state.cars.push(car);
+        state.car=car;
+        if(car.listingId&&typeof removePurchasedListing==='function')removePurchasedListing(car.listingId,car);
+        applyMarketConditionToOwned(car);
+        if(car.flipCondition&&!car.flipCondition.healthy)car.flipCondition.discovered=true;
+        car.diagnosed=true;
+        objective.textContent=car.flipCondition&&car.flipCondition.healthy?'Автомобиль исправен':'Обнаружена поломка';
+        objectiveSub.textContent=car.flipCondition&&car.flipCondition.healthy?'Ремонт не требуется.':(car.flipCondition.name+' · ремонт '+money(car.flipCondition.cost)+'.');
+        if(typeof persist==='function')persist();else if(typeof save==='function')save();
+        var ownedIndex=state.cars.indexOf(car);
+        if(ownedIndex<0)ownedIndex=state.cars.findIndex(function(x){return x&&x._garageId===car._garageId;});
+        if(ownedIndex>=0)return garageCarDetails(ownedIndex);
+        return garage();
+      }
+      return result;
+    };
+    buyV2.__conditionV2=true;window.buy=buyV2;
+  }
+
+  // Cars received through either exchange path use the same condition roll.
+  function wrapReceivedCar(fnName){
+    var original=window[fnName];
+    if(typeof original!=='function'||original.__conditionV2)return;
+    var wrapped=function(){
+      var before=state.car,result=original.apply(this,arguments),car=state.car;
+      if(car&&car!==before){
+        applyMarketConditionToOwned(car);
+        if(car.flipCondition&&!car.flipCondition.healthy)car.flipCondition.discovered=true;
+        car.diagnosed=true;
+        if(typeof persist==='function')persist();else if(typeof save==='function')save();
+      }
+      return result;
+    };
+    wrapped.__conditionV2=true;window[fnName]=wrapped;
+  }
+  wrapReceivedCar('completeSellerTrade');
+  wrapReceivedCar('completeBuyerTrade');
+
+  // Migrate currently owned cars to the new one-fault-or-healthy model.
+  if(Array.isArray(state.cars)){
+    state.cars.forEach(function(car){
+      var issue=car&&(car.marketFlipCondition||car.prePurchaseDiagnostic)?applyMarketConditionToOwned(car):ensureFlipCondition(car);
+      if(issue&&!issue.healthy)issue.discovered=true;
+      if(car)car.diagnosed=true;
+    });
+    if(state.car){
+      var current=state.cars.find(function(c){return carKeyV2(c)===carKeyV2(state.car);});
+      if(current)state.car=current;
+    }
+    if(typeof persist==='function')persist();else if(typeof save==='function')save();
+  }
+})();
+</script>
+
+<script>
+// V7.9 — Games: polished arcade UI + animated mini-games.
+(function(){
+  var gamesBusy=false;
+
+  function ensureGames(){
+    if(!state.games||typeof state.games!=='object')state.games={};
+    if(!state.games.stats)state.games.stats={played:0,wins:0,losses:0,wagered:0,net:0};
+    if(!Array.isArray(state.games.history))state.games.history=[];
+    return state.games;
+  }
+  function gsave(){
+    if(typeof persist==='function')persist();
+    else if(typeof save==='function')save();
+  }
+  function gamesHead(title){
+    return status()+'<div class="head games-head"><button onclick="gamesApp()">‹</button><b>'+title+'</b><span>✦</span></div>';
+  }
+  function gamesInput(id,value){
+    var v=Math.max(1000,Math.floor(Number(value||5000)/1000)*1000);
+    return '<div class="games-bet"><div class="games-bet-top"><span>Ставка</span><em>Баланс '+money(state.money)+'</em></div><div class="games-bet-field"><input id="'+id+'" type="number" min="1000" step="1000" value="'+v+'"><small>₽</small></div><div class="games-quick"><button onclick="gamesSetBet(\''+id+'\',1000)">1К</button><button onclick="gamesSetBet(\''+id+'\',5000)">5К</button><button onclick="gamesSetBet(\''+id+'\',10000)">10К</button><button onclick="gamesHalfBet(\''+id+'\')">½</button></div></div>';
+  }
+  window.gamesSetBet=function(id,value){
+    var el=document.getElementById(id);if(el)el.value=Math.min(Number(state.money||0),Math.max(1000,Number(value||1000)));
+  };
+  window.gamesHalfBet=function(id){
+    var el=document.getElementById(id);if(el)el.value=Math.max(1000,Math.floor(Number(state.money||0)/2/1000)*1000);
+  };
+  function readBet(id){
+    if(gamesBusy)return 0;
+    var el=document.getElementById(id),bet=Math.floor(Number(el&&el.value||0));
+    if(!Number.isFinite(bet)||bet<1000){alert('Минимальная ставка — 1 000 ₽.');return 0;}
+    if(bet>Number(state.money||0)){alert('Не хватает '+money(bet-Number(state.money||0))+'.');return 0;}
+    return bet;
+  }
+  function gameRecord(name,bet,payout,text){
+    var g=ensureGames(),net=Math.round(Number(payout||0)-Number(bet||0));
+    g.stats.played++;g.stats.wagered+=Number(bet||0);g.stats.net+=net;
+    if(net>0)g.stats.wins++;else if(net<0)g.stats.losses++;
+    g.history.unshift({name:name,bet:bet,payout:payout,net:net,text:text||''});
+    g.history=g.history.slice(0,8);
+    gsave();
+    return net;
+  }
+  function resultHtml(title,icon,text,net){
+    return '<div class="games-result '+(net>0?'win':net<0?'lose':'push')+'"><div class="games-result-icon">'+icon+'</div><small>'+title+'</small><h3>'+(net>0?'+':'')+money(net)+'</h3><p>'+text+'</p></div>';
+  }
+  function gameCard(icon,title,desc,tag,fn,accent){
+    return '<button class="game-tile '+(accent||'')+'" onclick="'+fn+'"><div class="game-tile-icon">'+icon+'</div><div class="game-tile-copy"><small>'+tag+'</small><b>'+title+'</b><span>'+desc+'</span></div><em>›</em></button>';
+  }
+  function stage(title,body,caption){
+    render('<div class="app games-app">'+gamesHead(title)+'<div class="games-live-stage">'+body+'<div class="games-live-caption">'+caption+'</div><div class="games-live-dots"><i></i><i></i><i></i></div></div></div>');
+  }
+  function beginBet(bet){
+    gamesBusy=true;
+    state.money=Number(state.money||0)-bet;
+    gsave();
+  }
+  function finishBusy(){gamesBusy=false;}
+
+  window.gamesApp=function(){
+    gamesBusy=false;
+    var g=ensureGames(),s=g.stats,h=g.history,rate=s.played?Math.round(s.wins/s.played*100):0;
+    render('<div class="app games-app games-lobby">'+head('Games')+
+      '<section class="games-hero"><div class="games-hero-orb">🎮</div><div class="games-hero-copy"><small>AUTOFLIP ARCADE</small><h3>Игровая пауза</h3><p>Быстрые мини-игры между сделками.</p></div><div class="games-wallet"><span>Баланс</span><b>'+money(state.money)+'</b></div></section>'+
+      '<div class="games-stats"><div><small>ИГР</small><b>'+s.played+'</b></div><div><small>ПОБЕД</small><b>'+rate+'%</b></div><div><small>ИТОГ</small><b class="'+(s.net>=0?'profit':'market-bad')+'">'+(s.net>=0?'+':'')+money(s.net)+'</b></div></div>'+
+      '<div class="games-section-title"><span>Мини-игры</span><small>4 режима</small></div>'+
+      '<div class="games-list">'+
+        gameCard('🪙','Coinflip','Орёл или решка · выигрыш ×2','50 / 50','coinflipGame()','gold')+
+        gameCard('💣','Мины','Открывай клетки и забирай вовремя','РИСК','minesGame()','red')+
+        gameCard('🎲','Кости','Угадай сторону от отметки 50','1–100','diceGame()','blue')+
+        gameCard('🎰','Слоты','Поймай пару или джекпот','УДАЧА','slotsGame()','pink')+
+      '</div>'+
+      (h.length?'<div class="games-history"><div class="games-section-title"><span>Последние игры</span><small>'+h.length+'</small></div>'+h.slice(0,4).map(function(x){return '<div class="games-history-row"><span>'+x.name+'</span><b class="'+(x.net>=0?'profit':'market-bad')+'">'+(x.net>=0?'+':'')+money(x.net)+'</b></div>';}).join('')+'</div>':'')+
+      '<p class="games-footnote">Внутриигровые деньги AutoFlip · без реальных ставок</p></div>');
+  };
+
+  // Coinflip
+  window.coinflipGame=function(result){
+    gamesBusy=false;ensureGames();
+    render('<div class="app games-app">'+gamesHead('Coinflip')+
+      '<div class="game-focus coin-focus"><div class="coin-static">₽</div><small>COINFLIP</small><h3>Выбери сторону</h3><p>Верный прогноз возвращает ставку ×2.</p></div>'+
+      (result||'')+gamesInput('coinBet',5000)+
+      '<div class="games-two"><button class="action games-choice" onclick="playCoinflip(\'Орёл\')"><span>🦅</span> Орёл</button><button class="action green games-choice" onclick="playCoinflip(\'Решка\')"><span>🪙</span> Решка</button></div></div>');
+  };
+  window.playCoinflip=function(choice){
+    var bet=readBet('coinBet');if(!bet)return;
+    beginBet(bet);
+    var landed=Math.random()<.5?'Орёл':'Решка';
+    stage('Coinflip','<div class="coin-anim"><div class="coin-face">₽</div></div>','Монета в воздухе…');
+    setTimeout(function(){
+      var win=landed===choice,payout=win?bet*2:0;
+      state.money+=payout;
+      var net=gameRecord('Coinflip',bet,payout,'');
+      finishBusy();
+      coinflipGame(resultHtml('ВЫПАЛ '+landed.toUpperCase(),landed==='Орёл'?'🦅':'🪙',win?'Твой выбор сыграл.':'Монета выбрала другую сторону.',net));
+    },1050);
+  };
+
+  // Dice
+  window.diceGame=function(result){
+    gamesBusy=false;ensureGames();
+    render('<div class="app games-app">'+gamesHead('Кости')+
+      '<div class="game-focus dice-focus"><div class="dice-static">🎲</div><small>1 — 100</small><h3>Где остановится число?</h3><p>Меньше или больше 50 · выигрыш ×1,95.</p></div>'+
+      (result||'')+gamesInput('diceBet',5000)+
+      '<div class="games-two"><button class="action games-choice" onclick="playDice(\'under\')">↓ Меньше 50</button><button class="action green games-choice" onclick="playDice(\'over\')">↑ Больше 50</button></div></div>');
+  };
+  window.playDice=function(choice){
+    var bet=readBet('diceBet');if(!bet)return;
+    beginBet(bet);
+    var roll=1+Math.floor(Math.random()*100);
+    stage('Кости','<div class="dice-anim"><span id="diceLive">?</span></div>','Бросаем кости…');
+    var ticks=0,timer=setInterval(function(){
+      var el=document.getElementById('diceLive');if(el)el.textContent=1+Math.floor(Math.random()*100);
+      if(++ticks>=8)clearInterval(timer);
+    },95);
+    setTimeout(function(){
+      clearInterval(timer);
+      var win=(choice==='under'&&roll<50)||(choice==='over'&&roll>50),payout=win?Math.floor(bet*1.95):0;
+      state.money+=payout;
+      var net=gameRecord('Кости',bet,payout,'');
+      finishBusy();
+      diceGame(resultHtml('ВЫПАЛО '+roll,'🎲',win?'Прогноз оказался верным.':roll===50?'Ровно 50 — ставка проиграла.':'Число ушло в другую сторону.',net));
+    },1000);
+  };
+
+  // Slots
+  window.slotsGame=function(result){
+    gamesBusy=false;ensureGames();
+    render('<div class="app games-app">'+gamesHead('Слоты')+
+      '<div class="game-focus slot-focus"><div class="slot-machine"><div>🍒</div><div>7️⃣</div><div>💎</div></div><small>ТРИ БАРАБАНА</small><h3>Собери комбинацию</h3><p>Пара ×1,5 · три одинаковых ×5.</p></div>'+
+      (result||'')+gamesInput('slotBet',5000)+
+      '<button class="action green games-main-action" onclick="playSlots()">🎰 Крутить барабаны</button></div>');
+  };
+  window.playSlots=function(){
+    var bet=readBet('slotBet');if(!bet)return;
+    var icons=['🍒','🍋','💎','7️⃣','🔔'],a=pickSlot(icons),b=pickSlot(icons),c=pickSlot(icons);
+    function pickSlot(arr){return arr[Math.floor(Math.random()*arr.length)];}
+    beginBet(bet);
+    stage('Слоты','<div class="slot-live"><div id="reelA">🍒</div><div id="reelB">7️⃣</div><div id="reelC">💎</div></div>','Барабаны крутятся…');
+    var ticks=0,timer=setInterval(function(){
+      ['reelA','reelB','reelC'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=pickSlot(icons);});
+      if(++ticks>=10)clearInterval(timer);
+    },85);
+    setTimeout(function(){
+      clearInterval(timer);
+      var triple=a===b&&b===c,pair=!triple&&(a===b||a===c||b===c),payout=triple?bet*5:(pair?Math.floor(bet*1.5):0);
+      state.money+=payout;
+      var net=gameRecord('Слоты',bet,payout,'');
+      finishBusy();
+      slotsGame(resultHtml(triple?'ДЖЕКПОТ':pair?'ЕСТЬ ПАРА':'БЕЗ КОМБИНАЦИИ',a+' '+b+' '+c,triple?'Три одинаковых символа.':pair?'Два символа совпали.':'Барабаны не собрали комбинацию.',net));
+    },1150);
+  };
+
+  // Mines
+  function minesMultipliers(){return [1,1.20,1.60,2.25,3.40,5.70,11.40,34.00];}
+  function minesNewState(bet){
+    var cells=[0,1,2,3,4,5,6,7,8],mines=[];
+    while(mines.length<2){var p=Math.floor(Math.random()*cells.length),v=cells.splice(p,1)[0];mines.push(v);}
+    return {active:true,bet:bet,mines:mines,revealed:[],ended:false,won:false,lastReveal:-1,lastMine:-1};
+  }
+  window.minesGame=function(message){
+    gamesBusy=false;
+    var g=ensureGames(),m=g.mines||null,mults=minesMultipliers(),safe=m&&Array.isArray(m.revealed)?m.revealed.length:0,mult=mults[Math.min(safe,mults.length-1)];
+    var grid='';
+    for(var i=0;i<9;i++){
+      var opened=m&&m.revealed&&m.revealed.indexOf(i)>=0,showMine=m&&m.ended&&m.mines.indexOf(i)>=0;
+      var cls=opened?' safe':showMine?' mine':'';
+      if(m&&m.lastReveal===i)cls+=' reveal-pop';
+      if(m&&m.lastMine===i)cls+=' explode';
+      grid+='<button class="mine-cell'+cls+'" '+(m&&m.active&&!opened?'onclick="gamesMinesReveal('+i+')"':'disabled')+'>'+(showMine?'💣':opened?'💎':'<span>?</span>')+'</button>';
+    }
+    render('<div class="app games-app">'+gamesHead('Мины')+
+      '<div class="game-focus mines-focus"><div class="mines-logo">💣</div><small>2 МИНЫ · 7 БЕЗОПАСНЫХ</small><h3>Открывай клетки</h3><p>Каждая безопасная клетка повышает множитель.</p></div>'+
+      (message||'')+
+      (m?'<div class="mines-board">'+grid+'</div><div class="mines-info"><span>СТАВКА<b>'+money(m.bet)+'</b></span><span>ОТКРЫТО<b>'+safe+'/7</b></span><span>МНОЖИТЕЛЬ<b>×'+mult.toFixed(2)+'</b></span></div>':'')+
+      ((!m||m.ended)?gamesInput('minesBet',5000)+'<button class="action green games-main-action" onclick="gamesMinesStart()">💣 Начать раунд</button>':'<button class="action green games-main-action" '+(safe<1?'disabled':'')+' onclick="gamesMinesCashout()">💰 Забрать '+money(Math.floor(m.bet*mult))+'</button>')+
+      '</div>');
+  };
+  window.gamesMinesStart=function(){
+    var bet=readBet('minesBet');if(!bet)return;
+    var g=ensureGames();state.money-=bet;g.mines=minesNewState(bet);gsave();minesGame();
+  };
+  window.gamesMinesReveal=function(index){
+    if(gamesBusy)return;
+    var g=ensureGames(),m=g.mines;if(!m||!m.active||m.revealed.indexOf(index)>=0)return;
+    gamesBusy=true;
+    if(m.mines.indexOf(index)>=0){
+      m.active=false;m.ended=true;m.won=false;m.lastMine=index;
+      var net=gameRecord('Мины',m.bet,0,'');
+      setTimeout(function(){finishBusy();minesGame(resultHtml('МИНА','💥','Раунд завершён — две мины показаны на поле.',net));},180);
+      return;
+    }
+    m.revealed.push(index);m.lastReveal=index;gsave();
+    if(m.revealed.length>=7){finishBusy();return gamesMinesCashout(true);}
+    minesGame();
+    setTimeout(function(){var gg=ensureGames();if(gg.mines)gg.mines.lastReveal=-1;gamesBusy=false;gsave();},420);
+  };
+  window.gamesMinesCashout=function(auto){
+    var g=ensureGames(),m=g.mines;if(!m||!m.active||!m.revealed.length)return;
+    var mult=minesMultipliers()[Math.min(m.revealed.length,7)],payout=Math.floor(m.bet*mult);
+    state.money+=payout;m.active=false;m.ended=true;m.won=true;
+    var net=gameRecord('Мины',m.bet,payout,'');
+    finishBusy();
+    minesGame(resultHtml(auto?'ПОЛЕ ПРОЙДЕНО':'ВЫИГРЫШ ЗАФИКСИРОВАН','💎',auto?'Все безопасные клетки открыты.':'Ты вовремя остановился на ×'+mult.toFixed(2)+'.',net));
+  };
+
+  ensureGames();
+})();
+</script>
+
+<script>
+// V7.9 — AutoBank V2.2: clear mobile dashboard, visible rating and complete credit navigation.
+(function(){
+  var BANK_DAY=1440,BANK_WEEK=BANK_DAY*7,BANK_COOLDOWN=48*60,BANK_RATE=.10,BANK_OVERDUE_RATE=.01;
+  var BANK_OFFERS=[
+    {amount:25000,rating:0,paid:0,label:'Старт'},
+    {amount:50000,rating:58,paid:1,label:'Базовый'},
+    {amount:100000,rating:67,paid:2,label:'Уверенный'},
+    {amount:250000,rating:80,paid:4,label:'Бизнес'},
+    {amount:500000,rating:92,paid:6,label:'Премиум'}
+  ];
+
+  function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+  function nowGame(){return typeof gameTotal==='function'?gameTotal():Math.max(0,(Number(state.day||1)-1)*BANK_DAY);}
+  function saveBank(){if(typeof persist==='function')persist();else localStorage.setItem(KEY,JSON.stringify(state));}
+  function notifyBank(icon,text,key){if(typeof pushPhoneNotification==='function')pushPhoneNotification('Банк',icon,text,'bank',key);}
+  function bm(n){return money(Math.max(0,Math.round(Number(n)||0)));}
+  function moment(total){
+    total=Math.max(0,Math.floor(Number(total)||0));
+    var d=Math.floor(total/BANK_DAY)+1,m=total%BANK_DAY,h=Math.floor(m/60),mm=m%60;
+    return 'День '+d+' · '+String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  function ratingName(r){
+    if(r>=92)return 'Премиальный';
+    if(r>=80)return 'Надёжный';
+    if(r>=67)return 'Хороший';
+    if(r>=58)return 'Проверенный';
+    if(r>=40)return 'Начальный';
+    return 'Низкий';
+  }
+  function bankHead(title,back){
+    return status()+'<div class="head bank-head"><button onclick="'+(back||'autoBankHome()')+'">‹</button><b>'+title+'</b><span>•••</span></div>';
+  }
+  function ensureBank(){
+    if(!state.bankCustomer||typeof state.bankCustomer!=='object'){
+      state.bankCustomer={rating:50,onTimePayments:0,latePayments:0,streak:0,totalIssued:0,history:[]};
+    }
+    var c=state.bankCustomer,r=Number(c.rating);
+    c.rating=clamp(Number.isFinite(r)?Math.round(r):50,0,100);
+    c.onTimePayments=Math.max(0,Math.floor(Number(c.onTimePayments)||0));
+    c.latePayments=Math.max(0,Math.floor(Number(c.latePayments)||0));
+    c.streak=Math.max(0,Math.floor(Number(c.streak)||0));
+    c.totalIssued=Math.max(0,Math.floor(Number(c.totalIssued)||0));
+    if(!Array.isArray(c.history))c.history=[];
+    // Migrate existing saves from their most recent completed repayment.
+    if(c.nextLoanAt===undefined){
+      var paid=c.history.find(function(x){return x.type==='paid'||x.type==='late-paid';});
+      c.nextLoanAt=paid&&Number.isFinite(Number(paid.at))?Number(paid.at)+BANK_COOLDOWN:0;
+    }
+    c.nextLoanAt=Math.max(0,Number(c.nextLoanAt)||0);
+    if(!state.bankCardLast4)state.bankCardLast4=String(1000+Math.floor(Math.random()*9000));
+
+    if(Number(state.loan||0)>0){
+      if(!state.bankCredit||!state.bankCredit.active){
+        var n=nowGame(),debt=Math.round(Number(state.loan||0));
+        state.bankCredit={
+          active:true,principal:Math.max(1000,Math.round(debt/1.10)),baseDebt:debt,
+          startedAt:n,dueAt:n+BANK_WEEK,penaltyDaysApplied:0,overdue:false,
+          ratingPenaltyApplied:false,lateCounted:false,migrated:true
+        };
+      }
+      state.bankCredit.active=true;
+      state.bankDueAt=Number(state.bankCredit.dueAt||nowGame()+BANK_WEEK);
+    }else{
+      state.loan=0;state.bankCredit=null;state.bankDueAt=0;
+    }
+    return c;
+  }
+  function cooldownLeft(){return Math.max(0,ensureBank().nextLoanAt-nowGame());}
+  function cooldownText(){
+    var minutes=Math.ceil(cooldownLeft()),h=Math.floor(minutes/60),m=minutes%60;
+    return h+' ч. '+String(m).padStart(2,'0')+' мин.';
+  }
+  function cooldownNotice(view){
+    if(!cooldownLeft())return '';
+    return '<div class="bank-warning-box" data-bank-cooldown="'+view+'">После погашения нужно подождать 48 игровых часов. Новый кредит через <b data-bank-countdown>'+cooldownText()+'</b> · '+moment(ensureBank().nextLoanAt)+'.</div>';
+  }
+  function unlocked(o,c){return Number(c.rating||0)>=o.rating&&Number(c.onTimePayments||0)>=o.paid;}
+  function offers(){
+    var c=ensureBank();
+    return BANK_OFFERS.map(function(o){
+      return {amount:o.amount,rating:o.rating,paid:o.paid,label:o.label,unlocked:unlocked(o,c),repay:Math.round(o.amount*(1+BANK_RATE))};
+    });
+  }
+  function topOffer(){
+    var list=offers().filter(function(o){return o.unlocked;});
+    return list[list.length-1]||offers()[0];
+  }
+  function nextOffer(){
+    var list=offers();
+    for(var i=0;i<list.length;i++)if(!list[i].unlocked)return list[i];
+    return null;
+  }
+  function history(type,title,text,delta){
+    var c=ensureBank();
+    c.history.unshift({type:type,title:title,text:text,delta:Number(delta||0),at:nowGame()});
+    c.history=c.history.slice(0,16);
+  }
+  function timeLeft(due){
+    var left=Number(due||0)-nowGame();
+    if(left<=0)return 'Просрочка '+Math.max(1,Math.floor(Math.abs(left)/BANK_DAY)+1)+' д.';
+    var d=Math.floor(left/BANK_DAY),h=Math.ceil((left%BANK_DAY)/60);
+    return d?(d+' д.'+(h?' '+h+' ч.':'')):Math.max(1,h)+' ч.';
+  }
+
+  function processCredit(redraw){
+    var c=ensureBank(),cr=state.bankCredit;
+    if(!cr||!cr.active||Number(state.loan||0)<=0)return false;
+    var n=nowGame(),due=Number(cr.dueAt||0);
+    if(n<=due)return false;
+
+    var days=Math.max(1,Math.floor((n-due)/BANK_DAY)+1),applied=Math.max(0,Math.floor(Number(cr.penaltyDaysApplied)||0));
+    if(days<=applied)return false;
+
+    var oldDebt=Number(state.loan||0),oldRating=Number(c.rating||0);
+    for(var i=applied+1;i<=days;i++){
+      state.loan=Math.round(Number(state.loan||0)*(1+BANK_OVERDUE_RATE));
+      if(i===1&&!cr.ratingPenaltyApplied){
+        c.rating=clamp(c.rating-10,0,100);
+        c.streak=0;cr.ratingPenaltyApplied=true;
+        if(!cr.lateCounted){c.latePayments++;cr.lateCounted=true;}
+      }else{
+        c.rating=clamp(c.rating-2,0,100);
+      }
+    }
+    cr.penaltyDaysApplied=days;cr.overdue=true;
+    var added=Number(state.loan||0)-oldDebt,drop=oldRating-Number(c.rating||0);
+    history('overdue','Просрочка · '+days+' д.','Долг +'+bm(added)+' · рейтинг −'+drop,-drop);
+    notifyBank('⚠️','Просрочка '+days+' д. Долг: '+bm(state.loan)+'. Рейтинг: '+c.rating+'/100.','bank22-overdue-'+cr.startedAt+'-'+days);
+    saveBank();
+    if(redraw&&document.querySelector('.bank-v22-app'))setTimeout(function(){autoBankHome();},25);
+    return true;
+  }
+
+  function ratingGoal(c){
+    var next=nextOffer(),r=Number(c.rating||0);
+    if(!next)return 'Все суммы уже открыты.';
+    var needR=Math.max(0,next.rating-r),needP=Math.max(0,next.paid-Number(c.onTimePayments||0));
+    return 'До '+bm(next.amount)+': '+(needR?('+'+needR+' рейтинга'):'рейтинг готов')+' · '+(needP?(needP+' выплат(ы) в срок'):'выплаты готовы');
+  }
+  function ratingBar(c){
+    var r=Number(c.rating||0);
+    return '<div class="bank-rating-visible">'+
+      '<div class="bank-rating-number"><small>КРЕДИТНЫЙ РЕЙТИНГ</small><div><b>'+r+'</b><span>/100</span></div><em>'+ratingName(r)+'</em></div>'+
+      '<div class="bank-rating-progress"><i><b style="width:'+r+'%"></b></i><p>'+ratingGoal(c)+'</p></div>'+
+    '</div>';
+  }
+  function cardHtml(){
+    return '<section class="bank-card-v22">'+
+      '<div class="bank-card-row"><div class="bank-logo-v22"><i>AF</i><b>AutoBank</b></div><span>VIRTUAL</span></div>'+
+      '<div class="bank-balance-v22"><small>Доступно</small><h2>'+bm(state.money)+'</h2></div>'+
+      '<div class="bank-card-footer"><span>•••• '+state.bankCardLast4+'</span><b>)))</b></div>'+
+    '</section>';
+  }
+  function quickActions(cr){
+    var c=ensureBank(),has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    return '<section class="bank-services">'+
+      '<div class="bank-section-kicker">СЕРВИСЫ</div>'+
+      '<div class="bank-services-grid">'+
+        '<button onclick="bankCredits()"><span class="bank-service-icon blue">₽</span><div><b>Кредиты</b><small>Выбрать доступную сумму</small></div><em>›</em></button>'+
+        '<button '+(has?'onclick="bankLoan()"':'disabled')+'><span class="bank-service-icon green">✓</span><div><b>'+(has?'Погасить кредит':'Погашение')+'</b><small>'+(has?('Долг '+bm(state.loan)):'Активного кредита нет')+'</small></div><em>›</em></button>'+
+        '<button onclick="bankRating()"><span class="bank-service-icon gold">★</span><div><b>Мой рейтинг</b><small>'+c.rating+'/100 · '+ratingName(c.rating)+'</small></div><em>›</em></button>'+
+        '<button onclick="bankHistory()"><span class="bank-service-icon gray">≡</span><div><b>История</b><small>Кредиты, выплаты и штрафы</small></div><em>›</em></button>'+
+      '</div>'+
+    '</section>';
+  }
+  function activeSummary(cr){
+    if(!cr||!cr.active||Number(state.loan||0)<=0){
+      return '<section class="bank-home-credit empty"><div class="bank-home-credit-copy"><small>МОЙ КРЕДИТ</small><h3>Кредита сейчас нет</h3><p>'+(cooldownLeft()?'Банк временно приостановил выдачу нового кредита.':'Выбери сумму, проверь условия и оформи кредит в пару нажатий.')+'</p></div><button onclick="bankCredits()">Открыть кредиты</button></section>';
+    }
+    var late=Math.max(0,Number(cr.penaltyDaysApplied||0));
+    return '<section class="bank-home-credit '+(late?'overdue':'')+'">'+
+      '<div class="bank-home-credit-copy"><small>'+(late?'ПРОСРОЧЕННЫЙ КРЕДИТ':'МОЙ КРЕДИТ')+'</small><h3>'+bm(state.loan)+'</h3><p>'+(late?('Просрочка '+late+' д. · долг растёт на 1% каждый день'):('До платежа '+timeLeft(cr.dueAt)+' · до '+moment(cr.dueAt)))+'</p></div>'+
+      '<button onclick="bankLoan()">'+(late?'Погасить':'Открыть')+'</button>'+
+    '</section>';
+  }
+
+  function homeCreditLevels(c){
+    var top=topOffer();
+    return '<section class="bank-home-credit-levels">'+
+      '<div class="bank-home-section-title"><b>Кредитные лимиты</b><button onclick="bankCredits()">Подробнее →</button></div>'+
+      '<div class="bank-home-credit-level-grid">'+BANK_OFFERS.map(function(o){
+        var ok=unlocked(o,c),current=top.amount===o.amount;
+        return '<button class="'+(ok?'open ':'locked ')+(current?'current':'')+'" '+(ok?'onclick="bankCredits()"':'onclick="bankRating()"')+'>'+
+          '<span>'+(ok?'✓':'🔒')+'</span><b>'+Math.round(o.amount/1000)+'К</b><small>'+(ok?(cooldownLeft()?'пауза':'доступно'):('рейтинг '+o.rating))+'</small>'+
+        '</button>';
+      }).join('')+'</div>'+
+    '</section>';
+  }
+
+  window.autoBankHome=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit,top=topOffer(),next=nextOffer(),hist=(c.history||[]).slice(0,2);
+    var has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    var nextText=next
+      ?('Следующий лимит '+bm(next.amount)+' · рейтинг '+next.rating+' · выплат в срок '+next.paid)
+      :'Открыт максимальный кредитный лимит';
+    var recent=hist.length
+      ?'<section class="bank-home-history"><div class="bank-home-section-title"><b>Последние операции</b><button onclick="bankHistory()">Все →</button></div>'+hist.map(function(x){
+          var d=Number(x.delta||0),ico=x.type==='loan'?'↗':x.type==='paid'?'✓':x.type==='overdue'?'!':'↙';
+          return '<div class="bank-home-history-row"><span>'+ico+'</span><div><b>'+x.title+'</b><small>'+x.text+'</small></div><em class="'+(d>0?'up':d<0?'down':'')+'">'+(d?(d>0?'+':'')+d:'')+'</em></div>';
+        }).join('')+'</section>'
+      :'';
+    render('<div class="app bank-v22-app bank-home-dashboard">'+head('Банк')+
+      cardHtml()+
+      '<section class="bank-home-rating-hero" onclick="bankRating()">'+
+        '<div class="bank-home-rating-score"><small>КРЕДИТНЫЙ РЕЙТИНГ</small><div><b>'+c.rating+'</b><span>/100</span></div><em>'+ratingName(c.rating)+'</em></div>'+
+        '<div class="bank-home-rating-info"><div class="bank-home-rating-line"><i><b style="width:'+c.rating+'%"></b></i></div><p>'+ratingGoal(c)+'</p><span>Как растёт рейтинг →</span></div>'+
+      '</section>'+
+      '<button class="bank-credit-cta" onclick="bankCredits()">'+
+        '<span class="bank-credit-cta-icon">₽</span>'+
+        '<div><small>ДОСТУПНЫЕ КРЕДИТЫ</small><b>Посмотреть доступные кредиты</b><em>'+(cooldownLeft()?'Выдача временно недоступна':has?'Есть активный кредит':'Сейчас доступно до '+bm(top.amount))+'</em></div>'+
+        '<strong>›</strong>'+
+      '</button>'+
+      cooldownNotice('home')+
+      homeCreditLevels(c)+
+      quickActions(cr)+
+      activeSummary(cr)+
+      '<section class="bank-home-info-card">'+
+        '<div class="bank-home-section-title"><b>Кредитный профиль</b><button onclick="bankRating()">Подробнее →</button></div>'+
+        '<div class="bank-profile-grid">'+
+          '<div><span>Рейтинг</span><b>'+c.rating+'/100</b></div>'+
+          '<div><span>Выплат в срок</span><b>'+c.onTimePayments+'</b></div>'+
+          '<div><span>Серия</span><b>'+c.streak+'</b></div>'+
+          '<div><span>Просрочек</span><b>'+c.latePayments+'</b></div>'+
+        '</div>'+
+        '<p>'+nextText+'</p>'+
+      '</section>'+
+      '<section class="bank-home-limit-v23">'+
+        '<div><small>ТВОЙ ЛИМИТ</small><h3>'+bm(top.amount)+'</h3><p>Новый кредит можно оформить через 48 игровых часов после полного погашения предыдущего.</p></div>'+
+        '<button onclick="bankCredits()">Суммы</button>'+
+      '</section>'+
+      '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>каждый день просрочки</span></div></section>'+
+      recent+
+    '</div>');
+    saveBank();
+  };
+
+  window.bankCredits=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit,has=!!(cr&&cr.active&&Number(state.loan||0)>0);
+    var waiting=cooldownLeft()>0;
+    var list=offers().map(function(o){
+      var locked=!o.unlocked,disabled=locked||has||waiting;
+      var req=locked?('Нужно: рейтинг '+o.rating+' и '+o.paid+' выплат(ы) в срок'):(has?'Сначала погаси текущий кредит':waiting?'Ожидание после погашения':'Вернуть '+bm(o.repay));
+      return '<button class="bank-credit-option '+(locked?'locked':'')+'" '+(disabled?'disabled':'onclick="bankLoanPreview('+o.amount+')"')+'>'+
+        '<div><small>'+o.label.toUpperCase()+'</small><h3>'+bm(o.amount)+'</h3><p>'+req+'</p></div>'+
+        '<span>'+(locked?'🔒':has||waiting?'—':'›')+'</span>'+
+      '</button>';
+    }).join('');
+    render('<div class="app bank-v22-app">'+bankHead('Кредиты','autoBankHome()')+
+      '<section class="bank-page-title"><small>КРЕДИТЫ</small><h2>Выбери сумму</h2><p>Все доступные и будущие лимиты видны сразу.</p></section>'+
+      ratingBar(c)+
+      (has?'<div class="bank-warning-box">Сейчас уже есть активный кредит. Новый можно оформить через 48 игровых часов после погашения.</div>':'')+
+      cooldownNotice('credits')+
+      '<div class="bank-credit-list">'+list+'</div>'+
+      '<section class="bank-home-rules"><div><b>10%</b><span>ставка</span></div><div><b>7 дней</b><span>срок</span></div><div><b>+1%</b><span>просрочка / день</span></div></section>'+
+    '</div>');
+  };
+
+  window.bankLoanPreview=function(amount){
+    processCredit(false);
+    var o=offers().find(function(x){return x.amount===Number(amount);});
+    if(!o||!o.unlocked)return bankCredits();
+    if(Number(state.loan||0)>0)return bankLoan();
+    if(cooldownLeft()>0)return bankCredits();
+    var due=nowGame()+BANK_WEEK;
+    render('<div class="app bank-v22-app">'+bankHead('Оформление','bankCredits()')+
+      '<section class="bank-preview-hero"><small>ТЫ ПОЛУЧИШЬ</small><h2>'+bm(o.amount)+'</h2><p>'+o.label+' кредит</p></section>'+
+      '<section class="bank-preview-table">'+
+        '<div><span>Зачисление на карту</span><b>'+bm(o.amount)+'</b></div>'+
+        '<div><span>Ставка</span><b>10%</b></div>'+
+        '<div><span>К возврату</span><b>'+bm(o.repay)+'</b></div>'+
+        '<div><span>Срок</span><b>7 игровых дней</b></div>'+
+        '<div><span>Следующий кредит</span><b>Через 48 игровых часов после погашения</b></div>'+
+        '<div><span>Оплатить до</span><b>'+moment(due)+'</b></div>'+
+        '<div><span>Просрочка</span><b>+1% к долгу каждый день</b></div>'+
+      '</section>'+
+      '<div class="bank-reward-box"><b>Погасишь вовремя → рейтинг +8…12</b><span>Серия своевременных выплат ускоряет рост.</span></div>'+
+      '<button class="action green bank-primary" onclick="bankIssueLoan('+o.amount+')">Получить '+bm(o.amount)+'</button>'+
+      '<button class="action" onclick="bankCredits()">Назад</button>'+
+    '</div>');
+  };
+
+  window.bankIssueLoan=function(amount){
+    processCredit(false);
+    var c=ensureBank(),o=offers().find(function(x){return x.amount===Number(amount);});
+    if(!o||!o.unlocked)return bankCredits();
+    if(Number(state.loan||0)>0)return bankLoan();
+    if(cooldownLeft()>0)return bankCredits();
+
+    var n=nowGame();
+    state.money=Number(state.money||0)+o.amount;
+    state.loan=o.repay;
+    state.bankCredit={
+      active:true,principal:o.amount,baseDebt:o.repay,startedAt:n,dueAt:n+BANK_WEEK,
+      penaltyDaysApplied:0,overdue:false,ratingPenaltyApplied:false,lateCounted:false,migrated:false
+    };
+    state.bankDueAt=state.bankCredit.dueAt;
+    c.totalIssued++;
+    if(state.phoneEventMeta){state.phoneEventMeta.bankWarnedForDue=0;state.phoneEventMeta.bankOverdueDay=-1;}
+    history('loan','Кредит '+bm(o.amount),'Вернуть '+bm(o.repay)+' до '+moment(state.bankCredit.dueAt),0);
+    notifyBank('💳','Зачислено '+bm(o.amount)+'. Вернуть '+bm(o.repay)+' до '+moment(state.bankCredit.dueAt)+'.','bank22-loan-'+n);
+    if(typeof log==='function')log('Банк: получено '+bm(o.amount)+'. К возврату '+bm(o.repay)+'.');
+    saveBank();
+    bankLoan();
+  };
+
+  window.bankLoan=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit;
+    if(!cr||!cr.active||Number(state.loan||0)<=0)return bankCredits();
+    var late=Math.max(0,Number(cr.penaltyDaysApplied||0)),bonus=8+Math.min(4,Math.max(0,Number(c.streak||0)));
+    render('<div class="app bank-v22-app">'+bankHead('Мой кредит','autoBankHome()')+
+      '<section class="bank-loan-big '+(late?'overdue':'')+'">'+
+        '<small>'+(late?'ПРОСРОЧЕННЫЙ КРЕДИТ':'ОСТАЛОСЬ ВЕРНУТЬ')+'</small><h2>'+bm(state.loan)+'</h2>'+
+        '<span>'+(late?('Просрочка '+late+' д.'):'До платежа '+timeLeft(cr.dueAt))+'</span>'+
+      '</section>'+
+      '<section class="bank-loan-details">'+
+        '<div><span>Получено</span><b>'+bm(cr.principal)+'</b></div>'+
+        '<div><span>Ставка</span><b>10%</b></div>'+
+        '<div><span>Срок</span><b>7 дней</b></div>'+
+        '<div><span>Оплатить до</span><b>'+moment(cr.dueAt)+'</b></div>'+
+      '</section>'+
+      (late
+        ?'<div class="bank-danger-box"><b>Просрочка активна</b><span>Каждый следующий игровой день долг увеличится ещё на 1%, а рейтинг продолжит снижаться.</span></div>'
+        :'<div class="bank-reward-box"><b>Погаси сейчас → рейтинг +'+bonus+'</b><span>Своевременная выплата приближает новый лимит.</span></div>')+
+      '<button class="action green bank-primary" onclick="bankPayLoan()">Погасить полностью · '+bm(state.loan)+'</button>'+
+      '<button class="action" onclick="bankRating()">Посмотреть рейтинг</button>'+
+      '<button class="action" onclick="autoBankHome()">На главную банка</button>'+
+    '</div>');
+  };
+
+  window.bankPayLoan=function(){
+    processCredit(false);
+    var c=ensureBank(),cr=state.bankCredit;
+    if(!cr||!cr.active||Number(state.loan||0)<=0)return autoBankHome();
+    var debt=Math.round(Number(state.loan||0));
+    if(Number(state.money||0)<debt)return alert('Не хватает '+bm(debt-Number(state.money||0))+' для полного погашения.');
+
+    var onTime=nowGame()<=Number(cr.dueAt||0)&&Number(cr.penaltyDaysApplied||0)===0;
+    state.money=Number(state.money||0)-debt;
+    var delta=0;
+    if(onTime){
+      c.onTimePayments++;c.streak++;
+      delta=8+Math.min(4,Math.max(0,c.streak-1));
+      c.rating=clamp(c.rating+delta,0,100);
+    }else{
+      c.streak=0;
+      if(!cr.lateCounted){c.latePayments++;cr.lateCounted=true;}
+    }
+    history(onTime?'paid':'late-paid',onTime?'Погашено вовремя':'Погашено с просрочкой',
+      bm(debt)+(onTime?' · рейтинг +'+delta:' · рейтинг восстанавливается следующими выплатами в срок'),onTime?delta:0);
+    state.loan=0;state.bankCredit=null;state.bankDueAt=0;
+    c.nextLoanAt=nowGame()+BANK_COOLDOWN;
+    if(state.phoneEventMeta){state.phoneEventMeta.bankWarnedForDue=0;state.phoneEventMeta.bankOverdueDay=-1;}
+    notifyBank(onTime?'✅':'🏦',onTime?'Кредит погашен. Рейтинг вырос до '+c.rating+'/100.':'Кредит закрыт. Следующая своевременная выплата поможет восстановить рейтинг.','bank22-paid-'+nowGame());
+    if(typeof log==='function')log(onTime?'Банк: кредит погашен вовремя. Рейтинг +'+delta+'.':'Банк: кредит закрыт после просрочки.');
+    saveBank();
+
+    render('<div class="app bank-v22-app">'+bankHead('Готово','autoBankHome()')+
+      '<section class="bank-success-screen"><div>✓</div><small>КРЕДИТ ЗАКРЫТ</small><h2>'+bm(debt)+'</h2><p>'+(onTime?('Рейтинг вырос на '+delta+' и теперь составляет '+c.rating+'/100.'):'Кредит закрыт после просрочки. Рейтинг можно восстановить следующими своевременными выплатами.')+'</p></section>'+
+      cooldownNotice('success')+
+      '<button class="action green bank-primary" onclick="autoBankHome()">Вернуться в банк</button>'+
+      '<button class="action" onclick="bankCredits()">Посмотреть доступные кредиты</button>'+
+    '</div>');
+  };
+
+  window.bankRating=function(){
+    processCredit(false);
+    var c=ensureBank(),next=nextOffer(),top=topOffer(),r=Number(c.rating||0);
+    var levels=BANK_OFFERS.map(function(o){
+      var ok=unlocked(o,c),current=top.amount===o.amount;
+      return '<div class="bank-rating-level '+(ok?'open':'locked')+' '+(current?'current':'')+'">'+
+        '<div><span>'+(ok?'✓':'🔒')+'</span><b>'+bm(o.amount)+'</b></div>'+
+        '<small>Рейтинг '+o.rating+' · выплат в срок '+o.paid+'</small>'+
+      '</div>';
+    }).join('');
+    render('<div class="app bank-v22-app">'+bankHead('Рейтинг','autoBankHome()')+
+      '<section class="bank-rating-page">'+
+        '<small>ТВОЙ РЕЙТИНГ</small><div class="bank-rating-page-number"><b>'+r+'</b><span>/100</span></div><h3>'+ratingName(r)+'</h3>'+
+        '<div class="bank-rating-page-bar"><i style="width:'+r+'%"></i></div>'+
+        '<p>'+ratingGoal(c)+'</p>'+
+      '</section>'+
+      '<section class="bank-rating-rules">'+
+        '<div class="good"><span>✓</span><div><b>Погашение в срок</b><small>+8…12 рейтинга</small></div></div>'+
+        '<div class="bad"><span>!</span><div><b>Первый день просрочки</b><small>−10 рейтинга</small></div></div>'+
+        '<div class="bad"><span>!</span><div><b>Каждый следующий день</b><small>−2 рейтинга</small></div></div>'+
+      '</section>'+
+      '<div class="bank-rating-stats"><div><span>Выплат в срок</span><b>'+c.onTimePayments+'</b></div><div><span>Серия</span><b>'+c.streak+'</b></div><div><span>Просрочек</span><b>'+c.latePayments+'</b></div></div>'+
+      '<section class="bank-rating-levels"><div class="bank-section-label">КРЕДИТНЫЕ УРОВНИ</div>'+levels+'</section>'+
+      '<button class="action green bank-primary" onclick="bankCredits()">Перейти к кредитам</button>'+
+      '<button class="action" onclick="autoBankHome()">На главную банка</button>'+
+    '</div>');
+  };
+
+  window.bankHistory=function(){
+    processCredit(false);
+    var c=ensureBank(),rows=(c.history||[]).map(function(x){
+      var d=Number(x.delta||0),ico=x.type==='loan'?'↗':x.type==='paid'?'✓':x.type==='overdue'?'!':'↙';
+      return '<div class="bank-history-v22-row"><span class="ico">'+ico+'</span><div><b>'+x.title+'</b><small>'+x.text+' · '+moment(x.at)+'</small></div><em class="'+(d>0?'up':d<0?'down':'')+'">'+(d?(d>0?'+':'')+d:'')+'</em></div>';
+    }).join('');
+    render('<div class="app bank-v22-app">'+bankHead('История','autoBankHome()')+
+      '<section class="bank-page-title"><small>ОПЕРАЦИИ</small><h2>История банка</h2><p>Кредиты, выплаты и изменения рейтинга.</p></section>'+
+      '<section class="bank-history-v22">'+(rows||'<div class="bank-empty-v22">Пока нет кредитных операций.</div>')+'</section>'+
+      '<button class="action" onclick="autoBankHome()">На главную банка</button>'+
+    '</div>');
+  };
+
+  // Compatibility with old game code.
+  window.takeLoan=function(){return Number(state.loan||0)>0?bankLoan():bankCredits();};
+  window.payLoan=window.bankPayLoan;
+  window.creditPlan=function(){
+    var c=ensureBank(),top=topOffer(),next=nextOffer();
+    return {title:ratingName(c.rating),amount:top.amount,maxDebt:Math.round(top.amount*1.10),rate:.10,next:next?('Следующая сумма '+bm(next.amount)):'Максимальный уровень'};
+  };
+
+  // Final in-module binding: all old autoBankHome() calls now open this dashboard.
+  window.bank=window.autoBankHome;
+
+  ensureBank();processCredit(false);saveBank();
+  setInterval(function(){
+    processCredit(true);
+    var notice=document.querySelector('[data-bank-cooldown]');
+    if(!notice)return;
+    if(cooldownLeft()>0){
+      var countdown=notice.querySelector('[data-bank-countdown]');
+      if(countdown)countdown.textContent=cooldownText();
+    }else if(notice.getAttribute('data-bank-cooldown')==='credits'){
+      bankCredits();
+    }else{
+      autoBankHome();
+    }
+  },1000);
+})();
+</script>
+
+<script>
+// AutoMarket bottom navigation — final wrappers after all V7.9 overrides.
+(function(){
+  function wrapAutoTab(name,active){
+    var original=window[name];
+    if(typeof original!=='function'||original.__autoBottomTab)return;
+    var wrapped=function(){
+      var result=original.apply(this,arguments);
+      setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav(active);},145);
+      return result;
+    };
+    wrapped.__autoBottomTab=true;
+    window[name]=wrapped;
+  }
+  ['market','carView','marketInspection','sellerTradeIn','startSellerTradeIn','renderSellerTradeIn','makeSellerTradeOffer','acceptSellerTradeCounter','completeSellerTrade'].forEach(function(name){wrapAutoTab(name,'listings');});
+  ['messages','openBuyerChat','completeBuyerSale','completeBuyerTrade'].forEach(function(name){wrapAutoTab(name,'messages');});
+  ['profile'].forEach(function(name){wrapAutoTab(name,'profile');});
+  ['sellCar','editListingPrice','saveListingPrice','publishCarListing'].forEach(function(name){wrapAutoTab(name,'sell');});
+})();
+</script>
+
+<script>
+// Final bank binding — intentionally last so legacy bank code cannot take priority.
+if(typeof window.autoBankHome==='function'){
+  window.bank=window.autoBankHome;
+  window.openBank=window.autoBankHome;
+}
+</script>
+
+<script src="ui.js"></script>
+<script src="plates.js?v=20261006-4"></script>
+<script src="garage-system.js?v=20261006-1"></script>
+<script src="world-system.js?v=20261007-6"></script>
+<script src="negotiations-system.js?v=20261007-2"></script>
+<script src="game-account.js?v=20261008-1"></script>
 </body>
 </html>

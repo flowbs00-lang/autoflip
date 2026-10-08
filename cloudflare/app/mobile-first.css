@@ -1,0 +1,16 @@
+/* Phone-first game shell. Desktop keeps the cinematic device presentation. */
+@media(max-width:600px){
+  html,body{width:100%;min-height:100%;margin:0;overflow:hidden;background:var(--os-bg,#0b111a)}
+  body>header,.hero,#about,body>footer,.game-title,.layout>aside{display:none!important}
+  main,.game,.layout{width:100%!important;max-width:none!important;height:100dvh!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important}
+  .layout{display:block!important}
+  .phone{position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;transform:none!important;background:var(--os-bg,#0b111a)!important}
+  .phone #screen{width:100%;height:100%;border-radius:0!important;overflow:hidden}
+  .notch{display:none!important}.homebar{position:fixed;bottom:5px;height:4px;opacity:.55}
+  #screen .app{min-height:100%;box-sizing:border-box;padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(92px,calc(env(safe-area-inset-bottom) + 76px)) max(14px,env(safe-area-inset-left))!important}
+  #screen .home,#screen .os-home{min-height:100%;box-sizing:border-box;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(18px,env(safe-area-inset-bottom))}
+  #screen .os-head{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--os-bg) 90%,transparent);backdrop-filter:blur(18px)}
+  #screen .auto-bottom-nav{position:fixed;left:0;right:0;bottom:0;width:100%;border-radius:20px 20px 0 0;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+  #screen :is(button,.action,.contact,.world-map-city,.meeting-time,.meeting-list-card){min-height:44px}
+  #screen :is(input,select,textarea){font-size:16px!important}
+}

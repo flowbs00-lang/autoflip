@@ -1,0 +1,616 @@
+/* Map interaction fixes: larger hit areas, preserved horizontal canvas and a full city list. */
+.world-map-scroll {
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+.world-map { width: 960px; }
+.world-city {
+  min-width: 44px;
+  min-height: 36px;
+  padding: 5px;
+  cursor: pointer;
+}
+.world-city span {
+  background: #08121bdc;
+  pointer-events: none;
+}
+.world-city:hover,
+.world-city:focus-visible,
+.world-city.selected { z-index: 5; }
+.world-city.selected i {
+  background: #76e3bb;
+  border-color: #fff;
+  transform: scale(1.3);
+}
+.world-city.selected span {
+  background: #76e3bb;
+  color: #10281f;
+}
+.world-city-directory {
+  margin-top: 11px;
+  padding: 13px;
+  border: 1px solid var(--os-line);
+  border-radius: 18px;
+  background: var(--os-surface);
+  box-shadow: var(--os-shadow);
+}
+.world-city-directory-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.world-city-directory-title small {
+  display: block;
+  color: var(--os-muted);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.world-city-directory-title b {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+}
+.world-city-directory-title > span {
+  padding: 5px 8px;
+  border-radius: 9px;
+  background: var(--os-raised);
+  color: var(--os-muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+.world-city-directory-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.world-city-choice {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) 8px;
+  gap: 7px;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px;
+  border: 1px solid var(--os-line);
+  border-radius: 13px;
+  background: var(--os-raised);
+  color: var(--os-text);
+  text-align: left;
+  cursor: pointer;
+}
+.world-city-choice > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--os-muted);
+}
+.world-city-choice > span { min-width: 0; }
+.world-city-choice b,
+.world-city-choice small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-city-choice b { font-size: 8px; }
+.world-city-choice small {
+  margin-top: 2px;
+  color: var(--os-muted);
+  font-size: 6px;
+}
+.world-city-choice > strong {
+  color: var(--os-muted);
+  font-size: 14px;
+}
+.world-city-choice:hover,
+.world-city-choice:focus-visible,
+.world-city-choice.selected {
+  border-color: var(--os-accent);
+  background: color-mix(in srgb, var(--os-accent) 10%, var(--os-surface));
+}
+.world-city-choice.selected > i,
+.world-city-choice.current > i {
+  background: var(--os-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--os-accent) 18%, transparent);
+}
+.world-city-choice.current small { color: var(--os-accent); }
+
+/* 2026 route-planner refresh. */
+.world-route-selector {
+  margin-top: 11px;
+  padding: 14px;
+  border: 1px solid var(--os-line);
+  border-radius: 20px;
+  background: linear-gradient(145deg, var(--os-surface), var(--os-raised));
+  box-shadow: var(--os-shadow);
+}
+.world-route-selector-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+.world-route-selector-head small,
+.world-route-fields small {
+  display: block;
+  color: var(--os-muted);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.world-route-selector-head b {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+}
+.world-route-selector-head > span {
+  padding: 6px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--os-accent) 13%, var(--os-surface));
+  color: var(--os-accent);
+  font-size: 8px;
+  font-weight: 900;
+}
+.world-route-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+}
+.world-route-fields > div,
+.world-route-fields > label {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--os-line);
+  border-radius: 13px;
+  background: var(--os-elevated);
+}
+.world-route-fields > div b {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-route-fields > i {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--os-accent);
+  color: var(--os-accent-ink);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+.world-route-fields select {
+  width: 100%;
+  margin-top: 3px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--os-text);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.world-map-scroll {
+  position: relative;
+  border-color: #6e91a944;
+  background: #07131f;
+  box-shadow: inset 0 0 0 1px #ffffff05, 0 16px 32px #04101a24;
+  touch-action: auto;
+}
+.world-map {
+  width: 920px;
+  height: 330px;
+  background:
+    radial-gradient(circle at 24% 30%, #27647a52, transparent 30%),
+    radial-gradient(circle at 78% 55%, #253e6952, transparent 34%),
+    linear-gradient(155deg, #102b3d, #07121e 68%);
+}
+.world-map::before {
+  background-image: radial-gradient(circle, #ffffff12 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.world-land {
+  background: linear-gradient(145deg, #367469, #183e47 65%, #17313c);
+  filter: drop-shadow(0 20px 22px #0007);
+}
+.world-land::after {
+  color: #d9fff30d;
+  font-size: 38px;
+  letter-spacing: 15px;
+}
+.world-route-line {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.world-route-line line {
+  stroke: #8af0ce;
+  stroke-width: .65;
+  stroke-linecap: round;
+  stroke-dasharray: 2 1.5;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 5px #69e7bc);
+  animation: world-route-dash 1.8s linear infinite;
+}
+@keyframes world-route-dash { to { stroke-dashoffset: -7; } }
+.world-city {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 8px;
+  border-radius: 50%;
+}
+.world-city i {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+  pointer-events: none;
+}
+.world-city span {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  margin: 0;
+  opacity: 0;
+  transform: translate(-50%, -4px);
+  transition: opacity .16s ease, transform .16s ease;
+}
+.world-city:hover span,
+.world-city:focus-visible span,
+.world-city.current span,
+.world-city.selected span {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.world-city.current { z-index: 6; }
+.world-city.current i { box-shadow: 0 0 0 5px #76e3bb2c, 0 0 15px #76e3bb99; }
+.world-city.selected:not(.current) i { background: #ffd36e; }
+.world-map-hint {
+  margin: 7px 0 11px;
+  font-size: 8px;
+}
+.world-route-panel {
+  border-color: color-mix(in srgb, var(--os-accent) 30%, var(--os-line));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--os-accent) 7%, var(--os-surface)), var(--os-surface));
+}
+.world-transport {
+  min-height: 76px;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.world-transport:hover,
+.world-transport:focus-visible { transform: translateY(-2px); }
+.auto-restoration-warning {
+  margin-top: 7px;
+  padding: 7px 9px;
+  border: 1px solid #e48a4052;
+  border-radius: 10px;
+  background: #e48a4014;
+  color: #df8742;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+/* Stable schematic minimap: markers never resize or change their coordinates. */
+.world-map-scroll {
+  border: 1px solid #6fd8c13d;
+  border-radius: 24px;
+  background: #06121d;
+  box-shadow: inset 0 0 0 1px #ffffff08, 0 18px 38px #03101c30;
+  scrollbar-color: #76e3bb66 transparent;
+}
+.world-map {
+  width: 900px;
+  height: 338px;
+  isolation: isolate;
+  background:
+    linear-gradient(90deg, transparent 49.8%, #ffffff08 50%, transparent 50.2%),
+    linear-gradient(transparent 49.8%, #ffffff08 50%, transparent 50.2%),
+    radial-gradient(circle at 21% 28%, #2677884f, transparent 26%),
+    radial-gradient(circle at 78% 63%, #31597b42, transparent 33%),
+    linear-gradient(145deg, #0d2b3c, #07131f 70%);
+  background-size: 72px 72px,72px 72px,auto,auto,auto;
+}
+.world-map::before {
+  background-image: radial-gradient(circle, #b7e9df1c 1px, transparent 1.5px);
+  background-size: 24px 24px;
+  opacity: .7;
+}
+.world-map-brand {
+  position: absolute;
+  top: 15px;
+  left: 17px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border: 1px solid #ffffff12;
+  border-radius: 11px;
+  background: #071522b8;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.world-map-brand b { color:#eafff8;font-size:10px;letter-spacing:1.6px }
+.world-map-brand small { margin-top:2px;color:#7896a5;font-size:5px;letter-spacing:1px }
+.world-map-legend {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #ffffff12;
+  border-radius: 10px;
+  background: #071522b8;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.world-map-legend span { color:#91a9b5;font-size:6px;font-weight:800 }
+.world-map-legend span::before { content:"";display:inline-block;width:6px;height:6px;margin-right:4px;border-radius:50%;background:#76e3bb }
+.world-map-legend .target::before { background:#ffd36e }
+.world-land {
+  inset: 49px 24px 29px 19px;
+  background: linear-gradient(145deg, #2d7168, #194651 62%, #173743);
+  clip-path: polygon(0 35%,7% 23%,17% 20%,25% 29%,34% 16%,45% 23%,56% 10%,68% 17%,82% 8%,100% 24%,97% 45%,100% 64%,90% 73%,80% 64%,67% 76%,54% 67%,43% 83%,31% 73%,18% 87%,8% 69%);
+  filter: drop-shadow(0 22px 26px #0008);
+}
+.world-land::after { content:"" }
+.world-city {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 9px;
+  border: 0;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  transition: none;
+}
+.world-city i,
+.world-city.current i,
+.world-city.selected i,
+.world-city:hover i {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 3px solid #b7ddd5;
+  background: #153b43;
+  box-shadow: 0 0 0 4px #8de8ce18,0 0 12px #64d8b744;
+  transform: none;
+  transition: none;
+  pointer-events: none;
+}
+.world-city.current i {
+  border-color: #effff9;
+  background: #76e3bb;
+  box-shadow: 0 0 0 5px #76e3bb2e,0 0 16px #76e3bb88;
+}
+.world-city.selected:not(.current) i {
+  border-color: #fff5cf;
+  background: #ffd36e;
+  box-shadow: 0 0 0 5px #ffd36e25,0 0 16px #ffd36e70;
+}
+.world-city span {
+  top: 33px;
+  min-width: max-content;
+  padding: 4px 7px;
+  border: 1px solid #ffffff17;
+  border-radius: 8px;
+  background: #07131ff2;
+  box-shadow: 0 7px 18px #0008;
+  color: #e9f6f2;
+  font-size: 7px;
+  transform: translate(-50%,0);
+  transition: opacity .12s ease;
+}
+.world-city:hover span,
+.world-city:focus-visible span,
+.world-city.current span,
+.world-city.selected span { transform:translate(-50%,0) }
+.world-route-line line {
+  stroke-width: .55;
+  stroke-dasharray: 1.6 1.2;
+}
+
+/* Static city board: no absolute markers, no scrolling, no moving controls. */
+.world-static-map {
+  margin: 11px 0;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--os-accent) 26%, var(--os-line));
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--os-accent) 15%, transparent), transparent 27%),
+    linear-gradient(145deg, #0d2837, #07131f 72%);
+  box-shadow: inset 0 0 0 1px #ffffff08, 0 18px 36px #03101a30;
+}
+.world-static-map-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.world-static-map-head small,
+.world-static-route small {
+  display: block;
+  color: #7d9aa7;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.world-static-map-head b {
+  display: block;
+  margin-top: 3px;
+  color: #effff9;
+  font-size: 14px;
+}
+.world-static-map-head > span {
+  padding: 6px 9px;
+  border: 1px solid #ffffff12;
+  border-radius: 10px;
+  background: #ffffff08;
+  color: #9db6c0;
+  font-size: 8px;
+  font-weight: 900;
+}
+.world-static-route {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 25px minmax(0,1fr);
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 11px;
+  padding: 9px;
+  border: 1px solid #ffffff12;
+  border-radius: 14px;
+  background: #05111bb8;
+}
+.world-static-route > span { min-width:0 }
+.world-static-route b {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #effff9;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-static-route > i {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #76e3bb;
+  color: #08251d;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+.world-static-grid {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  grid-template-rows: repeat(5,68px);
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid #ffffff0d;
+  border-radius: 17px;
+  background:
+    linear-gradient(#ffffff07 1px,transparent 1px),
+    linear-gradient(90deg,#ffffff07 1px,transparent 1px),
+    #071722;
+  background-size: 25% 20%,25% 20%,auto;
+}
+.world-map-city {
+  grid-row: var(--map-row);
+  grid-column: var(--map-col);
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 3px;
+  border: 1px solid #ffffff12;
+  border-radius: 13px;
+  outline: 0;
+  background: #102632;
+  color: #e7f5f1;
+  text-align: center;
+  cursor: pointer;
+  transform: none;
+  transition: border-color .14s ease,background .14s ease,box-shadow .14s ease;
+}
+.world-map-pin {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  place-items: center;
+  border: 2px solid #7897a2;
+  border-radius: 9px;
+  background: #0a1922;
+  color: #9cb6be;
+  font-size: 6px;
+  font-weight: 900;
+  pointer-events: none;
+}
+.world-map-city-copy {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  margin-top: 4px;
+  pointer-events: none;
+}
+.world-map-city-copy b {
+  display: -webkit-box;
+  overflow: hidden;
+  color: inherit;
+  font-size: 7px;
+  line-height: 1.05;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.world-map-city-copy small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #718b96;
+  font-size: 5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-map-city:hover,
+.world-map-city:focus-visible {
+  border-color: #76e3bb80;
+  background: #15333d;
+}
+.world-map-city.selected {
+  border-color: #ffd36e;
+  background: linear-gradient(145deg,#453b20,#1d302f);
+  box-shadow: inset 0 0 0 1px #ffd36e24,0 0 18px #ffd36e14;
+}
+.world-map-city.selected .world-map-pin {
+  border-color: #fff1b9;
+  background: #ffd36e;
+  color: #3a2c06;
+}
+.world-map-city.current {
+  border-color: #76e3bb;
+  background: linear-gradient(145deg,#17483e,#15313a);
+  box-shadow: inset 0 0 0 1px #76e3bb24,0 0 18px #76e3bb17;
+}
+.world-map-city.current .world-map-pin {
+  border-color: #eafff8;
+  background: #76e3bb;
+  color: #08251d;
+}
+.world-map-city.current .world-map-city-copy small { color:#76e3bb }
+.world-map-city.selected:not(.current) .world-map-city-copy small { color:#ffd36e }
+.world-static-map-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 10px;
+  color: #8da5af;
+  font-size: 6px;
+  font-weight: 800;
+}
+.world-static-map-foot > span { display:flex;gap:4px;align-items:center }
+.world-static-map-foot i { width:7px;height:7px;border-radius:3px;background:#76e3bb }
+.world-static-map-foot i.selected { background:#ffd36e }
+.world-static-map-foot > small { margin-left:auto;color:#6f8994;font-size:6px }
+.world-meeting-deadline{display:flex;gap:10px;align-items:center;margin:10px 0;padding:11px;border-radius:13px;background:#fff4d7;color:#79550c}.world-meeting-deadline>span{font-size:20px}.world-meeting-deadline>div{display:flex;flex-direction:column}.world-meeting-deadline b{font-size:11px}.world-meeting-deadline small{font-size:9px}.world-transport-late{opacity:.48;filter:grayscale(.65)}.world-transport-late em{color:#c75648!important}
