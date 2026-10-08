@@ -46,6 +46,37 @@ async function encodeStoredSave(dataJson) {
   return stored;
 }
 
+async function decodeUploadedSave(body) {
+  if (body?.encoding !== "gzip-base64") return null;
+  if (typeof body.compressed !== "string" || !body.compressed) {
+    throw new RequestError("invalid_save");
+  }
+
+  const stored = `gz:${body.compressed}`;
+  if (new TextEncoder().encode(stored).byteLength > MAX_STORED_BYTES) {
+    throw new RequestError("save_too_large", 413);
+  }
+
+  try {
+    const bytes = base64ToBytes(body.compressed);
+    const decompressed = new Blob([bytes])
+      .stream()
+      .pipeThrough(new DecompressionStream("gzip"));
+    const dataJson = await new Response(decompressed).text();
+    if (new TextEncoder().encode(dataJson).byteLength > MAX_SAVE_BYTES - 1024) {
+      throw new RequestError("save_too_large", 413);
+    }
+    const state = JSON.parse(dataJson);
+    if (!state || typeof state !== "object" || Array.isArray(state)) {
+      throw new RequestError("invalid_save");
+    }
+    return { state, stored };
+  } catch (error) {
+    if (error instanceof RequestError) throw error;
+    throw new RequestError("invalid_save");
+  }
+}
+
 async function parseStoredSave(row) {
   if (!row) return null;
   try {
@@ -83,16 +114,20 @@ export async function onRequestPut(context) {
     if (!assertSameOrigin(context.request)) throw new RequestError("origin_rejected", 403);
     const session = await requireUser(context);
     const body = await readJson(context.request, MAX_SAVE_BYTES);
-    const state = body?.state;
+    const uploaded = await decodeUploadedSave(body);
+    const state = uploaded?.state || body?.state;
     if (!state || typeof state !== "object" || Array.isArray(state)) {
       throw new RequestError("invalid_save");
     }
 
-    const dataJson = JSON.stringify(state);
-    if (new TextEncoder().encode(dataJson).byteLength > MAX_SAVE_BYTES - 1024) {
-      throw new RequestError("save_too_large", 413);
+    let storedSave = uploaded?.stored;
+    if (!storedSave) {
+      const dataJson = JSON.stringify(state);
+      if (new TextEncoder().encode(dataJson).byteLength > MAX_SAVE_BYTES - 1024) {
+        throw new RequestError("save_too_large", 413);
+      }
+      storedSave = await encodeStoredSave(dataJson);
     }
-    const storedSave = await encodeStoredSave(dataJson);
 
     const updatedAt = Date.now();
     await context.env.DB.prepare(`

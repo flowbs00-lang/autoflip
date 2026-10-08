@@ -22,6 +22,36 @@
     if (window.parent !== window) window.parent.postMessage({ type: 'autoflip-cloud', payload: window.AUTOFLIP_CLOUD }, location.origin);
   }
 
+  function bytesToBase64(bytes) {
+    var binary = '';
+    for (var offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 0x8000));
+    }
+    return btoa(binary);
+  }
+
+  async function createUploadBody(raw, state) {
+    if (typeof CompressionStream !== 'function' || typeof Blob !== 'function') {
+      return JSON.stringify({ state: state, revision: revision });
+    }
+    var stream = new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip'));
+    var bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    return JSON.stringify({
+      encoding: 'gzip-base64',
+      compressed: bytesToBase64(bytes),
+      revision: revision
+    });
+  }
+
+  async function responseError(response) {
+    try {
+      var payload = await response.json();
+      return payload && payload.error ? payload.error : 'HTTP ' + response.status;
+    } catch (_) {
+      return 'HTTP ' + response.status;
+    }
+  }
+
   async function uploadNow() {
     if (!hydrated) {
       pendingUpload = true;
@@ -32,20 +62,21 @@
     try {
       var state = JSON.parse(raw);
       emit('syncing', 'Сохраняем прогресс');
+      var body = await createUploadBody(raw, state);
       var response = await fetch('/api/save', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ state: state, revision: revision }),
+        body: body,
         keepalive: true
       });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
+      if (!response.ok) throw new Error(await responseError(response));
       var payload = await response.json();
       revision = Number(payload.revision || revision + 1);
       originalSetItem.call(localStorage, STAMP_KEY, String(payload.updatedAt || Date.now()));
       emit('saved', 'Прогресс сохранён в облаке');
     } catch (error) {
-      emit('offline', 'Прогресс сохранён на устройстве');
+      emit('offline', 'Прогресс сохранён на устройстве. Ошибка облака: ' + (error && error.message ? error.message : 'unknown'));
     }
   }
 

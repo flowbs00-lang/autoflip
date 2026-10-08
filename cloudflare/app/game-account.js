@@ -19,7 +19,10 @@
     detail = detail || {};
     if (detail.status === 'syncing') setSync('Сохраняем…', 'syncing');
     else if (detail.status === 'saved') setSync('В облаке', 'saved');
-    else if (detail.status === 'offline') setSync('На устройстве', 'offline');
+    else if (detail.status === 'offline') {
+      setSync('На устройстве', 'offline');
+      if (sync) sync.title = detail.detail || 'Не удалось сохранить прогресс в облаке';
+    }
     else setSync(detail.detail || 'Сохранено', detail.status);
   }
 

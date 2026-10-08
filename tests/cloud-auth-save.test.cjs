@@ -16,6 +16,15 @@ test('cloud save API is authenticated, same-origin and size bounded', () => {
   assert.match(source, /ON CONFLICT\(user_id\)/);
 });
 
+test('large saves are compressed in the browser before upload', () => {
+  const client = read('cloud-save.js');
+  const server = read('functions/api/save.js');
+  assert.match(client, /encoding: 'gzip-base64'/);
+  assert.match(client, /compressed: bytesToBase64/);
+  assert.match(server, /decodeUploadedSave/);
+  assert.match(server, /body\?\.encoding !== "gzip-base64"/);
+});
+
 test('app routes are protected at the edge', () => {
   const source = read('functions/_middleware.js');
   assert.match(source, /isGameEntry/);
