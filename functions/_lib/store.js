@@ -2,15 +2,15 @@ import { RequestError } from "./http.js";
 
 export const STORE_PRODUCTS = Object.freeze({
   cash_200k: { code: "cash_200k", title: "200 000 ₽", description: "Игровые деньги", category: "money", price: 99, grant: { type: "money", amount: 200_000 } },
-  cash_1m: { code: "cash_1m", title: "1 000 000 ₽", description: "Игровые деньги", category: "money", price: 349, grant: { type: "money", amount: 1_000_000 }, badge: "Выгодно" },
-  cash_2m: { code: "cash_2m", title: "2 000 000 ₽", description: "Игровые деньги", category: "money", price: 599, grant: { type: "money", amount: 2_000_000 }, badge: "Максимум" },
-  plate_cool: { code: "plate_cool", title: "Крутой номер", description: "Случайный номер тайной редкости", category: "plates", price: 249, grant: { type: "plate", mode: "cool" } },
-  plate_custom: { code: "plate_custom", title: "Свой номер", description: "Выбери буквы, цифры и регион", category: "plates", price: 699, grant: { type: "plate", mode: "custom" }, badge: "Конструктор" },
+  cash_1m: { code: "cash_1m", title: "1 000 000 ₽", description: "Игровые деньги", category: "money", price: 399, grant: { type: "money", amount: 1_000_000 }, badge: "Выгодно" },
+  cash_2m: { code: "cash_2m", title: "2 000 000 ₽", description: "Игровые деньги", category: "money", price: 699, grant: { type: "money", amount: 2_000_000 }, badge: "Максимум" },
+  plate_cool: { code: "plate_cool", title: "Крутой номер", description: "Случайный премиальный номер · нельзя продать", category: "plates", price: 499, grant: { type: "plate", mode: "cool" } },
+  plate_custom: { code: "plate_custom", title: "Свой номер", description: "Выбери буквы, цифры и регион", category: "plates", price: 999, grant: { type: "plate", mode: "custom" }, badge: "Конструктор" },
   buyers_1d: { code: "buyers_1d", title: "Быстрые покупатели · сутки", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 99, grant: { type: "fast_buyers", durationMs: 86_400_000 } },
-  buyers_7d: { code: "buyers_7d", title: "Быстрые покупатели · 7 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 349, grant: { type: "fast_buyers", durationMs: 604_800_000 }, badge: "Популярное" },
-  buyers_30d: { code: "buyers_30d", title: "Быстрые покупатели · 30 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 899, grant: { type: "fast_buyers", durationMs: 2_592_000_000 }, badge: "Лучший выбор" },
-  garage_5: { code: "garage_5", title: "Гараж 5 уровня", description: "Мгновенно открыть уровень и автосервис", category: "garage", price: 790, grant: { type: "garage", level: 5 } },
-  garage_10: { code: "garage_10", title: "Гараж 10 уровня", description: "Максимальный уровень гаража", category: "garage", price: 1490, grant: { type: "garage", level: 10 }, badge: "Максимум" }
+  buyers_7d: { code: "buyers_7d", title: "Быстрые покупатели · 7 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 399, grant: { type: "fast_buyers", durationMs: 604_800_000 }, badge: "Популярное" },
+  buyers_30d: { code: "buyers_30d", title: "Быстрые покупатели · 30 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 1199, grant: { type: "fast_buyers", durationMs: 2_592_000_000 }, badge: "Лучший выбор" },
+  garage_5: { code: "garage_5", title: "Гараж 5 уровня", description: "Мгновенно открыть уровень и автосервис", category: "garage", price: 499, grant: { type: "garage", level: 5 } },
+  garage_10: { code: "garage_10", title: "Гараж 10 уровня", description: "Максимальный уровень гаража", category: "garage", price: 1499, grant: { type: "garage", level: 10 }, badge: "Максимум" }
 });
 
 const LETTERS = "АВЕКМНОРСТУХ";
@@ -84,10 +84,11 @@ function purchasedPlate(order, mode, payload) {
     number,
     region: { code: region, city: REGIONS[region], country: "Россия" },
     rarity: "secret",
-    value: 500_000,
+    value: mode === "cool" ? 0 : 500_000,
     createdAt: Number(order.paid_at || Date.now()),
     attachedCarId: null,
-    premium: true
+    premium: true,
+    tradable: mode !== "cool"
   };
 }
 

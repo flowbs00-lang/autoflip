@@ -41,6 +41,12 @@ test('locked cases cannot take money and the starter case stores a plate',()=>{
 test('selling returns exactly the configured rarity value',()=>{
   const g=game({money:0,garageLevel:1,plates:{items:[{id:'one',number:'А111МР',region:{code:'77',city:'Москва',country:'Россия'},rarity:'secret',value:500000}],nextId:2}});g.c.sellPlate('one');assert.equal(g.c.state.money,500000);assert.equal(g.c.state.plates.items.length,0);
 });
+test('premium store plate is visible but cannot be sold',()=>{
+  const g=game({money:0,garageLevel:1,plates:{items:[{id:'premium',number:'А111АА',region:{code:'77',city:'Москва',country:'Россия'},rarity:'secret',value:0,createdAt:1,attachedCarId:null,premium:true,tradable:false}],nextId:2}});
+  g.c.plates();g.c.setPlateTab('collection');assert.match(g.html(),/Не продаётся/);
+  g.c.confirmPlateSale('premium');assert.doesNotMatch(g.html(),/ПРОДАЖА НОМЕРА/);
+  g.c.sellPlate('premium');assert.equal(g.c.state.money,0);assert.equal(g.c.state.plates.items.length,1);
+});
 test('case opening renders animation before revealing the won plate',()=>{
   const g=game(undefined,true);g.c.plates();g.c.openPlateCase('standard');assert.match(g.html(),/ОТКРЫВАЕМ/);assert.match(g.html(),/Пропустить анимацию/);
   const won=g.c.state.plates.items[0],full=won.number+' '+won.region.code;
