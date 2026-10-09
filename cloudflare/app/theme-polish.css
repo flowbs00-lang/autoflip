@@ -131,6 +131,15 @@
 #screen .service-message>div span b{color:var(--os-text)}
 #screen .service-message>div strong{color:var(--os-success)}
 #screen :is(.service-message,.tuning-car) button{background:var(--os-accent);color:var(--os-accent-ink)}
+#screen .service-choice-intro{background:var(--os-surface);border-color:var(--os-line);color:var(--os-text)}
+#screen .service-choice-intro p{color:var(--os-muted)}
+#screen .service-order-tags i{background:var(--os-raised);color:var(--os-muted)}
+#screen .service-message button:disabled{background:var(--os-elevated);color:var(--os-faint);opacity:1}
+#screen .garage-app .service-active :is(h3,b){color:#f3f7fb!important}
+#screen .garage-app .service-active p{color:#bcc8d4}
+#screen .garage-app .service-active small{color:#8fa0b1}
+#screen .garage-app .service-active-head small{color:#7fe5ba}
+#screen .garage-app .service-active-money strong{color:#75e5b5}
 
 /* Plates — keeps the physical number plate white while theming its cards. */
 #screen .plates-app{color:var(--os-text)}

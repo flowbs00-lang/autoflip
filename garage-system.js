@@ -28,7 +28,16 @@
   };
   var SERVICE_NAMES=['Артём','Виктор','Денис','Кирилл','Максим','Роман','Сергей','Тимур'];
   var SERVICE_CARS=['Lada Vesta','Kia Rio','Toyota Camry','BMW 320i','Volkswagen Polo','Hyundai Solaris','Ford Focus II','Skoda Octavia'];
-  var SERVICE_ISSUES=[['Замена тормозных колодок',9000,24000],['Ремонт подвески',18000,44000],['Замена радиатора',22000,52000],['Ремонт электрики',12000,31000],['Обслуживание двигателя',28000,65000],['Замена сцепления',25000,59000]];
+  var SERVICE_ISSUES=[
+    {name:'Замена тормозных колодок',parts:9000,payout:24000,hours:4,difficulty:'Простой'},
+    {name:'Ремонт электрики',parts:12000,payout:31000,hours:5,difficulty:'Обычный'},
+    {name:'Ремонт подвески',parts:18000,payout:44000,hours:7,difficulty:'Средний'},
+    {name:'Замена радиатора',parts:22000,payout:52000,hours:8,difficulty:'Средний'},
+    {name:'Замена сцепления',parts:25000,payout:59000,hours:10,difficulty:'Сложный'},
+    {name:'Обслуживание двигателя',parts:28000,payout:65000,hours:11,difficulty:'Сложный'},
+    {name:'Капитальный ремонт двигателя',parts:45000,payout:98000,hours:12,difficulty:'Экспертный'}
+  ];
+  var serviceTimer=0;
 
   function clamp(n,a,b){return Math.max(a,Math.min(b,Number(n)||0));}
   function saveGarage(){
@@ -37,13 +46,36 @@
   function ensure(){
     if(!state.garageProgress||typeof state.garageProgress!=='object')state.garageProgress={};
     var g=state.garageProgress;
-    g.version=1;
+    g.version=2;
     g.level=clamp(g.level||state.garageLevel||1,1,10);
     if(!g.stats||typeof g.stats!=='object')g.stats={};
     ['sales','trades','loans','coinflip5000','serviceJobs','tunings'].forEach(function(k){g.stats[k]=Math.max(0,Number(g.stats[k]||0));});
     if(!g.renovations||typeof g.renovations!=='object')g.renovations={};
     if(!Array.isArray(g.eventKeys))g.eventKeys=[];
     if(!Array.isArray(g.serviceRequests))g.serviceRequests=[];
+    if(!Array.isArray(g.completedServiceIds))g.completedServiceIds=[];
+    g.completedServiceIds=g.completedServiceIds.slice(-100);
+    if(g.activeServiceJob&&typeof g.activeServiceJob!=='object')g.activeServiceJob=null;
+    g.serviceCycle=Math.max(0,Number(g.serviceCycle||0));
+    g.serviceRequests=g.serviceRequests.filter(function(x){return x&&x.done!==true;}).slice(0,3).map(function(x,i){
+      var meta=SERVICE_ISSUES.find(function(issue){return issue.name===x.issue;})||SERVICE_ISSUES[i%SERVICE_ISSUES.length];
+      x.hours=Math.max(4,Math.min(12,Number(x.hours||meta.hours)));
+      x.difficulty=x.difficulty||meta.difficulty;
+      x.parts=Math.max(0,Number(x.parts||meta.parts));
+      x.payout=Math.max(x.parts,Number(x.payout||meta.payout));
+      return x;
+    });
+    if(g.activeServiceJob){
+      var activeMeta=SERVICE_ISSUES.find(function(issue){return issue.name===g.activeServiceJob.issue;})||SERVICE_ISSUES[0];
+      g.activeServiceJob.hours=Math.max(4,Math.min(12,Number(g.activeServiceJob.hours||activeMeta.hours)));
+      g.activeServiceJob.startedAt=Math.max(1,Number(g.activeServiceJob.startedAt||Date.now()));
+      g.activeServiceJob.finishAt=Math.max(g.activeServiceJob.startedAt+1,Number(g.activeServiceJob.finishAt||g.activeServiceJob.startedAt+g.activeServiceJob.hours*3600000));
+      g.activeServiceJob.difficulty=g.activeServiceJob.difficulty||activeMeta.difficulty;
+      g.activeServiceJob.parts=Math.max(0,Number(g.activeServiceJob.parts||activeMeta.parts));
+      g.activeServiceJob.payout=Math.max(g.activeServiceJob.parts,Number(g.activeServiceJob.payout||activeMeta.payout));
+      g.activeServiceJob.claimed=!!g.activeServiceJob.claimed;
+      g.serviceRequests=[];
+    }
     g.serviceBuilt=!!g.serviceBuilt;
     state.garageLevel=g.level;
     return g;
@@ -155,14 +187,39 @@
     render('<div class="app garage-app garage-levelup-screen">'+head('Новый уровень')+'<div class="levelup-burst"><span>УРОВЕНЬ</span><b>'+g.level+'</b></div><h2>'+LEVELS[g.level].name+'</h2><p>'+LEVELS[g.level].reward+'</p><button class="action green" onclick="garage()">Открыть обновлённый гараж</button></div>');
   };
 
-  function generateServiceRequests(){
-    var g=ensure(),day=Number(state.day||1);if(g.serviceDay===day&&g.serviceRequests.length)return;
-    g.serviceDay=day;g.serviceRequests=[];
+  function generateServiceRequests(force){
+    var g=ensure();if(g.activeServiceJob||(!force&&g.serviceRequests.length===3))return;
+    var day=Number(state.day||1),createdAt=Date.now(),cycle=g.serviceCycle;
+    g.serviceRequests=[];
     for(var i=0;i<3;i++){
-      var seed=day*17+i*13+g.level,issue=SERVICE_ISSUES[seed%SERVICE_ISSUES.length],boost=1+(g.level-5)*.08;
-      g.serviceRequests.push({id:'job-'+day+'-'+i,name:SERVICE_NAMES[(seed+i)%SERVICE_NAMES.length],car:SERVICE_CARS[(seed*3+i)%SERVICE_CARS.length],issue:issue[0],parts:Math.round(issue[1]*boost/1000)*1000,payout:Math.round(issue[2]*boost/1000)*1000,done:false});
+      var seed=day*17+cycle*29+g.level*7,issue=SERVICE_ISSUES[(seed+i*2)%SERVICE_ISSUES.length],boost=1+(g.level-5)*.08;
+      g.serviceRequests.push({id:'service-'+createdAt+'-'+cycle+'-'+i,name:SERVICE_NAMES[(seed+i*3)%SERVICE_NAMES.length],car:SERVICE_CARS[(seed*3+i*5)%SERVICE_CARS.length],issue:issue.name,difficulty:issue.difficulty,hours:issue.hours,parts:Math.round(issue.parts*boost/1000)*1000,payout:Math.round(issue.payout*boost/1000)*1000,createdAt:createdAt,done:false});
     }
     saveGarage();
+  }
+  function serviceRemaining(finishAt){return Math.max(0,Number(finishAt||0)-Date.now());}
+  function serviceClock(ms){
+    if(ms<=0)return 'Ремонт завершён';
+    var total=Math.ceil(ms/1000),hours=Math.floor(total/3600),minutes=Math.floor(total%3600/60),seconds=total%60;
+    return String(hours).padStart(2,'0')+':'+String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
+  }
+  function serviceFinishText(value){try{return new Date(Number(value)).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
+  function scheduleServiceClock(){
+    if(serviceTimer&&typeof clearTimeout==='function')clearTimeout(serviceTimer);serviceTimer=0;
+    function tick(){
+      var g=ensure(),job=g.activeServiceJob,node=document.getElementById('serviceCountdown');
+      if(!job||!node)return;
+      var left=serviceRemaining(job.finishAt);node.textContent=serviceClock(left);
+      var bar=document.getElementById('serviceProgress'),duration=Math.max(1,job.finishAt-job.startedAt);
+      if(bar)bar.style.width=Math.max(0,Math.min(100,(Date.now()-job.startedAt)/duration*100))+'%';
+      if(left<=0){garageService();return;}
+      serviceTimer=setTimeout(tick,1000);
+    }
+    tick();
+  }
+  function serviceActiveCard(job){
+    var left=serviceRemaining(job.finishAt),ready=left<=0,duration=Math.max(1,job.finishAt-job.startedAt),progress=Math.max(0,Math.min(100,(Date.now()-job.startedAt)/duration*100));
+    return '<section class="service-active '+(ready?'ready':'')+'"><div class="service-active-head"><span>🔧</span><div><small>'+(ready?'ЗАКАЗ ГОТОВ':'МАШИНА В РАБОТЕ')+'</small><h3>'+job.car+'</h3><p>'+job.issue+' · '+job.difficulty+'</p></div></div><div class="service-progress"><i id="serviceProgress" style="width:'+progress+'%"></i></div><div class="service-active-time"><span><small>'+(ready?'СТАТУС':'ОСТАЛОСЬ')+'</small><b id="serviceCountdown">'+serviceClock(left)+'</b></span><span><small>ГОТОВНОСТЬ</small><b>'+serviceFinishText(job.finishAt)+'</b></span></div><div class="service-active-money"><span>Вложено в детали <b>'+money(job.parts)+'</b></span><span>Оплата клиента <b>'+money(job.payout)+'</b></span><strong>Чистая прибыль +'+money(job.payout-job.parts)+'</strong></div>'+(ready?'<button class="action green" onclick="garageCompleteServiceJob()">Выдать автомобиль и получить оплату</button>':'<div class="service-wait-note">Можно закрыть игру — реальный таймер продолжит идти.</div>')+'</section>';
   }
   window.garageService=function(){
     var g=ensure();if(g.level<5){alert('Автосервис откроется на 5 уровне гаража.');return garageProgress();}
@@ -170,9 +227,9 @@
       shell('Автосервис','service','<div class="garage-facility-build"><span>🔧</span><small>ДОСТУПНО С 5 УРОВНЯ</small><h2>Построить автосервис</h2><p>Клиенты будут писать с просьбой починить их автомобиль. Ты оплачиваешь детали и получаешь выплату с прибылью.</p><div><b>Стоимость строительства</b><strong>'+money(250000)+'</strong></div><button class="action green" onclick="garageBuildService()">Построить автосервис</button></div>');return;
     }
     generateServiceRequests();
-    var active=g.serviceRequests.filter(function(x){return !x.done;});
-    var cards=active.map(function(x){return '<article class="service-order"><div class="service-avatar">'+x.name.charAt(0)+'</div><div class="service-message"><small>'+x.name+' · '+x.car+'</small><p>Здравствуйте! '+x.issue.toLowerCase()+'. Сможете помочь?</p><div><span>Детали <b>'+money(x.parts)+'</b></span><span>Выплата <b>'+money(x.payout)+'</b></span><strong>Прибыль +'+money(x.payout-x.parts)+'</strong></div><button onclick="garageTakeServiceJob(\''+x.id+'\')">Принять заказ</button></div></article>';}).join('');
-    shell('Автосервис','service','<div class="service-dashboard"><div><small>ЗАКАЗОВ ВЫПОЛНЕНО</small><b>'+g.stats.serviceJobs+'</b></div><div><small>НОВЫЕ ЗАЯВКИ</small><b>'+active.length+'</b></div></div>'+(cards||'<div class="garage-empty-day"><span>✓</span><h3>Все заказы на сегодня готовы</h3><p>Новые клиенты напишут на следующий игровой день.</p></div>'));
+    var cards=g.serviceRequests.map(function(x){return '<article class="service-order"><div class="service-avatar">'+x.name.charAt(0)+'</div><div class="service-message"><small>'+x.name+' · '+x.car+'</small><div class="service-order-tags"><i>'+x.difficulty+'</i><i>'+x.hours+' ч.</i></div><p>Здравствуйте! '+x.issue.toLowerCase()+'. Сможете помочь?</p><div><span>Детали <b>'+money(x.parts)+'</b></span><span>Оплата <b>'+money(x.payout)+'</b></span><strong>Прибыль +'+money(x.payout-x.parts)+'</strong></div><button '+(Number(state.money||0)<x.parts?'disabled':'')+' onclick="garageTakeServiceJob(\''+x.id+'\')">'+(Number(state.money||0)<x.parts?'Не хватает на детали':'Взять в работу · '+x.hours+' ч.')+'</button></div></article>';}).join('');
+    var body='<div class="service-dashboard"><div><small>ЗАКАЗОВ ВЫПОЛНЕНО</small><b>'+g.stats.serviceJobs+'</b></div><div><small>'+(g.activeServiceJob?'СТАТУС':'ДОСТУПНО КЛИЕНТОВ')+'</small><b>'+(g.activeServiceJob?'1 в работе':g.serviceRequests.length)+'</b></div></div>'+(g.activeServiceJob?serviceActiveCard(g.activeServiceJob):'<div class="service-choice-intro"><b>Выбери один заказ</b><p>После принятия остальные клиенты уедут. Новый выбор появится после завершения ремонта.</p></div>'+cards);
+    shell('Автосервис','service',body);if(g.activeServiceJob)scheduleServiceClock();
   };
   window.garageBuildService=function(){
     var g=ensure();if(g.level<5||g.serviceBuilt)return garageService();
@@ -180,10 +237,19 @@
     state.money-=250000;g.serviceBuilt=true;if(typeof log==='function')log('В гараже построен автосервис.');saveGarage();garageService();
   };
   window.garageTakeServiceJob=function(id){
-    var g=ensure(),x=g.serviceRequests.find(function(j){return j.id===id;});if(!x||x.done)return garageService();
+    var g=ensure();if(g.activeServiceJob)return garageService();
+    var x=g.serviceRequests.find(function(j){return j.id===id;});if(!x||x.done)return garageService();
     if(Number(state.money||0)<x.parts)return alert('На детали не хватает '+money(x.parts-Number(state.money||0))+'.');
-    state.money-=x.parts;state.money+=x.payout;state.rep=Number(state.rep||0)+2;x.done=true;g.stats.serviceJobs++;
-    if(typeof log==='function')log('Автосервис: '+x.car+', '+x.issue+'. Прибыль '+money(x.payout-x.parts)+'.');saveGarage();garageService();
+    var now=Date.now();state.money-=x.parts;g.activeServiceJob=Object.assign({},x,{startedAt:now,finishAt:now+x.hours*3600000,claimed:false});g.serviceRequests=[];
+    if(typeof log==='function')log('Автосервис принял '+x.car+': '+x.issue+'. Готовность через '+x.hours+' ч.');saveGarage();garageService();
+  };
+  window.garageCompleteServiceJob=function(){
+    var g=ensure(),x=g.activeServiceJob;if(!x||x.claimed||g.completedServiceIds.indexOf(x.id)>=0)return garageService();
+    if(serviceRemaining(x.finishAt)>0)return alert('Ремонт ещё не завершён. Осталось '+serviceClock(serviceRemaining(x.finishAt))+'.');
+    x.claimed=true;g.completedServiceIds.push(x.id);g.completedServiceIds=g.completedServiceIds.slice(-100);state.money=Number(state.money||0)+Number(x.payout||0);state.rep=Number(state.rep||0)+(x.hours>=10?3:x.hours>=7?2:1);g.stats.serviceJobs++;g.activeServiceJob=null;g.serviceCycle++;g.serviceRequests=[];
+    if(typeof log==='function')log('Автосервис завершил '+x.car+': '+x.issue+'. Прибыль '+money(x.payout-x.parts)+'.');
+    if(typeof pushPhoneNotification==='function')pushPhoneNotification('Автосервис','🔧','Ремонт '+x.car+' завершён. Оплата '+money(x.payout)+'.','garage','service-'+x.id);
+    saveGarage();generateServiceRequests(true);garageService();
   };
 
   window.garageTuning=function(){

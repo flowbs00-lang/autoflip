@@ -35,7 +35,7 @@ test('priceless series is strictly one of the five 777 plates',()=>{
   const g=game(),allowed=new Set(g.c.plateSystem.regions.map(x=>x[0]));for(let i=0;i<30;i++){const p=g.c.plateSystem.makePlate('priceless');assert.match(p.number,/^(А777МР|Е777КХ|А777АА|В777ОР|О777ОО)$/);assert.ok(allowed.has(p.region.code));}
 });
 test('locked cases cannot take money and the starter case stores a plate',()=>{
-  const g=game();g.c.plates();const before=g.c.state.money;g.c.openPlateCase('rare');assert.equal(g.c.state.money,before);assert.equal(g.c.state.plates.items.length,0);
+  const g=game();g.c.plates();assert.match(g.html(),/Гараж → Развитие/);assert.doesNotMatch(g.html(),/следующем обновлении/);const before=g.c.state.money;g.c.openPlateCase('rare');assert.equal(g.c.state.money,before);assert.equal(g.c.state.plates.items.length,0);
   g.c.openPlateCase('standard');assert.equal(g.c.state.money,before-3000);assert.equal(g.c.state.plates.items.length,1);assert.match(g.html(),/НОВЫЙ НОМЕР/);
 });
 test('selling returns exactly the configured rarity value',()=>{

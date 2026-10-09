@@ -42,3 +42,9 @@ test('store uses explicit readable colors in both themes',()=>{
   assert.match(css,/\.app\.store-app \.store-hero :is\(h2,p,small\)\{color:inherit!important\}/);
   assert.match(css,/\.app\.store-app \.store-product>button:disabled\{background:var\(--os-elevated\);color:var\(--os-faint\);opacity:1\}/);
 });
+
+test('timed service card keeps light text in the light theme',()=>{
+  assert.match(css,/\.garage-app \.service-active :is\(h3,b\)\{color:#f3f7fb!important\}/);
+  assert.match(css,/\.garage-app \.service-active p\{color:#bcc8d4\}/);
+  assert.match(css,/\.service-message button:disabled\{background:var\(--os-elevated\);color:var\(--os-faint\);opacity:1\}/);
+});
