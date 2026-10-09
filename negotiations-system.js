@@ -220,6 +220,6 @@
   if(typeof baseAdvance==='function')window.advanceGameMinutes=function(mins){var r=baseAdvance.apply(this,arguments);processMeetings(true);return r;};
   var baseTrip=window.confirmWorldTrip;
   if(typeof baseTrip==='function')window.confirmWorldTrip=function(){var r=baseTrip.apply(this,arguments);processMeetings(true);return r;};
-  meetings();processMeetings(false);saveMeetings();setInterval(function(){processMeetings(false);},1000);
+  meetings();processMeetings(false);saveMeetings();(typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(function(){processMeetings(false);},1000);
   window.autoFlipMeetings={format:fmt,process:processMeetings,isReady:isReady,graceMinutes:graceMinutes};
 })();

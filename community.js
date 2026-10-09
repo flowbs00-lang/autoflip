@@ -287,5 +287,5 @@
       decorateAccountName();
     }).catch(function () {});
   }, 450);
-  setInterval(pollMessages, 4000);
+  (typeof startVisibleInterval === 'function' ? startVisibleInterval : function (fn, delay) { return setInterval(fn, delay); })(pollMessages, 8000);
 })();

@@ -549,15 +549,21 @@ function rerollLiveMarket(){
   state.liveMarket.hiddenIds=hidden;
   state.liveMarket.newIds=fresh;
   state.liveMarket.hotIds=hot;
+  state.liveMarket.factorRevision=Number(state.liveMarket.factorRevision||0)+1;
   persist();
 }
-function applyLiveMarket(){
+var liveMarketAppliedVersion='';
+function applyLiveMarket(force){
   if(typeof makes==='undefined')return;
   if(!state.liveMarket.priceFactors||!Object.keys(state.liveMarket.priceFactors).length)rerollLiveMarket();
+  var version=Number(state.liveMarket.cycle||0)+':'+Number(state.liveMarket.factorRevision||0)+':'+makes.length;
+  if(!force&&liveMarketAppliedVersion===version)return false;
   makes.forEach(function(car,i){
     var base=Number(car.basePrice||liveBasePrices[i]||car.price||0),factor=Number(state.liveMarket.priceFactors[car.id]||1);
     car.price=Math.max(10000,Math.round(base*factor/1000)*1000);
   });
+  liveMarketAppliedVersion=version;
+  return true;
 }
 function cardId(card){
   var s=card.getAttribute('onclick')||'',m=s.match(/carView\((\d+)\)/);
@@ -590,7 +596,7 @@ if(typeof originalMarket==='function'&&!originalMarket.__v79){
   window.market=function(){
     state.liveMarket.visits=Number(state.liveMarket.visits||0)+1;
     var updates=processScheduledMarketRefresh();
-    if(!state.liveMarket.priceFactors||!Object.keys(state.liveMarket.priceFactors).length||updates.length)rerollLiveMarket();
+    if(!state.liveMarket.priceFactors||!Object.keys(state.liveMarket.priceFactors).length)rerollLiveMarket();
     applyLiveMarket();
     originalMarket.apply(this,arguments);
     setTimeout(decorateMarket,120);
@@ -679,14 +685,14 @@ function processPhoneLifeEvents(){
   }else{meta.bankWarnedForDue=0;meta.bankOverdueDay=-1;}
   localStorage.setItem(KEY,JSON.stringify(state));
 }
-setInterval(processPhoneLifeEvents,1000);
+(typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(processPhoneLifeEvents,1000);
 function updateGameClockUI(){
   var time=gameTimeText(),date=gameDateText();
   document.querySelectorAll('.status').forEach(function(s){var first=s.querySelector('span');if(first)first.textContent=time;});
   document.querySelectorAll('.clock').forEach(function(el){el.textContent=time;});
   document.querySelectorAll('.home-top small').forEach(function(el){el.textContent=date;});
 }
-setInterval(function(){updateGameClockUI();updateMarketCountdownUI();if(typeof window.updateBankCooldownUI==='function')window.updateBankCooldownUI();if(gameTotal()%10===0){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));}},1000);
+(typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(function(){updateGameClockUI();updateMarketCountdownUI();if(typeof window.updateBankCooldownUI==='function')window.updateBankCooldownUI();if(gameTotal()%10===0){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));}},1000);
 window.addEventListener('beforeunload',function(){syncGameClock();localStorage.setItem(KEY,JSON.stringify(state));});
 function advanceGameMinutes(mins){
   clockAnchorTotal=gameTotal()+Math.max(0,Math.round(Number(mins)||0));

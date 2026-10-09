@@ -66,7 +66,8 @@ test('community is a permanent visible home-screen application', () => {
 
 test('open chats poll for new messages without replacing the draft', () => {
   const client = read('community.js');
-  assert.match(client, /setInterval\(pollMessages, 4000\)/);
+  assert.match(client, /startVisibleInterval[\s\S]*pollMessages, 8000/);
+  assert.doesNotMatch(client, /setInterval\(pollMessages, 4000\)/);
   assert.match(client, /document\.getElementById\('communityChat'\)/);
   assert.match(client, /chat\.innerHTML = messageRows\(data\)/);
   assert.doesNotMatch(client.match(/async function pollMessages[\s\S]*?\n  }/)[0], /renderCommunity/);

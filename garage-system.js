@@ -37,7 +37,7 @@
     {name:'Обслуживание двигателя',parts:28000,payout:65000,hours:11,difficulty:'Сложный'},
     {name:'Капитальный ремонт двигателя',parts:45000,payout:98000,hours:12,difficulty:'Экспертный'}
   ];
-  var serviceTimer=0;
+  var serviceTimer=null;
 
   function clamp(n,a,b){return Math.max(a,Math.min(b,Number(n)||0));}
   function saveGarage(){
@@ -205,17 +205,20 @@
   }
   function serviceFinishText(value){try{return new Date(Number(value)).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
   function scheduleServiceClock(){
-    if(serviceTimer&&typeof clearTimeout==='function')clearTimeout(serviceTimer);serviceTimer=0;
+    if(serviceTimer){if(typeof serviceTimer.stop==='function')serviceTimer.stop();else if(typeof clearTimeout==='function')clearTimeout(serviceTimer);}serviceTimer=null;
     function tick(){
       var g=ensure(),job=g.activeServiceJob,node=document.getElementById('serviceCountdown');
-      if(!job||!node)return;
+      if(!job||!node){if(serviceTimer&&typeof serviceTimer.stop==='function')serviceTimer.stop();serviceTimer=null;return false;}
       var left=serviceRemaining(job.finishAt);node.textContent=serviceClock(left);
       var bar=document.getElementById('serviceProgress'),duration=Math.max(1,job.finishAt-job.startedAt);
       if(bar)bar.style.width=Math.max(0,Math.min(100,(Date.now()-job.startedAt)/duration*100))+'%';
-      if(left<=0){garageService();return;}
-      serviceTimer=setTimeout(tick,1000);
+      if(left<=0){var current=serviceTimer;serviceTimer=null;if(current&&typeof current.stop==='function')current.stop();garageService();return false;}
+      return true;
     }
-    tick();
+    serviceTimer=setTimeout(function(){
+      if(!tick())return;
+      serviceTimer=(typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){var id=setInterval(fn,delay);return{stop:function(){clearInterval(id);}};})(tick,1000);
+    },120);
   }
   function serviceActiveCard(job){
     var left=serviceRemaining(job.finishAt),ready=left<=0,duration=Math.max(1,job.finishAt-job.startedAt),progress=Math.max(0,Math.min(100,(Date.now()-job.startedAt)/duration*100));
@@ -229,7 +232,7 @@
     generateServiceRequests();
     var cards=g.serviceRequests.map(function(x){return '<article class="service-order"><div class="service-avatar">'+x.name.charAt(0)+'</div><div class="service-message"><small>'+x.name+' · '+x.car+'</small><div class="service-order-tags"><i>'+x.difficulty+'</i><i>'+x.hours+' ч.</i></div><p>Здравствуйте! '+x.issue.toLowerCase()+'. Сможете помочь?</p><div><span>Детали <b>'+money(x.parts)+'</b></span><span>Оплата <b>'+money(x.payout)+'</b></span><strong>Прибыль +'+money(x.payout-x.parts)+'</strong></div><button '+(Number(state.money||0)<x.parts?'disabled':'')+' onclick="garageTakeServiceJob(\''+x.id+'\')">'+(Number(state.money||0)<x.parts?'Не хватает на детали':'Взять в работу · '+x.hours+' ч.')+'</button></div></article>';}).join('');
     var body='<div class="service-dashboard"><div><small>ЗАКАЗОВ ВЫПОЛНЕНО</small><b>'+g.stats.serviceJobs+'</b></div><div><small>'+(g.activeServiceJob?'СТАТУС':'ДОСТУПНО КЛИЕНТОВ')+'</small><b>'+(g.activeServiceJob?'1 в работе':g.serviceRequests.length)+'</b></div></div>'+(g.activeServiceJob?serviceActiveCard(g.activeServiceJob):'<div class="service-choice-intro"><b>Выбери один заказ</b><p>После принятия остальные клиенты уедут. Новый выбор появится после завершения ремонта.</p></div>'+cards);
-    shell('Автосервис','service',body);if(g.activeServiceJob)scheduleServiceClock();
+    shell('Автосервис','service',body);if(g.activeServiceJob&&serviceRemaining(g.activeServiceJob.finishAt)>0)scheduleServiceClock();
   };
   window.garageBuildService=function(){
     var g=ensure();if(g.level<5||g.serviceBuilt)return garageService();

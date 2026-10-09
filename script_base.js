@@ -96,6 +96,16 @@ function renderStats(){document.getElementById('statsbox').innerHTML=`<div class
 function log(t){state.logs.unshift(t);state.logs=state.logs.slice(0,5);journal.innerHTML='<b>Журнал</b>'+state.logs.map(x=>`<p>${x}</p>`).join('');save()}
 function fx(){if(!state.sound)return;try{let a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.frequency.value=430;g.gain.value=.018;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.045)}catch(e){}}
 function render(x){screen.classList.add('fade');setTimeout(()=>{screen.innerHTML=x;screen.classList.remove('fade');screen.querySelectorAll('[data-action="home"]').forEach(el=>el.onclick=home)},80);fx()}
+function startVisibleInterval(fn,delay){
+ let timer=0,stopped=false;
+ const start=()=>{if(stopped||timer||document.hidden)return;timer=setInterval(fn,delay)};
+ const pause=()=>{if(timer){clearInterval(timer);timer=0}};
+ const onVisibility=()=>{if(document.hidden)pause();else{fn();start()}};
+ if(document&&typeof document.addEventListener==='function')document.addEventListener('visibilitychange',onVisibility);
+ start();
+ return{stop(){stopped=true;pause();if(document&&typeof document.removeEventListener==='function')document.removeEventListener('visibilitychange',onVisibility)}};
+}
+window.startVisibleInterval=startVisibleInterval;
 function toggleSound(){state.sound=!state.sound;document.getElementById('soundBtn').textContent=state.sound?'🔊':'🔇';save()}
 function now(){return new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
 function dateText(){return new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}
@@ -204,6 +214,9 @@ function autoSellHub(){
 
 let marketSearchTerm='';
 let marketAllOrder=[];
+let marketAllScope='';
+let marketFeed={items:[],shown:0,filter:'all'};
+const marketInitialCount=18,marketBatchCount=12;
 function marketListingKey(c){return c&&c.listingId?c.listingId:('market-'+c.id+'-'+c.name)}
 function shuffleMarketAll(arr,renew){
  if(renew||!Array.isArray(marketAllOrder)||!marketAllOrder.length){
@@ -229,6 +242,43 @@ function clearMarketSearch(){
   marketSearchTerm='';
   market('all',0);
 }
+function marketThumb(c){
+ const src=photo(c);
+ return /^assets\/cars\/[^/]+\.webp(?:\?.*)?$/.test(src)?src.replace('assets/cars/','assets/cars/thumbs/'):src;
+}
+function marketCardHtml(c,index){
+ const potential=Number(c.market||0)-Number(c.price||0),pct=Math.round(potential/Math.max(1,Number(c.price||1))*100),saved=isMarketFavorite(c),src=marketThumb(c);
+ return `<div class="market auto-market-card" onclick="carView(${c.id})">
+   <div class="pic auto-market-photo" style="--car-position:${c.photoPosition||'50% 50%'}"><img src="${src}" alt="${String(c.name||'Автомобиль').replace(/"/g,'&quot;')}" loading="${index<2?'eager':'lazy'}" decoding="async" ${index<2?'fetchpriority="high"':'fetchpriority="low"'}><span class="auto-market-shade"></span><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${saved?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${saved?'Убрать из избранного':'Добавить в избранное'}">${saved?'♥':'♡'}</button></div>
+   <div class="auto-market-info">
+     <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
+     <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.starterOffer?'<span>🛠️ Под восстановление</span>':''}</div>
+     ${c.damageSummary?`<div class="auto-restoration-warning">⚠️ ${c.damageSummary}</div>`:''}
+     <div class="auto-market-bottom">
+       <span>Рынок <b>${money(c.market)}</b></span>
+       <span class="${potential>=0?'auto-profit':'auto-loss'}">Разница ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
+     </div>
+   </div>
+ </div>`;
+}
+function mountMarketFeed(){
+ const sentinel=document.getElementById('marketFeedSentinel');if(!sentinel)return;
+ if('IntersectionObserver' in window){
+   const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))marketLoadMore()},{rootMargin:'320px 0px'});
+   observer.observe(sentinel);sentinel._marketObserver=observer;
+ }
+}
+function marketLoadMore(){
+ const list=document.getElementById('marketFeedList'),sentinel=document.getElementById('marketFeedSentinel');
+ if(!list||!sentinel||marketFeed.shown>=marketFeed.items.length)return;
+ const start=marketFeed.shown,next=Math.min(marketFeed.items.length,start+marketBatchCount),chunk=marketFeed.items.slice(start,next);
+ list.insertAdjacentHTML('beforeend',chunk.map((c,i)=>marketCardHtml(c,start+i)).join(''));marketFeed.shown=next;
+ const count=document.getElementById('marketFeedCount');if(count)count.textContent='Показано '+marketFeed.shown+' из '+marketFeed.items.length;
+ if(marketFeed.shown>=marketFeed.items.length){if(sentinel._marketObserver)sentinel._marketObserver.disconnect();sentinel.remove();}
+ else{const button=sentinel.querySelector('button');if(button)button.textContent='Показать ещё '+Math.min(marketBatchCount,marketFeed.items.length-marketFeed.shown);}
+ if(typeof decorateMarket==='function')setTimeout(decorateMarket,0);
+}
+window.marketLoadMore=marketLoadMore;
 function market(filter='all',page=0){
  const consumedIds=new Set([...(Array.isArray(state.consumedMarketListingIds)?state.consumedMarketListingIds:[]),...(Array.isArray(state.cars)?state.cars.map(c=>c&&c.listingId).filter(Boolean):[]),...(state.car&&state.car.listingId?[state.car.listingId]:[])].map(String));
  let arr=[...makes].filter(c=>(c.marketActive!==false)&&(!c.listingId||!consumedIds.has(String(c.listingId))));
@@ -236,15 +286,17 @@ function market(filter='all',page=0){
  if(selectedMarketCity)arr=arr.filter(c=>c.city===selectedMarketCity);
  const q=String(marketSearchTerm||'').trim().toLowerCase();
  if(q)arr=arr.filter(c=>[c.name,c.city,c.year,String(c.km),c.color,c.body,c.trim,c.listingId].join(' ').toLowerCase().includes(q));
- if(filter==='all')arr=shuffleMarketAll(arr,Number(page||0)===0);
+ if(filter==='all'){
+   const scope=Number(state.liveMarket&&state.liveMarket.cycle||0)+'|'+selectedMarketCity+'|'+q,renew=marketAllScope!==scope;
+   arr=shuffleMarketAll(arr,renew);marketAllScope=scope;
+ }
  if(filter==='cheap')arr.sort((a,b)=>Number(a.price||0)-Number(b.price||0));
  if(filter==='expensive')arr.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
  if(filter==='city')arr=arr.filter(c=>c.city===state.city).sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
  if(filter==='new')arr.sort((a,b)=>Number(b.postedAt||0)-Number(a.postedAt||0));
  arr=diversifyMarketModels(arr);
- const perPage=8,totalPages=Math.max(1,Math.ceil(arr.length/perPage));
- page=Math.max(0,Math.min(Number(page)||0,totalPages-1));
- const start=page*perPage,visible=arr.slice(start,start+perPage),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
+ marketFeed={items:arr,shown:Math.min(marketInitialCount,arr.length),filter:filter};
+ const visible=arr.slice(0,marketFeed.shown),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
  render(`<div class="app">${head('Объявления')}
    <section class="auto-market-hero">
      <div class="auto-market-hero-copy"><small>AUTOMARKET · LIVE</small><h3>Рынок автомобилей</h3><div class="auto-market-refresh-line"><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p><span id="autoMarketCountdown">До обновления —</span></div></div>
@@ -268,26 +320,12 @@ function market(filter='all',page=0){
      <button class="${filter==='new'?'active':''}" onclick="market('new',0)">🆕 Новые</button>
    </div>
    ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
-   <div class="auto-market-list">
-   ${visible.map(c=>{const potential=Number(c.market||0)-Number(c.price||0),pct=Math.round(potential/Math.max(1,Number(c.price||1))*100);return `<div class="market auto-market-card" onclick="carView(${c.id})">
-     <div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url('${photo(c)}');background-position:${c.photoPosition||'50% 50%'}"><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${isMarketFavorite(c)?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${isMarketFavorite(c)?'Убрать из избранного':'Добавить в избранное'}">${isMarketFavorite(c)?'♥':'♡'}</button></div>
-     <div class="auto-market-info">
-       <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
-       <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.starterOffer?'<span>🛠️ Под восстановление</span>':''}</div>
-       ${c.damageSummary?`<div class="auto-restoration-warning">⚠️ ${c.damageSummary}</div>`:''}
-       <div class="auto-market-bottom">
-         <span>Рынок <b>${money(c.market)}</b></span>
-         <span class="${potential>=0?'auto-profit':'auto-loss'}">Разница ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
-       </div>
-     </div>
-   </div>`}).join('')}
+   <div id="marketFeedList" class="auto-market-list">
+   ${visible.map((c,i)=>marketCardHtml(c,i)).join('')}
    </div>
-   ${visible.length?`<div class="auto-market-pagination">
-     <button class="action" ${page<=0?'disabled':''} onclick="market('${filter}',${page-1})">‹ Назад</button>
-     <div><small>СТРАНИЦА</small><b>${page+1} / ${totalPages}</b></div>
-     <button class="action" ${page>=totalPages-1?'disabled':''} onclick="market('${filter}',${page+1})">Дальше ›</button>
-   </div>`:''}
- </div>`)
+   ${visible.length?`<div class="auto-market-feed-status"><span id="marketFeedCount">Показано ${marketFeed.shown} из ${arr.length}</span>${marketFeed.shown<arr.length?`<div id="marketFeedSentinel"><button class="action" onclick="marketLoadMore()">Показать ещё ${Math.min(marketBatchCount,arr.length-marketFeed.shown)}</button></div>`:''}</div>`:''}
+ </div>`);
+ setTimeout(mountMarketFeed,100);
 }
 function marketInspectionKey(c){return c&&c.listingId?c.listingId:('market-'+c.id+'-'+c.year+'-'+c.km)}
 function marketInspectionData(c){

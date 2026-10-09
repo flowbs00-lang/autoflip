@@ -71,6 +71,6 @@
     document.querySelectorAll('#autoBottomNav .auto-tab-icon').forEach((el,i)=>{if(names[i])el.innerHTML=icon(names[i]);});
   };
   // Update only the clock nodes; never replace a form while the player is typing.
-  setInterval(function(){document.querySelectorAll('[data-os-time]').forEach(el=>el.textContent=time());document.querySelectorAll('[data-os-date]').forEach(el=>el.textContent=date());},1000);
+  (typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(function(){document.querySelectorAll('[data-os-time]').forEach(el=>el.textContent=time());document.querySelectorAll('[data-os-date]').forEach(el=>el.textContent=date());},1000);
   apply();home();
 })();

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AutoFlip — твой следующий ход</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261010-1">
 <link rel="stylesheet" href="ui.css?v=20261008-1">
 <link rel="stylesheet" href="plates.css?v=20261006-4">
 <link rel="stylesheet" href="garage-system.css?v=20261010-1">
@@ -46,10 +46,10 @@
 <footer>AutoFlip · Твой следующий ход · 2026 · <a href="photo-credits.html" target="_blank" rel="noopener">Авторы фотографий</a> · <a href="restoration-photo-credits.html" target="_blank" rel="noopener">Фото проектов</a></footer>
 <script src="cloud-save.js?v=20261009-1"></script>
 <script src="world-data.js?v=20261006-1"></script>
-<script src="script_base.js?v=20261008-8"></script>
+<script src="script_base.js?v=20261010-1"></script>
 <script src="car-catalog.js?v=20261006-4"></script>
 <script src="v79_market.js"></script>
-<script src="script.js?v=20261008-6"></script>
+<script src="script.js?v=20261010-1"></script>
 <script>
 // V7.2 — у каждого продавца свой характер и поведение в торге.
 let negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0};
@@ -678,7 +678,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     saveLife();
     return count;
   };
-  setInterval(checkBuyerEvents,1000);
+  (typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(checkBuyerEvents,1000);
 
   function buyerThreads(){
     return state.buyerInbox||[];
@@ -1835,7 +1835,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     });
   };
   ensureBank();processCredit(false);saveBank();
-  setInterval(updateBankCooldownUI,500);
+  (typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(updateBankCooldownUI,1000);
 })();
 </script>
 
@@ -1868,13 +1868,13 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261008-3"></script>
+<script src="ui.js?v=20261010-1"></script>
 <script src="plates.js?v=20261010-2"></script>
-<script src="garage-system.js?v=20261010-1"></script>
+<script src="garage-system.js?v=20261010-2"></script>
 <script src="world-system.js?v=20261007-6"></script>
-<script src="negotiations-system.js?v=20261009-1"></script>
+<script src="negotiations-system.js?v=20261010-1"></script>
 <script src="game-account.js?v=20261008-2"></script>
-<script src="community.js?v=20261008-3"></script>
+<script src="community.js?v=20261010-1"></script>
 <script src="store.js?v=20261010-2"></script>
 </body>
 </html>
