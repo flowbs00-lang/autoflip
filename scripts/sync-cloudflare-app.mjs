@@ -16,6 +16,7 @@ const files = [
   'mobile-first.css',
   'community.css',
   'community-profile.css',
+  'store.css',
   'theme-polish.css',
   'account.css',
   'cloud-save.js',
@@ -31,6 +32,7 @@ const files = [
   'world-system.js',
   'negotiations-system.js',
   'community.js',
+  'store.js',
   'photo-credits.html',
   'restoration-photo-credits.html'
 ];

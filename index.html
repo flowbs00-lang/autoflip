@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="account.css?v=20261008-1">
 <link rel="stylesheet" href="community.css?v=20261008-2">
 <link rel="stylesheet" href="community-profile.css?v=20261008-1">
+<link rel="stylesheet" href="store.css?v=20261010-1">
 <link rel="stylesheet" href="theme-polish.css?v=20261008-5">
 </head>
 <body>
@@ -491,14 +492,18 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   function nextDelay(car,ask,first){
     const fair=(car.repaired?Number(car.market||ask)*1.02:Number(car.market||ask)*.94);
     const ratio=ask/Math.max(1,fair);
+    let delay;
     if(first){
-      if(ratio<=.98)return 12+Math.floor(Math.random()*24);
-      if(ratio<=1.08)return 20+Math.floor(Math.random()*36);
-      return 45+Math.floor(Math.random()*76);
+      if(ratio<=.98)delay=12+Math.floor(Math.random()*24);
+      else if(ratio<=1.08)delay=20+Math.floor(Math.random()*36);
+      else delay=45+Math.floor(Math.random()*76);
+    }else{
+      if(ratio<=.98)delay=35+Math.floor(Math.random()*66);
+      else if(ratio<=1.08)delay=55+Math.floor(Math.random()*96);
+      else delay=100+Math.floor(Math.random()*151);
     }
-    if(ratio<=.98)return 35+Math.floor(Math.random()*66);
-    if(ratio<=1.08)return 55+Math.floor(Math.random()*96);
-    return 100+Math.floor(Math.random()*151);
+    const boosted=state.store&&Number(state.store.fastBuyersUntil||0)>Date.now();
+    return boosted?Math.max(1,Math.ceil(delay/2)):delay;
   }
   function addDiagForHidden(car,h){
     if(!car.diagnosed)return;
@@ -1870,5 +1875,6 @@ if(typeof window.autoBankHome==='function'){
 <script src="negotiations-system.js?v=20261009-1"></script>
 <script src="game-account.js?v=20261008-2"></script>
 <script src="community.js?v=20261008-3"></script>
+<script src="store.js?v=20261010-1"></script>
 </body>
 </html>

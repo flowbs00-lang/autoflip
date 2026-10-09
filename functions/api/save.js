@@ -8,6 +8,7 @@ import {
 } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
 import { syncCommunityProfile } from "../_lib/community.js";
+import { applyPaidOrdersToState } from "../_lib/store.js";
 
 const MAX_SAVE_BYTES = 6_000_000;
 const MAX_STORED_BYTES = 1_900_000;
@@ -98,12 +99,22 @@ export async function onRequestGet(context) {
     const row = await context.env.DB.prepare(
       "SELECT revision, data_json, updated_at FROM game_saves WHERE user_id = ? LIMIT 1"
     ).bind(session.id).first();
+    const state = await parseStoredSave(row);
+    let revision = Number(row?.revision || 0);
+    let updatedAt = Number(row?.updated_at || 0);
+    if (state && await applyPaidOrdersToState(context.env.DB, session.id, state)) {
+      updatedAt = Date.now();
+      const storedSave = await encodeStoredSave(JSON.stringify(state));
+      await context.env.DB.prepare("UPDATE game_saves SET revision = revision + 1, data_json = ?, updated_at = ? WHERE user_id = ?")
+        .bind(storedSave, updatedAt, session.id).run();
+      revision += 1;
+    }
 
     return json({
       ok: true,
-      save: await parseStoredSave(row),
-      revision: Number(row?.revision || 0),
-      updatedAt: Number(row?.updated_at || 0)
+      save: state,
+      revision,
+      updatedAt
     });
   } catch (error) {
     return handleError(error);
@@ -121,7 +132,8 @@ export async function onRequestPut(context) {
       throw new RequestError("invalid_save");
     }
 
-    let storedSave = uploaded?.stored;
+    const purchasesApplied = await applyPaidOrdersToState(context.env.DB, session.id, state);
+    let storedSave = purchasesApplied ? null : uploaded?.stored;
     if (!storedSave) {
       const dataJson = JSON.stringify(state);
       if (new TextEncoder().encode(dataJson).byteLength > MAX_SAVE_BYTES - 1024) {
