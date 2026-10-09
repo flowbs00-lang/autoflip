@@ -7,16 +7,24 @@
 
   var SAVE_KEY = 'autoflip-v7-save';
   var STAMP_KEY = 'autoflip-cloud-updated';
+  var DIRTY_KEY = 'autoflip-cloud-dirty';
   var RELOAD_KEY = 'autoflip-cloud-reloaded';
+  var SAVE_DELAY = 2500;
+  var MIN_UPLOAD_GAP = 12000;
   var storagePrototype = Object.getPrototypeOf(localStorage);
   var originalSetItem = storagePrototype.setItem;
+  var originalRemoveItem = storagePrototype.removeItem;
   var uploadTimer = null;
   var applyingRemote = false;
   var hydrated = false;
   var pendingUpload = false;
   var uploadInFlight = false;
   var lastUploadedRaw = '';
+  var lastUploadStartedAt = 0;
   var revision = 0;
+  // Only a marker that survived a previous tab is proof of an interrupted save.
+  // Startup migrations may write the save again before the cloud GET completes.
+  var dirtyAtBoot = localStorage.getItem(DIRTY_KEY) === '1';
 
   function emit(status, detail) {
     window.AUTOFLIP_CLOUD = { status: status, detail: detail || '', at: Date.now() };
@@ -66,6 +74,7 @@
       return;
     }
     uploadInFlight = true;
+    lastUploadStartedAt = Date.now();
     try {
       var state = JSON.parse(raw);
       if (!revision) emit('syncing', 'Сохраняем прогресс');
@@ -81,7 +90,13 @@
       revision = Number(payload.revision || revision + 1);
       lastUploadedRaw = raw;
       originalSetItem.call(localStorage, STAMP_KEY, String(payload.updatedAt || Date.now()));
-      emit('saved', 'Прогресс сохранён в облаке');
+      if (localStorage.getItem(SAVE_KEY) === raw) {
+        originalRemoveItem.call(localStorage, DIRTY_KEY);
+        dirtyAtBoot = false;
+        emit('saved', 'Прогресс сохранён в облаке');
+      } else {
+        pendingUpload = true;
+      }
     } catch (error) {
       emit('offline', 'Прогресс сохранён на устройстве. Ошибка облака: ' + (error && error.message ? error.message : 'unknown'));
     } finally {
@@ -93,17 +108,26 @@
     }
   }
 
-  function scheduleUpload() {
-    if (uploadTimer) return;
+  function scheduleUpload(immediate) {
+    if (uploadTimer) {
+      if (!immediate) return;
+      clearTimeout(uploadTimer);
+      uploadTimer = null;
+    }
+    var elapsed = Date.now() - lastUploadStartedAt;
+    var delay = immediate ? 0 : Math.max(SAVE_DELAY, MIN_UPLOAD_GAP - elapsed);
     uploadTimer = setTimeout(function () {
       uploadTimer = null;
       uploadNow();
-    }, 5000);
+    }, delay);
   }
 
   storagePrototype.setItem = function (key, value) {
     originalSetItem.call(this, key, value);
-    if (this === localStorage && key === SAVE_KEY && !applyingRemote) scheduleUpload();
+    if (this === localStorage && key === SAVE_KEY && !applyingRemote) {
+      originalSetItem.call(localStorage, DIRTY_KEY, '1');
+      scheduleUpload(false);
+    }
   };
 
   async function hydrate() {
@@ -120,11 +144,24 @@
       var localRaw = localStorage.getItem(SAVE_KEY);
       var localStamp = Number(localStorage.getItem(STAMP_KEY) || 0);
       var remoteStamp = Number(payload.updatedAt || 0);
+      var localDirty = dirtyAtBoot;
+
+      // A tab may be closed while its final request is still in flight. In that
+      // case the local dirty copy is the only version known to contain the last
+      // actions and must never be replaced by an older cloud response.
+      if (localRaw && localDirty) {
+        hydrated = true;
+        emit('syncing', 'Сохраняем последние изменения');
+        await uploadNow();
+        return;
+      }
 
       if (payload.save && (!localRaw || remoteStamp > localStamp)) {
         applyingRemote = true;
         originalSetItem.call(localStorage, SAVE_KEY, JSON.stringify(payload.save));
         originalSetItem.call(localStorage, STAMP_KEY, String(remoteStamp));
+        originalRemoveItem.call(localStorage, DIRTY_KEY);
+        dirtyAtBoot = false;
         lastUploadedRaw = JSON.stringify(payload.save);
         applyingRemote = false;
         hydrated = true;
@@ -137,10 +174,19 @@
       }
 
       if (!payload.save && localRaw) {
+        originalSetItem.call(localStorage, DIRTY_KEY, '1');
         hydrated = true;
         await uploadNow();
         return;
       }
+      if (payload.save && localRaw && JSON.stringify(payload.save) !== localRaw) {
+        originalSetItem.call(localStorage, DIRTY_KEY, '1');
+        hydrated = true;
+        await uploadNow();
+        return;
+      }
+      originalRemoveItem.call(localStorage, DIRTY_KEY);
+      dirtyAtBoot = false;
       hydrated = true;
       emit('saved', 'Прогресс синхронизирован');
     } catch (error) {
@@ -154,12 +200,21 @@
     }
   }
 
-  addEventListener('pagehide', function () {
+  function flushPendingSave() {
     if (uploadTimer) {
       clearTimeout(uploadTimer);
       uploadTimer = null;
-      uploadNow();
     }
+    if (localStorage.getItem(DIRTY_KEY) === '1') uploadNow();
+  }
+
+  addEventListener('pagehide', flushPendingSave);
+  addEventListener('freeze', flushPendingSave);
+  addEventListener('visibilitychange', function () {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') flushPendingSave();
+  });
+  addEventListener('online', function () {
+    if (localStorage.getItem(DIRTY_KEY) === '1') scheduleUpload(true);
   });
 
   window.AUTOFLIP_CLOUD_FLUSH = uploadNow;

@@ -107,6 +107,17 @@ test('condition application never rerolls a received car without a market previe
   g.random(.9);c.applyMarketConditionToOwned(c.state.car);c.garage();
   assert.equal(c.state.car.flipCondition.healthy,true);
 });
+test('unchecked acquisitions cannot stay healthy forever and finalize only once',()=>{
+  const g=game(),c=g.c;g.random(.2);
+  const acquired=[1,2,3].map(id=>car(id));
+  const outcomes=acquired.map(x=>c.finalizeAcquiredCondition(x));
+  assert.deepEqual(Array.from(outcomes,x=>x.healthy),[true,true,false]);
+  assert.equal(c.state.conditionLuck.total,3);
+  const third=JSON.stringify(outcomes[2]);
+  c.finalizeAcquiredCondition(acquired[2]);
+  assert.equal(JSON.stringify(outcomes[2]),third);
+  assert.equal(c.state.conditionLuck.total,3);
+});
 test('invalid seller input cannot corrupt the deal',()=>{
   const g=game(),c=g.c;seller(g);const before=JSON.stringify(c.state);
   g.input('Infinity');c.makeSellerTradeOffer();assert.equal(JSON.stringify(c.state),before);
@@ -220,6 +231,6 @@ test('old healthy status cannot hide a diagnosed fault; repair charges once and 
 
 test('startup loads dependencies explicitly before compatibility and condition overrides',()=>{
   const sources=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-  assert.deepEqual(sources,['cloud-save.js?v=20261008-4','world-data.js?v=20261006-1','script_base.js?v=20261008-8','car-catalog.js?v=20261006-4','v79_market.js','script.js?v=20261008-6','ui.js?v=20261008-3','plates.js?v=20261006-4','garage-system.js?v=20261006-1','world-system.js?v=20261007-6','negotiations-system.js?v=20261008-3','game-account.js?v=20261008-2','community.js?v=20261008-3']);
+  assert.deepEqual(sources,['cloud-save.js?v=20261009-1','world-data.js?v=20261006-1','script_base.js?v=20261008-8','car-catalog.js?v=20261006-4','v79_market.js','script.js?v=20261008-6','ui.js?v=20261008-3','plates.js?v=20261006-4','garage-system.js?v=20261006-1','world-system.js?v=20261007-6','negotiations-system.js?v=20261009-1','game-account.js?v=20261008-2','community.js?v=20261008-3']);
   assert.doesNotMatch(compatibility,/document\.write\(/);
 });

@@ -24,7 +24,12 @@ test('large saves are compressed in the browser before upload', () => {
   assert.doesNotMatch(client, /keepalive:\s*true/);
   assert.match(client, /lastUploadedRaw/);
   assert.match(client, /uploadInFlight/);
-  assert.match(client, /}, 5000\)/);
+  assert.match(client, /DIRTY_KEY = 'autoflip-cloud-dirty'/);
+  assert.match(client, /dirtyAtBoot = localStorage\.getItem\(DIRTY_KEY\) === '1'/);
+  assert.match(client, /MIN_UPLOAD_GAP = 12000/);
+  assert.match(client, /localStorage\.getItem\(SAVE_KEY\) === raw/);
+  assert.match(client, /visibilitychange/);
+  assert.match(client, /pagehide/);
   assert.match(server, /decodeUploadedSave/);
   assert.match(server, /body\?\.encoding !== "gzip-base64"/);
 });

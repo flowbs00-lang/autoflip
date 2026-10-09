@@ -43,7 +43,7 @@
 </div></section>
 </main>
 <footer>AutoFlip · Твой следующий ход · 2026 · <a href="photo-credits.html" target="_blank" rel="noopener">Авторы фотографий</a> · <a href="restoration-photo-credits.html" target="_blank" rel="noopener">Фото проектов</a></footer>
-<script src="cloud-save.js?v=20261008-4"></script>
+<script src="cloud-save.js?v=20261009-1"></script>
 <script src="world-data.js?v=20261006-1"></script>
 <script src="script_base.js?v=20261008-8"></script>
 <script src="car-catalog.js?v=20261006-4"></script>
@@ -429,7 +429,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     state.businessHistory=state.businessHistory.slice(0,30);
     state.cars=(state.cars||[]).filter(function(c){return ownedCarKey(c)!==d.ownKey;});
     var added=Object.assign({},d.target,{buy:Number(d.purchasePrice),repaired:false,repairSpent:0,listed:false,_garageId:'car-ex-'+Date.now()+'-'+Math.floor(Math.random()*999)});
-    if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(added);
+    if(typeof finalizeAcquiredCondition==='function')finalizeAcquiredCondition(added);
+    else if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(added);
     state.cars.push(added);state.car=added;state.deals=Number(state.deals||0)+1;
     if(typeof removePurchasedListing==='function')removePurchasedListing(d.targetListingId||d.target.listingId,d.target);
     log('Обмен: '+own.name+' зачтён за '+money(d.valuation)+', получен '+added.name+'. '+tradePurchaseCashText(d.purchasePrice,d.valuation)+'.');
@@ -803,7 +804,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(Array.isArray(state.cars))state.cars=state.cars.filter(v=>carKey(v)!==carKey(c));
     const received=Object.assign({},x.tradeCar,{buy:tradeValue,repaired:false,repairSpent:0,listed:false,_garageId:'car-trade-'+Date.now()+'-'+Math.floor(Math.random()*999)});
     if(!Array.isArray(state.cars))state.cars=[];
-    if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(received);
+    if(typeof finalizeAcquiredCondition==='function')finalizeAcquiredCondition(received);
+    else if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(received);
     state.cars.push(received);state.car=received;state.activeListings=listings().filter(v=>v.id!==x.listingId);state.activeListing=state.activeListings[0]||null;
     log('Обмен: '+c.name+' оценён в '+money(finalValue)+'. Получен '+received.name+' за '+money(tradeValue)+'. '+tradeSaleCashText(finalValue,tradeValue)+'.');
     saveLife();
@@ -862,8 +864,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
   function rubles(n){return Math.max(1,Math.floor(Number(n||0)));}
   function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
-  function faultRoll(){
-    if(Math.random()<.60)return null;
+  function faultRoll(forceFault){
+    if(!forceFault&&Math.random()<.60)return null;
     var total=faultTiers.reduce(function(sum,x){return sum+x.weight;},0),r=Math.random()*total;
     for(var i=0;i<faultTiers.length;i++){
       r-=faultTiers[i].weight;
@@ -967,6 +969,33 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     }:null;
     car.flipConditionVersion=CONDITION_VERSION;
     return car.flipCondition;
+  };
+
+  // Finalize the hidden outcome exactly once when a car actually enters the garage.
+  // Two healthy unchecked acquisitions in a row activate bad-luck protection:
+  // the next unchecked car is guaranteed to need repair.
+  window.finalizeAcquiredCondition=function(car){
+    if(!car)return null;
+    if(car.acquisitionConditionFinalized&&car.flipCondition)return car.flipCondition;
+    if(!state.conditionLuck||typeof state.conditionLuck!=='object')state.conditionLuck={healthyStreak:0,total:0};
+    var luck=state.conditionLuck,diagnosed=!!car.prePurchaseDiagnostic;
+    var forceFault=!diagnosed&&Number(luck.healthyStreak||0)>=2;
+    if(forceFault&&(!car.marketFlipCondition||car.marketFlipCondition.healthy)){
+      var healthyMarket=Math.max(10000,rubles(car.marketHealthyValue||car.market||car.sale||car.price||car.buy||50000));
+      var forced=faultRoll(true);
+      car.marketHealthyValue=healthyMarket;
+      car.marketFlipCondition={healthy:false,name:forced.name,loss:forced.loss,cost:rubles(healthyMarket*forced.loss),healthyMarket:healthyMarket};
+      car.marketConditionVersion=CONDITION_VERSION;
+      car.flipConditionVersion=0;
+      delete car.flipCondition;
+    }
+    var issue=applyMarketConditionToOwned(car);
+    car.acquisitionConditionFinalized=true;
+    if(issue&&!issue.healthy)issue.discovered=true;
+    car.diagnosed=true;
+    luck.total=Number(luck.total||0)+1;
+    luck.healthyStreak=issue&&issue.healthy?Number(luck.healthyStreak||0)+1:0;
+    return issue;
   };
 
   window.standardDiagnosticCost=function(car){
@@ -1109,9 +1138,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
         if(!state.cars.some(function(x){return x===car||x._garageId===car._garageId;}))state.cars.push(car);
         state.car=car;
         if(car.listingId&&typeof removePurchasedListing==='function')removePurchasedListing(car.listingId,car);
-        applyMarketConditionToOwned(car);
-        if(car.flipCondition&&!car.flipCondition.healthy)car.flipCondition.discovered=true;
-        car.diagnosed=true;
+        finalizeAcquiredCondition(car);
         objective.textContent=car.flipCondition&&car.flipCondition.healthy?'Автомобиль исправен':'Обнаружена поломка';
         objectiveSub.textContent=car.flipCondition&&car.flipCondition.healthy?'Ремонт не требуется.':(car.flipCondition.name+' · ремонт '+money(car.flipCondition.cost)+'.');
         if(typeof persist==='function')persist();else if(typeof save==='function')save();
@@ -1132,9 +1159,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     var wrapped=function(){
       var before=state.car,result=original.apply(this,arguments),car=state.car;
       if(car&&car!==before){
-        applyMarketConditionToOwned(car);
-        if(car.flipCondition&&!car.flipCondition.healthy)car.flipCondition.discovered=true;
-        car.diagnosed=true;
+        finalizeAcquiredCondition(car);
         if(typeof persist==='function')persist();else if(typeof save==='function')save();
       }
       return result;
@@ -1842,7 +1867,7 @@ if(typeof window.autoBankHome==='function'){
 <script src="plates.js?v=20261006-4"></script>
 <script src="garage-system.js?v=20261006-1"></script>
 <script src="world-system.js?v=20261007-6"></script>
-<script src="negotiations-system.js?v=20261008-3"></script>
+<script src="negotiations-system.js?v=20261009-1"></script>
 <script src="game-account.js?v=20261008-2"></script>
 <script src="community.js?v=20261008-3"></script>
 </body>

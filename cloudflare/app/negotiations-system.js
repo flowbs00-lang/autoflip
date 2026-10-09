@@ -160,7 +160,7 @@
   window.completeMeeting=function(id){
     var m=meetingById(id);if(!m||!isReady(m))return openMeeting(id);var beforeCars=(state.cars||[]).slice();
     if(m.kind==='seller_purchase'){
-      var snapshot=Object.assign({},m.payload&&m.payload.car||{}),idx=makes.findIndex(function(c){return c.listingId===m.sourceId;});if(idx<0)idx=Number(m.carId);snapshot.id=idx;makes[idx]=snapshot;rawBuy(idx,m.price);
+      var snapshot=Object.assign({},m.payload&&m.payload.car||{}),idx=makes.findIndex(function(c){return c.listingId===m.sourceId;});if(idx<0)idx=Number(m.carId);snapshot.id=idx;makes[idx]=snapshot;rawBuy(idx,m.price);var purchasedCar=(state.cars||[]).find(function(c){return beforeCars.indexOf(c)<0;});if(!purchasedCar)return openMeeting(id);if(typeof finalizeAcquiredCondition==='function')finalizeAcquiredCondition(purchasedCar);
     }else if(m.kind==='seller_trade'){
       if(typeof window.restoreSellerTradeDeal==='function')window.restoreSellerTradeDeal(m.payload&&m.payload.tradeDeal);rawSellerTrade();
     }else if(m.kind==='buyer_trade'){var tradeBuyer=findBuyer(m.sourceId);if(tradeBuyer)tradeBuyer.status='accepted';rawBuyerTrade(m.sourceId,m.price);}
