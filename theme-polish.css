@@ -209,6 +209,27 @@
 #screen .app :is(.trade-context-title,.community-kicker,.community-message-name,.community-rank-score){color:var(--os-accent)!important}
 #screen .app .trade-swap-arrow{background:var(--os-raised);border-color:var(--os-line);color:var(--os-text)}
 
+/* Store — explicit semantic colors prevent dark-on-dark and light-on-light text. */
+:root{--store-accent-text:#86e9c3}
+:root[data-theme=light]{--store-accent-text:#126b4d}
+#screen .app.store-app :is(.store-group-title h2,.store-product h3,.store-checkout h2,.store-history-head h2,.store-history b,.store-security b,.store-email){color:var(--os-text)!important}
+#screen .app.store-app :is(.store-group-title small,.store-checkout>small,.store-history-head small){color:var(--store-accent-text)!important}
+#screen .app.store-app :is(.store-product,.store-security,.store-pay-note,.store-notice,.store-loading,.store-history>div){background:var(--os-surface)!important;border-color:var(--os-line)!important;color:var(--os-text)!important}
+#screen .app.store-app :is(.store-product>div>small,.store-product p,.store-security p,.store-pay-note,.store-checkout p,.store-history small,.store-notice,.store-loading){color:var(--os-muted)!important}
+#screen .app.store-app .store-product>span,#screen .app.store-app .store-checkout>span{background:color-mix(in srgb,var(--os-accent) 18%,var(--os-raised));color:var(--store-accent-text)}
+#screen .app.store-app .store-product>button{background:var(--os-accent);color:var(--os-accent-ink)}
+#screen .app.store-app .store-product>button :is(b,small){color:inherit!important}
+#screen .app.store-app .store-product>button:disabled{background:var(--os-elevated);color:var(--os-faint);opacity:1}
+#screen .app.store-app .store-hero :is(h2,p,small){color:inherit!important}
+#screen .app.store-app .store-hero small{color:#86e9c3!important}
+#screen .app.store-app .store-hero p{color:#c8d2e1!important}
+#screen .app.store-app .store-boost-active :is(b,small){color:inherit!important}
+#screen .app.store-app .store-boost-active small{color:#aee8d2!important}
+#screen .app.store-app .store-checkout strong{color:var(--store-accent-text)}
+#screen .app.store-app .store-plate-builder{background:#f5f5f1!important;border-color:#b6b6b0!important;color:#161616!important}
+#screen .app.store-app .store-plate-builder label{color:#161616!important}
+#screen .app.store-app .store-plate-builder :is(input,select){background:#fff!important;border-color:#9a9a94!important;color:#111!important}
+
 /* Games intentionally stay cinematic dark in both themes, now with readable type. */
 #screen .games-app{background:#090d13;color:#f2f5f8}
 #screen .games-app .os-head b,#screen .games-app .os-status{color:#f2f5f8}

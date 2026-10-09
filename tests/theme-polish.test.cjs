@@ -8,8 +8,8 @@ const css=fs.readFileSync(path.join(__dirname,'../theme-polish.css'),'utf8');
 
 test('final theme layer loads after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(links.at(-1),'theme-polish.css?v=20261008-5');
-  assert.ok(links.indexOf('theme-polish.css?v=20261008-5')>links.indexOf('community.css?v=20261008-2'));
+  assert.equal(links.at(-1),'theme-polish.css?v=20261010-1');
+  assert.ok(links.indexOf('theme-polish.css?v=20261010-1')>links.indexOf('community.css?v=20261008-2'));
 });
 
 test('dark feature cards keep light text when the OS theme is light',()=>{
@@ -32,4 +32,13 @@ test('both themes define complete readable semantic palettes',()=>{
   assert.match(css,/\.games-app/);
   assert.match(css,/\.plates-app/);
   assert.match(css,/\.meeting-app/);
+});
+
+test('store uses explicit readable colors in both themes',()=>{
+  assert.match(css,/:root\{--store-accent-text:#86e9c3\}/);
+  assert.match(css,/:root\[data-theme=light\]\{--store-accent-text:#126b4d\}/);
+  assert.match(css,/\.app\.store-app :is\(\.store-group-title h2,[^}]+color:var\(--os-text\)!important/);
+  assert.match(css,/\.app\.store-app :is\(\.store-product,[^}]+background:var\(--os-surface\)!important/);
+  assert.match(css,/\.app\.store-app \.store-hero :is\(h2,p,small\)\{color:inherit!important\}/);
+  assert.match(css,/\.app\.store-app \.store-product>button:disabled\{background:var\(--os-elevated\);color:var\(--os-faint\);opacity:1\}/);
 });
