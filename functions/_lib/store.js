@@ -21,14 +21,31 @@ const INTERNAL_PRODUCTS = Object.freeze({
     category: "internal",
     price: 0,
     grant: { type: "bundle", money: 5_000_000, garageLevel: 10 }
+  },
+  account_owner_recovery: {
+    code: "account_owner_recovery",
+    title: "Исправление персональной награды",
+    description: "Гарантирует 5 000 000 ₽ и гараж 10 уровня",
+    category: "internal",
+    price: 0,
+    grant: { type: "bundle_floor", money: 5_000_000, garageLevel: 10 }
   }
 });
 
 const OWNER_GRANT = Object.freeze({
   userId: "AF-VH8KEHQ3GRCC",
-  orderId: "grant-AF-VH8KEHQ3GRCC-5m-garage10",
-  clientToken: "account-grant-AF-VH8KEHQ3GRCC-v1",
-  productCode: "account_owner_bundle"
+  grants: Object.freeze([
+    Object.freeze({
+      orderId: "grant-AF-VH8KEHQ3GRCC-5m-garage10",
+      clientToken: "account-grant-AF-VH8KEHQ3GRCC-v1",
+      productCode: "account_owner_bundle"
+    }),
+    Object.freeze({
+      orderId: "grant-AF-VH8KEHQ3GRCC-recovery-v2",
+      clientToken: "account-grant-AF-VH8KEHQ3GRCC-v2",
+      productCode: "account_owner_recovery"
+    })
+  ])
 });
 
 const LETTERS = "АВЕКМНОРСТУХ";
@@ -75,14 +92,13 @@ export function productByCode(code) {
   return STORE_PRODUCTS[key] || INTERNAL_PRODUCTS[key] || null;
 }
 
-async function ensurePersonalAccountGrant(db, userId) {
+export async function ensurePersonalAccountGrant(db, userId) {
   if (userId !== OWNER_GRANT.userId) return;
   const now = Date.now();
-  await db.prepare(`INSERT OR IGNORE INTO store_orders
-    (id, client_token, user_id, product_code, amount_rub, custom_payload, status, created_at, paid_at, updated_at)
-    VALUES (?, ?, ?, ?, 0, '{}', 'paid', ?, ?, ?)`)
-    .bind(OWNER_GRANT.orderId, OWNER_GRANT.clientToken, userId, OWNER_GRANT.productCode, now, now, now)
-    .run();
+  await db.batch(OWNER_GRANT.grants.map((grant) => db.prepare(`INSERT OR IGNORE INTO store_orders
+      (id, client_token, user_id, product_code, amount_rub, custom_payload, status, created_at, paid_at, updated_at)
+      VALUES (?, ?, ?, ?, 0, '{}', 'paid', ?, ?, ?)`)
+    .bind(grant.orderId, grant.clientToken, userId, grant.productCode, now, now, now)));
 }
 
 export function validateCustomPlate(value) {
@@ -140,6 +156,12 @@ export function applyStoreOrder(state, order) {
   }
   if (grant.type === "bundle") {
     state.money = Number(state.money || 0) + Number(grant.money || 0);
+    if (!state.garageProgress || typeof state.garageProgress !== "object") state.garageProgress = {};
+    state.garageProgress.level = Math.max(Number(state.garageProgress.level || state.garageLevel || 1), Number(grant.garageLevel || 1));
+    state.garageLevel = state.garageProgress.level;
+  }
+  if (grant.type === "bundle_floor") {
+    state.money = Math.max(Number(state.money || 0), Number(grant.money || 0));
     if (!state.garageProgress || typeof state.garageProgress !== "object") state.garageProgress = {};
     state.garageProgress.level = Math.max(Number(state.garageProgress.level || state.garageLevel || 1), Number(grant.garageLevel || 1));
     state.garageLevel = state.garageProgress.level;

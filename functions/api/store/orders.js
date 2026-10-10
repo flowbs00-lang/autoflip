@@ -1,6 +1,6 @@
 import { handleError, json, methodNotAllowed, RequestError } from "../../_lib/http.js";
 import { getSession } from "../../_lib/session.js";
-import { ensureStoreSchema, productByCode, reconcileOrderPayment } from "../../_lib/store.js";
+import { ensurePersonalAccountGrant, ensureStoreSchema, productByCode, reconcileOrderPayment } from "../../_lib/store.js";
 
 function publicOrder(order) {
   const product = productByCode(order.product_code);
@@ -22,6 +22,7 @@ export async function onRequestGet(context) {
     const session = await getSession(context.env.DB, context.request);
     if (!session?.nickname) throw new RequestError("authentication_required", 401);
     await ensureStoreSchema(context.env.DB);
+    await ensurePersonalAccountGrant(context.env.DB, session.id);
     const orderId = new URL(context.request.url).searchParams.get("order");
     if (orderId) {
       let order = await context.env.DB.prepare("SELECT * FROM store_orders WHERE id = ? AND user_id = ? LIMIT 1").bind(orderId, session.id).first();

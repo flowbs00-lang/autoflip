@@ -35,7 +35,7 @@ test('paid grants are idempotent for money, boosts and garage levels',async()=>{
 });
 
 test('personal owner grant is hidden, account-bound and idempotent',async()=>{
-  const source=read('functions/_lib/store.js');
+  const source=read('functions/_lib/store.js'),orders=read('functions/api/store/orders.js');
   const {applyStoreOrder,publicCatalog}=await store();
   assert.match(source,/userId: "AF-VH8KEHQ3GRCC"/);
   assert.match(source,/if \(userId !== OWNER_GRANT\.userId\) return/);
@@ -47,6 +47,13 @@ test('personal owner grant is hidden, account-bound and idempotent',async()=>{
   assert.equal(state.money,5150000);
   assert.equal(state.garageLevel,10);
   assert.equal(state.garageProgress.level,10);
+  const recovery={id:'grant-AF-VH8KEHQ3GRCC-recovery-v2',product_code:'account_owner_recovery',custom_payload:'{}',paid_at:2};
+  const recovered={money:120000,garageLevel:3,garageProgress:{level:3}};
+  assert.equal(applyStoreOrder(recovered,recovery),true);
+  assert.equal(applyStoreOrder(recovered,recovery),false);
+  assert.equal(recovered.money,5000000);
+  assert.equal(recovered.garageLevel,10);
+  assert.match(orders,/ensurePersonalAccountGrant\(context\.env\.DB, session\.id\)/);
 });
 
 test('custom and premium plates are validated, uppercase and added once',async()=>{
@@ -80,5 +87,5 @@ test('shop is visible on the phone and fast buyers halve the generated delay',()
   const ui=read('ui.js'),html=read('index.html');
   assert.match(ui,/openStore','Магазин','shop'/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
-  assert.match(html,/store\.js\?v=20261011-1/);assert.match(html,/store\.css\?v=20261010-1/);
+  assert.match(html,/store\.js\?v=20261011-2/);assert.match(html,/store\.css\?v=20261010-1/);
 });
