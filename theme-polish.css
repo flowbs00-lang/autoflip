@@ -261,6 +261,27 @@
 #screen .games-app .game-tile small{font-size:6.5px}
 #screen .games-app .games-section-title span{font-size:9px}
 
+/* Save safety center. */
+#screen .save-center .save-cloud-card{display:flex;align-items:center;gap:13px;margin:10px 0 12px;padding:16px;border:1px solid var(--os-line);border-radius:18px;background:var(--os-surface);color:var(--os-text);box-shadow:var(--os-shadow)}
+#screen .save-center .save-cloud-card>span{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:14px;background:color-mix(in srgb,var(--os-accent) 18%,transparent);color:var(--os-accent);font-size:21px}
+#screen .save-center .save-cloud-card h3{margin:2px 0;color:var(--os-text);font-size:12px}
+#screen .save-center .save-cloud-card :is(small,p){margin:0;color:var(--os-muted);line-height:1.35}
+#screen .save-center .save-cloud-card.saved{border-color:color-mix(in srgb,#20b879 45%,var(--os-line))}
+#screen .save-center .save-cloud-card.offline{border-color:color-mix(in srgb,#ee9b32 55%,var(--os-line))}
+#screen .save-center .save-safety-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+#screen .save-center .save-safety-grid>div{min-width:0;padding:11px 8px;border:1px solid var(--os-line);border-radius:14px;background:var(--os-surface);text-align:center}
+#screen .save-center .save-safety-grid small{display:block;color:var(--os-muted);font-size:6.5px;letter-spacing:.08em}
+#screen .save-center .save-safety-grid b{display:block;margin-top:4px;color:var(--os-text);font-size:10px;overflow:hidden;text-overflow:ellipsis}
+#screen .save-center .save-log-title{margin:18px 2px 8px;color:var(--os-text);font-size:11px}
+#screen .save-center .save-operation-list{display:grid;gap:7px}
+#screen .save-center .save-operation{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:9px;padding:10px;border:1px solid var(--os-line);border-radius:14px;background:var(--os-surface);color:var(--os-text)}
+#screen .save-center .save-operation>span{display:grid;place-items:center;height:32px;border-radius:10px;background:var(--os-elevated)}
+#screen .save-center .save-operation div{min-width:0}
+#screen .save-center .save-operation :is(b,small){display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#screen .save-center .save-operation b{color:var(--os-text);font-size:8px}
+#screen .save-center .save-operation small{margin-top:2px;color:var(--os-muted);font-size:6.7px}
+#screen .save-center .save-operation strong{color:var(--os-text);font-size:8px;white-space:nowrap}
+
 @media(max-width:460px){
   #screen .auto-market-refresh-line{align-items:flex-start;flex-direction:column;gap:6px}
   #screen .garage-scene{margin-left:-15px;margin-right:-15px}

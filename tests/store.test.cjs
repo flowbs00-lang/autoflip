@@ -65,5 +65,5 @@ test('shop is visible on the phone and fast buyers halve the generated delay',()
   const ui=read('ui.js'),html=read('index.html');
   assert.match(ui,/openStore','Магазин','shop'/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
-  assert.match(html,/store\.js\?v=20261010-2/);assert.match(html,/store\.css\?v=20261010-1/);
+  assert.match(html,/store\.js\?v=20261010-3/);assert.match(html,/store\.css\?v=20261010-1/);
 });

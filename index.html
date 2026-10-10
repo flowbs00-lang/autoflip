@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="community.css?v=20261008-2">
 <link rel="stylesheet" href="community-profile.css?v=20261008-1">
 <link rel="stylesheet" href="store.css?v=20261010-1">
-<link rel="stylesheet" href="theme-polish.css?v=20261010-1">
+<link rel="stylesheet" href="theme-polish.css?v=20261010-2">
 </head>
 <body>
 <header>
@@ -44,9 +44,9 @@
 </div></section>
 </main>
 <footer>AutoFlip · Твой следующий ход · 2026 · <a href="photo-credits.html" target="_blank" rel="noopener">Авторы фотографий</a> · <a href="restoration-photo-credits.html" target="_blank" rel="noopener">Фото проектов</a></footer>
-<script src="cloud-save.js?v=20261009-1"></script>
+<script src="cloud-save.js?v=20261010-2"></script>
 <script src="world-data.js?v=20261006-1"></script>
-<script src="script_base.js?v=20261010-1"></script>
+<script src="script_base.js?v=20261010-2"></script>
 <script src="car-catalog.js?v=20261006-4"></script>
 <script src="v79_market.js"></script>
 <script src="script.js?v=20261010-1"></script>
@@ -135,8 +135,8 @@ function buildDiagnostics(c){const key=diagnosticLabels[c.risk]||c.risk,seed=c.i
 function statusIcon(x){return x==='good'?'🟢':x==='warning'?'🟠':'🔴'}
 function diagnose(){const c=state.car;if(!c)return garage();if(state.money<5000)return alert('Для полной диагностики нужно 5 000 ₽.');state.money-=5000;c.diagnosed=true;c.diagnosticCost=5000;c.diagnostics=buildDiagnostics(c);c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);const bad=c.diagnostics.filter(x=>x.status!=='good').length;objective.textContent='Диагностика завершена';objectiveSub.textContent=bad?`Найдено проблем: ${bad}. Решай, во что вкладываться.`:'Автомобиль в хорошем состоянии.';log(`Полная диагностика ${c.name}: найдено проблем — ${bad}. Стоимость диагностики 5 000 ₽.`);garageDetails();}
 function service(){const c=state.car;if(!c){render(`<div class="app">${head('СТО')}<div class="note"><b>Нет автомобиля</b><p class="muted">Сначала купи машину, затем приезжай на СТО.</p></div><button class="action green" onclick="market()">🚗 Найти автомобиль</button></div>`);return;}if(!c.diagnosed){render(`<div class="app">${head('СТО')}<div class="note"><small>ПОЛНАЯ ДИАГНОСТИКА</small><h3>${c.name}</h3><p class="muted">Проверим двигатель, коробку, подвеску, тормоза, электрику, кузов и жидкости.</p><div class="hero-line"><span>Стоимость</span><strong>5 000 ₽</strong></div></div><button class="action orange" onclick="diagnose()">🔍 Провести диагностику</button><button class="action" onclick="garage()">‹ В гараж</button></div>`);return;}garageDetails();}
-function repairPart(index){const c=state.car;if(!c||!c.diagnosed||!c.diagnostics)return garageDetails();const d=c.diagnostics[index];if(!d||d.status==='good')return garageDetails();if(d.repaired)return alert('Этот узел уже отремонтирован.');if(state.money<d.cost)return alert(`Не хватает ${money(d.cost-state.money)} на этот ремонт.`);state.money-=d.cost;d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88);c.repairSpent=(c.repairSpent||0)+d.cost;c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);if(c.diagnostics.every(x=>x.status==='good')){c.repaired=true;c.condition=100;}log(`СТО: ${c.name} — отремонтировано: ${d.name}. Стоимость ${money(d.cost)}.`);garageDetails();}
-function repairAll(){const c=state.car;if(!c||!c.diagnosed)return garageDetails();const pending=c.diagnostics.filter(x=>x.status!=='good'&&!x.repaired),total=pending.reduce((sum,x)=>sum+x.cost,0);if(!pending.length)return alert('Все обнаруженные проблемы уже устранены.');if(state.money<total)return alert(`На полный ремонт не хватает ${money(total-state.money)}.`);state.money-=total;pending.forEach(d=>{d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88)});c.repairSpent=(c.repairSpent||0)+total;c.totalRepair=0;c.repaired=true;c.condition=100;log(`СТО: ${c.name} полностью отремонтирован. Потрачено ${money(total)}.`);garageDetails();}
+function repairPart(index){const c=state.car;if(!c||!c.diagnosed||!c.diagnostics)return garageDetails();const d=c.diagnostics[index];if(!d||d.status==='good')return garageDetails();if(d.repaired)return alert('Этот узел уже отремонтирован.');if(state.money<d.cost)return alert(`Не хватает ${money(d.cost-state.money)} на этот ремонт.`);if(typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед ремонтом автомобиля',{car:c.name,repair:d.name,amount:d.cost});state.money-=d.cost;d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88);c.repairSpent=(c.repairSpent||0)+d.cost;c.totalRepair=c.diagnostics.filter(x=>x.status!=='good').reduce((sum,x)=>sum+x.cost,0);if(c.diagnostics.every(x=>x.status==='good')){c.repaired=true;c.condition=100;}if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('repair',{car:c.name,amount:d.cost,text:d.name},true);log(`СТО: ${c.name} — отремонтировано: ${d.name}. Стоимость ${money(d.cost)}.`);garageDetails();}
+function repairAll(){const c=state.car;if(!c||!c.diagnosed)return garageDetails();const pending=c.diagnostics.filter(x=>x.status!=='good'&&!x.repaired),total=pending.reduce((sum,x)=>sum+x.cost,0);if(!pending.length)return alert('Все обнаруженные проблемы уже устранены.');if(state.money<total)return alert(`На полный ремонт не хватает ${money(total-state.money)}.`);if(typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед полным ремонтом автомобиля',{car:c.name,amount:total});state.money-=total;pending.forEach(d=>{d.repaired=true;d.status='good';d.wear=Math.max(d.wear,88)});c.repairSpent=(c.repairSpent||0)+total;c.totalRepair=0;c.repaired=true;c.condition=100;if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('repair',{car:c.name,amount:total,text:'Полный ремонт'},true);log(`СТО: ${c.name} полностью отремонтирован. Потрачено ${money(total)}.`);garageDetails();}
 function garageDetails(){const c=state.car;if(!c)return garage();const current=c.repaired?Math.round(c.market*1.02):c.market;const profit=Math.round(current-c.buy-(c.repaired?0:(c.totalRepair||c.repair)));const diagnostics=c.diagnostics||[];const diagHtml=c.diagnosed?`<div class="note"><small>РЕЗУЛЬТАТ ДИАГНОСТИКИ</small><div class="hero-line"><span>Диагностика</span><strong>${money(c.diagnosticCost||5000)}</strong></div><div class="hero-line"><span>Ремонт ориентировочно</span><strong>${money(c.totalRepair||0)}</strong></div>${diagnostics.map((d,i)=>`<div class="hero-line"><span>${statusIcon(d.status)} ${d.name} <small>${d.wear}%</small></span><strong>${d.status==='good'?'Норма':money(d.cost)}</strong></div>${d.status!=='good'?`<button class="action" onclick="repairPart(${i})">🔧 Отремонтировать за ${money(d.cost)}</button>`:''}`).join('')}</div>`:`<div class="warning">⚠ Диагностика ещё не проведена. Часть проблем скрыта.</div>`;render(`<div class="app">${head('Автомобиль')}<div class="pic" style="background-image:linear-gradient(#0002,#0008),url('${photo(c)}')">🚘</div><h3>${c.name}</h3><div class="deal-score"><span>ПОКУПКА<b>${money(c.buy)}</b></span><span>РЫНОК<b>${money(current)}</b></span><span>РАЗНИЦА<b class="profit">${money(profit)}</b></span></div>${diagHtml}${c.repaired?'<div class="warning">✅ Все обнаруженные проблемы устранены. Автомобиль готов к продаже.</div>':''}${c.diagnosed&&!c.repaired&&(c.totalRepair||0)>0?`<button class="action orange" onclick="repairAll()">🛠️ Отремонтировать всё за ${money(c.totalRepair)}</button>`:''}<button class="action" onclick="garage()">‹ В гараж</button></div>`);}
 </script>
 <script>
@@ -423,6 +423,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(!Number.isFinite(d.purchasePrice)||d.purchasePrice<10000||!Number.isFinite(d.valuation)||d.valuation<10000||d.valuation>d.maxValue)return alert('Условия обмена недействительны.');
     var cash=Number(d.purchasePrice)-Number(d.valuation);
     if(cash>0&&Number(state.money||0)<cash)return alert('Не хватает '+money(cash-Number(state.money||0))+' для доплаты.');
+    if(typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед обменом автомобиля',{car:own.name,target:d.target&&d.target.name});
     state.money=Number(state.money||0)-cash;
     var repairSpent=Number(own.repairSpent||0),tradeProfit=Number(d.valuation)-Number(own.buy||0)-repairSpent;
     if(!Array.isArray(state.businessHistory))state.businessHistory=[];
@@ -435,6 +436,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     state.cars.push(added);state.car=added;state.deals=Number(state.deals||0)+1;
     if(typeof removePurchasedListing==='function')removePurchasedListing(d.targetListingId||d.target.listingId,d.target);
     log('Обмен: '+own.name+' зачтён за '+money(d.valuation)+', получен '+added.name+'. '+tradePurchaseCashText(d.purchasePrice,d.valuation)+'.');
+    if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('exchange',{car:own.name+' → '+added.name,amount:Number(d.purchasePrice),result:-cash,text:tradePurchaseCashText(d.purchasePrice,d.valuation)},true);
     if(typeof persist==='function')persist();else save();
     purchaseTradeDeal=null;
     render('<div class="app">'+head('Обмен завершён')+
@@ -748,6 +750,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     const x=(state.buyerInbox||[]).find(v=>v.id===id),l=x&&listingById(x.listingId),c=listingCar(l);if(l)state.activeListing=l;
     if(!activeBuyer(x)||!c||x.trade||x.status!=='accepted'||Number(price)!==Number(x.offer)||!Number.isFinite(Number(price))||Number(price)<10000)return messages();
     const finalPrice=round1000(price),repairSpent=Number(c.repairSpent||0),profit=finalPrice-Number(c.buy||0)-repairSpent;
+    if(typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед продажей автомобиля',{car:c.name,amount:finalPrice});
     const beforeRep=Number(state.rep||0),invested=Math.max(1,Number(c.buy||0)+repairSpent),margin=profit/invested;
     let delta=0,streakBonus=0;
     if(profit<0){delta=-6;state.profitStreak=0;}
@@ -773,6 +776,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(state.car===c)state.car=(state.cars&&state.cars[0])||null;
     state.activeListings=listings().filter(v=>v.id!==x.listingId);state.activeListing=state.activeListings[0]||null;
     log('Продан '+c.name+' за '+money(finalPrice)+'. Прибыль '+money(profit)+'.');
+    if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('sale',{car:c.name,amount:finalPrice,result:profit},true);
     saveLife();
     render('<div class="app">'+head('Сделка завершена')+'<div class="note"><h3>🎉 '+c.name+' продан</h3><div class="hero-line"><span>Цена продажи</span><strong>'+money(finalPrice)+'</strong></div><div class="hero-line"><span>Покупка + ремонт</span><strong>'+money(Number(c.buy||0)+repairSpent)+'</strong></div><div class="hero-line"><span>Результат</span><strong class="profit">'+(profit>=0?'+':'')+money(profit)+'</strong></div><div class="hero-line"><span>Репутация</span><strong>'+(delta>=0?'+':'')+delta+'</strong></div></div><button class="action green" onclick="market()">🚗 Искать следующий автомобиль</button><button class="action" onclick="home()">📱 На главный экран</button></div>');
   };
@@ -783,6 +787,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(!Number.isFinite(Number(dealValue))||Number(dealValue)<10000||!Number.isFinite(Number(x.tradeValue))||Number(x.tradeValue)<10000)return alert('Условия обмена недействительны.');
     const finalValue=round1000(dealValue),tradeValue=round1000(x.tradeValue),cash=finalValue-tradeValue;
     if(cash<0&&Number(state.money||0)<Math.abs(cash))return alert('Для обмена нужно доплатить '+money(Math.abs(cash))+'. На руках недостаточно денег.');
+    if(typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед обменом автомобиля',{car:c.name,target:x.tradeCar.name});
     const repairSpent=Number(c.repairSpent||0),profit=finalValue-Number(c.buy||0)-repairSpent;
     const beforeRep=Number(state.rep||0),invested=Math.max(1,Number(c.buy||0)+repairSpent),margin=profit/invested;
     let delta=0,streakBonus=0;
@@ -813,6 +818,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     else if(typeof applyMarketConditionToOwned==='function')applyMarketConditionToOwned(received);
     state.cars.push(received);state.car=received;state.activeListings=listings().filter(v=>v.id!==x.listingId);state.activeListing=state.activeListings[0]||null;
     log('Обмен: '+c.name+' оценён в '+money(finalValue)+'. Получен '+received.name+' за '+money(tradeValue)+'. '+tradeSaleCashText(finalValue,tradeValue)+'.');
+    if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('exchange',{car:c.name+' → '+received.name,amount:finalValue,result:cash,text:tradeSaleCashText(finalValue,tradeValue)},true);
     saveLife();
     render('<div class="app">'+head('Обмен завершён')+
       tradeCarCardHtml(received,tradeValue,'ТЕПЕРЬ ТВОЯ')+
@@ -1055,6 +1061,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(!issue.discovered)return alert('Сначала нужно обнаружить поломку диагностикой.');
     if(issue.repaired)return alert('Эта поломка уже устранена.');
     if(Number(state.money||0)<Number(issue.cost||0))return alert('Не хватает '+money(Number(issue.cost||0)-Number(state.money||0))+' на ремонт.');
+    if(typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед ремонтом автомобиля',{car:c.name,repair:issue.name,amount:Number(issue.cost||0)});
     state.money=Number(state.money||0)-Number(issue.cost||0);
     c.repairSpent=Number(c.repairSpent||0)+Number(issue.cost||0);
     issue.repaired=true;
@@ -1064,6 +1071,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     objective.textContent='Автомобиль восстановлен';
     objectiveSub.textContent=issue.name+' устранена. Рыночная стоимость восстановлена.';
     log('Ремонт '+c.name+': '+issue.name+' — '+money(issue.cost)+'. Рыночная стоимость восстановлена до '+money(c.market)+'.');
+    if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('repair',{car:c.name,amount:Number(issue.cost||0),text:issue.name},true);
     if(typeof persist==='function')persist();else if(typeof save==='function')save();
     garageDetails();
   };
@@ -1136,7 +1144,9 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   var previousBuy=window.buy;
   if(typeof previousBuy==='function'&&!previousBuy.__conditionV2){
     var buyV2=function(){
-      var before=state.car,result=previousBuy.apply(this,arguments),car=state.car;
+      var candidate=makes&&makes[arguments[0]],before=state.car;
+      if(candidate&&typeof AUTOFLIP_CHECKPOINT==='function')AUTOFLIP_CHECKPOINT('Перед покупкой автомобиля',{car:candidate.name,amount:Number(arguments[1]||0)});
+      var result=previousBuy.apply(this,arguments),car=state.car;
       if(car&&car!==before){
         if(!Array.isArray(state.cars))state.cars=[];
         if(!car._garageId)car._garageId='car-buy-'+Date.now()+'-'+Math.floor(Math.random()*999);
@@ -1146,6 +1156,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
         finalizeAcquiredCondition(car);
         objective.textContent=car.flipCondition&&car.flipCondition.healthy?'Автомобиль исправен':'Обнаружена поломка';
         objectiveSub.textContent=car.flipCondition&&car.flipCondition.healthy?'Ремонт не требуется.':(car.flipCondition.name+' · ремонт '+money(car.flipCondition.cost)+'.');
+        if(typeof AUTOFLIP_RECORD_OPERATION==='function')AUTOFLIP_RECORD_OPERATION('purchase',{car:car.name,amount:Number(car.buy||arguments[1]||0)},true);
         if(typeof persist==='function')persist();else if(typeof save==='function')save();
         var ownedIndex=state.cars.indexOf(car);
         if(ownedIndex<0)ownedIndex=state.cars.findIndex(function(x){return x&&x._garageId===car._garageId;});
@@ -1868,13 +1879,13 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261010-1"></script>
+<script src="ui.js?v=20261010-2"></script>
 <script src="plates.js?v=20261010-2"></script>
 <script src="garage-system.js?v=20261010-2"></script>
 <script src="world-system.js?v=20261007-6"></script>
 <script src="negotiations-system.js?v=20261010-1"></script>
-<script src="game-account.js?v=20261008-2"></script>
+<script src="game-account.js?v=20261010-1"></script>
 <script src="community.js?v=20261010-1"></script>
-<script src="store.js?v=20261010-2"></script>
+<script src="store.js?v=20261010-3"></script>
 </body>
 </html>

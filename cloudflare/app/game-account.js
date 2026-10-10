@@ -17,13 +17,17 @@
 
   function applyCloud(detail) {
     detail = detail || {};
-    if (detail.status === 'syncing') setSync('Сохраняем…', 'syncing');
-    else if (detail.status === 'saved') setSync('В облаке', 'saved');
+    var savedTime = detail.savedAt ? new Date(Number(detail.savedAt)).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
+    if (detail.status === 'syncing') setSync('Сохраняем в облако…', 'syncing');
+    else if (detail.status === 'pending') setSync('На устройстве · ждёт облака', 'pending');
+    else if (detail.status === 'saved') setSync('Сохранено в облаке' + (savedTime ? ' · ' + savedTime : ''), 'saved');
     else if (detail.status === 'offline') {
-      setSync('На устройстве', 'offline');
+      setSync('На устройстве · ждём интернет', 'offline');
       if (sync) sync.title = detail.detail || 'Не удалось сохранить прогресс в облаке';
     }
+    else if (detail.status === 'blocked') setSync('Нужно обновить игру', 'blocked');
     else setSync(detail.detail || 'Сохранено', detail.status);
+    if (sync && detail.detail) sync.title = detail.detail;
   }
 
   window.addEventListener('autoflip:cloud', function (event) {

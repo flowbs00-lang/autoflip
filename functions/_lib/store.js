@@ -121,12 +121,28 @@ export function applyStoreOrder(state, order) {
   if (!Array.isArray(state.store.history)) state.store.history = [];
   state.store.history.unshift({ id: order.id, productCode: order.product_code, title: product.title, paidAt: Number(order.paid_at || Date.now()) });
   state.store.history = state.store.history.slice(0, 30);
+  if (!Array.isArray(state.operationLog)) state.operationLog = [];
+  if (!state.operationLog.some((item) => item && item.orderId === order.id)) {
+    state.operationLog.unshift({
+      id: `op-store-${order.id}`,
+      orderId: order.id,
+      type: "donation",
+      label: `Покупка: ${product.title}`,
+      car: "",
+      amount: Number(order.amount_rub || 0),
+      result: 0,
+      details: order.product_code,
+      at: Number(order.paid_at || Date.now()),
+      day: Number(state.day || 1)
+    });
+    state.operationLog = state.operationLog.slice(0, 60);
+  }
   return true;
 }
 
 export async function applyPaidOrdersToState(db, userId, state) {
   await ensureStoreSchema(db);
-  const rows = await db.prepare(`SELECT id, product_code, custom_payload, paid_at
+  const rows = await db.prepare(`SELECT id, product_code, custom_payload, amount_rub, paid_at
     FROM store_orders WHERE user_id = ? AND status = 'paid' ORDER BY paid_at ASC LIMIT 200`).bind(userId).all();
   let changed = false;
   for (const order of rows.results || []) changed = applyStoreOrder(state, order) || changed;
