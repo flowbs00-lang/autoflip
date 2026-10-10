@@ -57,8 +57,18 @@ test('removed tuning cannot remain in garage navigation, requirements or public 
 
 test('business screens explain locked service, parts savings and clan entry point',()=>{
   const g=game();g.c.economyHub();assert.match(g.html(),/Найти клан/);assert.match(g.html(),/Требует внимания/);
+  g.c.openClanTask();assert.match(g.html(),/Задание пока недоступно/);assert.match(g.html(),/Найти или создать клан/);
+  g.c.state.communityMembership={tag:'TEST',name:'Тестовый клан',role:'member'};g.c.openClanTask();
+  assert.match(g.html(),/Деловая неделя/);assert.match(g.html(),/50 000 ₽/);assert.match(g.html(),/сделок/);assert.match(g.html(),/заказов сервиса/);
   g.c.economyGarage();assert.match(g.html(),/ОТКРОЕТСЯ НА 5 УРОВНЕ/);
   g.c.state.garageLevel=5;g.c.state.garageProgress.level=5;g.c.state.garageProgress.serviceBuilt=true;g.c.economyGarage();
   assert.match(g.html(),/автоматически оплачивает 10%/);assert.match(g.html(),/экономия 25 000 ₽/);
   g.c.economyBuyParts();assert.equal(g.c.state.money,425000);assert.equal(g.c.state.economy.service.partsStock,100000);
+});
+
+test('clan task is a dedicated screen and records deal and service contributions',()=>{
+  assert.match(economy,/window\.openClanTask/);
+  assert.match(economy,/clan-task-mission/);
+  assert.match(economy,/breakdown\[id==='service'\?'service':'deals'\]/);
+  assert.match(economy,/onclick="openClanTask\(\)"/);
 });

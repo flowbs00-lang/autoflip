@@ -87,6 +87,7 @@ test('clans are limited to 50 and expose managed member roles', () => {
   assert.match(client, /Соруководитель/);
   assert.match(client, /СОСТАВ КЛАНА/);
   assert.match(client, /\/50 участников/);
+  assert.match(client, /onclick="openClanTask\(\)"/);
 });
 
 test('chat authors and clan members open a safe public player inventory', () => {

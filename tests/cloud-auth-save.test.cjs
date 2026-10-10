@@ -57,6 +57,21 @@ test('save backups migration and important operation journal are installed', () 
   assert.match(store, /type: "donation"/);
   assert.match(account, /Сохранено в облаке/);
   assert.match(account, /savedAt/);
+  assert.match(account, /window\.openAccountProfile/);
+  assert.match(account, /УНИКАЛЬНЫЙ ID ИГРОКА/);
+  assert.match(account, /window\.AUTOFLIP_ACCOUNT = account/);
+});
+
+test('account and AutoMarket career profiles are intentionally separate', () => {
+  const account = read('game-account.js');
+  const game = read('script.js');
+  const ui = read('ui.js');
+  assert.match(account, /ЛИЧНЫЙ АККАУНТ/);
+  assert.match(account, /НИКНЕЙМ/);
+  assert.match(game, /Профиль AutoMarket/);
+  assert.match(game, /КАРЬЕРА ПЕРЕКУПЩИКА/);
+  assert.doesNotMatch(ui, /\['profile','Профиль рынка'/);
+  assert.match(ui, /onclick="openAccountProfile\(\)"/);
 });
 
 test('app routes are protected at the edge', () => {

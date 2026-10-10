@@ -29,10 +29,12 @@ test('balance privacy, widget toggle and quick settings work together',()=>{
 });
 test('launcher renders every app in one compact grid and exposes personal wallpaper picker',()=>{
   const g=game();g.c.home();
-  assert.equal((g.html().match(/class="os-app"/g)||[]).length,20);
+  assert.equal((g.html().match(/class="os-app"/g)||[]).length,19);
   assert.match(g.html(),/Бизнес/);
+  assert.doesNotMatch(g.html(),/Профиль рынка/);
   assert.match(g.html(),/os-home-glance/);
   g.c.settings();assert.match(g.html(),/accept="image\/\*"/);assert.match(g.html(),/Выбрать своё фото/);
+  assert.match(g.html(),/Аккаунт/);assert.match(g.html(),/openAccountProfile\(\)/);assert.match(g.html(),/Никнейм, ID и данные входа/);
 });
 test('saved custom wallpaper is restored as the active phone background',()=>{
   const image='data:image/jpeg;base64,abc123';

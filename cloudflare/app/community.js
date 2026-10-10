@@ -112,7 +112,7 @@
     var own = data.me.clan;
     var ownCount = Number((data.clanMembers || []).length);
     var ownHtml = own ? '<section class="community-own-clan"><small>ТВОЙ КЛАН · ' + roleLabel(own.role).toUpperCase() + '</small><h3>[' + esc(own.tag) + '] ' + esc(own.name) + '</h3><p>Состав: ' + ownCount + '/50 · тег отображается рядом с ником.</p><div class="community-clan-actions">' +
-      '<button onclick="openCommunity(\'clan_chat\')">Чат клана</button><button onclick="openCommunity(\'clan_members\')">Состав</button><button onclick="economyHub()">Задание клана</button>' +
+      '<button onclick="openCommunity(\'clan_chat\')">Чат клана</button><button onclick="openCommunity(\'clan_members\')">Состав</button><button onclick="openClanTask()">Задание клана</button>' +
       (own.ownerUserId === data.me.id ? '<button class="danger" onclick="communityDeleteClan()">Удалить</button>' : '<button onclick="communityLeaveClan()">Выйти</button>') + '</div></section>' :
       '<section class="community-create"><small>СОЗДАТЬ ГРУППУ</small><h3>Свой клан</h3><div><input id="clanName" maxlength="24" placeholder="Название"><input id="clanTag" maxlength="5" placeholder="Тег"></div><button onclick="communityCreateClan()">Создать клан</button></section>';
     var list = (data.clans || []).map(function (clan, index) {
