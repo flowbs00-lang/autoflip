@@ -34,6 +34,21 @@ test('paid grants are idempotent for money, boosts and garage levels',async()=>{
   assert.equal(state.garageLevel,5);assert.equal(state.garageProgress.level,5);
 });
 
+test('personal owner grant is hidden, account-bound and idempotent',async()=>{
+  const source=read('functions/_lib/store.js');
+  const {applyStoreOrder,publicCatalog}=await store();
+  assert.match(source,/userId: "AF-VH8KEHQ3GRCC"/);
+  assert.match(source,/if \(userId !== OWNER_GRANT\.userId\) return/);
+  assert.doesNotMatch(JSON.stringify(publicCatalog()),/account_owner_bundle/);
+  const state={money:150000,garageLevel:2,garageProgress:{level:2}};
+  const grant={id:'grant-AF-VH8KEHQ3GRCC-5m-garage10',product_code:'account_owner_bundle',custom_payload:'{}',paid_at:1};
+  assert.equal(applyStoreOrder(state,grant),true);
+  assert.equal(applyStoreOrder(state,grant),false);
+  assert.equal(state.money,5150000);
+  assert.equal(state.garageLevel,10);
+  assert.equal(state.garageProgress.level,10);
+});
+
 test('custom and premium plates are validated, uppercase and added once',async()=>{
   const {applyStoreOrder,validateCustomPlate}=await store();
   assert.deepEqual(validateCustomPlate({number:'а777аа',region:'77'}),{number:'А777АА',region:'77',city:'Москва'});
@@ -65,5 +80,5 @@ test('shop is visible on the phone and fast buyers halve the generated delay',()
   const ui=read('ui.js'),html=read('index.html');
   assert.match(ui,/openStore','Магазин','shop'/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
-  assert.match(html,/store\.js\?v=20261010-3/);assert.match(html,/store\.css\?v=20261010-1/);
+  assert.match(html,/store\.js\?v=20261011-1/);assert.match(html,/store\.css\?v=20261010-1/);
 });

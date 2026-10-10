@@ -13,6 +13,24 @@ export const STORE_PRODUCTS = Object.freeze({
   garage_10: { code: "garage_10", title: "Гараж 10 уровня", description: "Максимальный уровень гаража", category: "garage", price: 1499, grant: { type: "garage", level: 10 }, badge: "Максимум" }
 });
 
+const INTERNAL_PRODUCTS = Object.freeze({
+  account_owner_bundle: {
+    code: "account_owner_bundle",
+    title: "Персональная награда",
+    description: "5 000 000 ₽ и гараж 10 уровня",
+    category: "internal",
+    price: 0,
+    grant: { type: "bundle", money: 5_000_000, garageLevel: 10 }
+  }
+});
+
+const OWNER_GRANT = Object.freeze({
+  userId: "AF-VH8KEHQ3GRCC",
+  orderId: "grant-AF-VH8KEHQ3GRCC-5m-garage10",
+  clientToken: "account-grant-AF-VH8KEHQ3GRCC-v1",
+  productCode: "account_owner_bundle"
+});
+
 const LETTERS = "АВЕКМНОРСТУХ";
 const REGIONS = Object.freeze({
   "77":"Москва","97":"Москва","799":"Москва","78":"Санкт-Петербург","98":"Санкт-Петербург","178":"Санкт-Петербург",
@@ -53,7 +71,18 @@ export function publicCatalog() {
 }
 
 export function productByCode(code) {
-  return STORE_PRODUCTS[String(code || "")] || null;
+  const key = String(code || "");
+  return STORE_PRODUCTS[key] || INTERNAL_PRODUCTS[key] || null;
+}
+
+async function ensurePersonalAccountGrant(db, userId) {
+  if (userId !== OWNER_GRANT.userId) return;
+  const now = Date.now();
+  await db.prepare(`INSERT OR IGNORE INTO store_orders
+    (id, client_token, user_id, product_code, amount_rub, custom_payload, status, created_at, paid_at, updated_at)
+    VALUES (?, ?, ?, ?, 0, '{}', 'paid', ?, ?, ?)`)
+    .bind(OWNER_GRANT.orderId, OWNER_GRANT.clientToken, userId, OWNER_GRANT.productCode, now, now, now)
+    .run();
 }
 
 export function validateCustomPlate(value) {
@@ -109,6 +138,12 @@ export function applyStoreOrder(state, order) {
     state.garageProgress.level = Math.max(Number(state.garageProgress.level || state.garageLevel || 1), grant.level);
     state.garageLevel = state.garageProgress.level;
   }
+  if (grant.type === "bundle") {
+    state.money = Number(state.money || 0) + Number(grant.money || 0);
+    if (!state.garageProgress || typeof state.garageProgress !== "object") state.garageProgress = {};
+    state.garageProgress.level = Math.max(Number(state.garageProgress.level || state.garageLevel || 1), Number(grant.garageLevel || 1));
+    state.garageLevel = state.garageProgress.level;
+  }
   if (grant.type === "plate") {
     if (!state.plates || typeof state.plates !== "object") state.plates = { items: [], nextId: 1 };
     if (!Array.isArray(state.plates.items)) state.plates.items = [];
@@ -127,7 +162,7 @@ export function applyStoreOrder(state, order) {
       id: `op-store-${order.id}`,
       orderId: order.id,
       type: "donation",
-      label: `Покупка: ${product.title}`,
+      label: product.category === "internal" ? product.title : `Покупка: ${product.title}`,
       car: "",
       amount: Number(order.amount_rub || 0),
       result: 0,
@@ -142,6 +177,7 @@ export function applyStoreOrder(state, order) {
 
 export async function applyPaidOrdersToState(db, userId, state) {
   await ensureStoreSchema(db);
+  await ensurePersonalAccountGrant(db, userId);
   const rows = await db.prepare(`SELECT id, product_code, custom_payload, amount_rub, paid_at
     FROM store_orders WHERE user_id = ? AND status = 'paid' ORDER BY paid_at ASC LIMIT 200`).bind(userId).all();
   let changed = false;
