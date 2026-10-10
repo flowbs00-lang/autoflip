@@ -231,6 +231,6 @@ test('old healthy status cannot hide a diagnosed fault; repair charges once and 
 
 test('startup loads dependencies explicitly before compatibility and condition overrides',()=>{
   const sources=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-  assert.deepEqual(sources,['cloud-save.js?v=20261010-2','world-data.js?v=20261006-1','script_base.js?v=20261010-2','car-catalog.js?v=20261006-4','v79_market.js','script.js?v=20261010-1','ui.js?v=20261010-2','plates.js?v=20261010-2','garage-system.js?v=20261010-2','world-system.js?v=20261007-6','negotiations-system.js?v=20261010-1','game-account.js?v=20261010-1','community.js?v=20261010-1','store.js?v=20261010-3']);
+  assert.deepEqual(sources,['cloud-save.js?v=20261010-2','world-data.js?v=20261006-1','script_base.js?v=20261010-2','car-catalog.js?v=20261006-4','v79_market.js','script.js?v=20261010-2','ui.js?v=20261010-3','plates.js?v=20261010-2','garage-system.js?v=20261010-3','world-system.js?v=20261007-6','negotiations-system.js?v=20261010-2','economy-system.js?v=20261010-1','game-account.js?v=20261010-1','community.js?v=20261010-2','store.js?v=20261010-3']);
   assert.doesNotMatch(compatibility,/document\.write\(/);
 });

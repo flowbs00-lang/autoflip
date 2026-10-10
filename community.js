@@ -166,6 +166,7 @@
 
   function renderCommunity(data) {
     snapshot = data;
+    window.AUTOFLIP_COMMUNITY_ME = data.me;
     if (!region) region = data.me.city || state.city || 'Москва';
     decorateAccountName();
     var body = tab === 'rating' ? ratingHtml(data) : tab === 'clans' ? clansHtml(data) : tab === 'clan_members' ? clanMembersHtml(data) : messagesHtml(data);

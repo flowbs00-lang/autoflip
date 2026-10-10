@@ -131,7 +131,7 @@
     var m=meetingById(id),c=meetingCar(m);if(!m||!c||!isReady(m))return openMeeting(id);var full=mode==='full',cost=diagnosticCost(c,full?'full':'standard');
     if(Number(state.money||0)<cost)return alert('Не хватает '+money(cost-Number(state.money||0))+' на диагностику.');
     if(typeof ensureMarketFlipCondition!=='function')return alert('Диагностика временно недоступна.');
-    var condition=ensureMarketFlipCondition(c),previous=m.diagnostic,found=!condition.healthy&&(full||Math.random()<.30);
+    var condition=ensureMarketFlipCondition(c),previous=m.diagnostic,chance=typeof AUTOFLIP_DIAGNOSTIC_CHANCE==='function'?AUTOFLIP_DIAGNOSTIC_CHANCE(.30):.30,found=!condition.healthy&&(full||Math.random()<chance);
     state.money=Number(state.money||0)-cost;m.diagnostic={kind:'diagnostic-v2',mode:full?'full':'standard',cost:cost,totalSpent:Number(previous&&previous.totalSpent||0)+cost,found:found,healthyConfirmed:full&&condition.healthy,faultName:found?condition.name:'',faultCost:found?Number(condition.cost||0):0,loss:found?Number(condition.loss||0):0,risk:found?condition.name:(full&&condition.healthy?'автомобиль исправен':'поломок не обнаружено'),negotiationBonus:found?(full?.05:.03):0};
     c.prePurchaseDiagnostic=Object.assign({},m.diagnostic);if(!state.marketInspections||typeof state.marketInspections!=='object')state.marketInspections={};state.marketInspections[marketInspectionKey(c)]=Object.assign({},m.diagnostic);saveMeetings();openMeeting(id);
   };

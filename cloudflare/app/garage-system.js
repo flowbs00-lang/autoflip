@@ -146,7 +146,7 @@
   }
   function tabs(active){
     var g=ensure();
-    return '<nav class="garage-tabs"><button class="'+(active==='cars'?'active':'')+'" onclick="garage()">Авто</button><button class="'+(active==='progress'?'active':'')+'" onclick="garageProgress()">Развитие</button><button class="'+(active==='service'?'active':'')+' '+(g.level<5?'locked':'')+'" onclick="garageService()">Сервис</button><button class="'+(active==='tuning'?'active':'')+' '+(g.level<8?'locked':'')+'" onclick="garageTuning()">Тюнинг</button></nav>';
+    return '<nav class="garage-tabs"><button class="'+(active==='cars'?'active':'')+'" onclick="garage()">Авто</button><button class="'+(active==='progress'?'active':'')+'" onclick="garageProgress()">Развитие</button><button class="'+(active==='service'?'active':'')+' '+(g.level<5?'locked':'')+'" onclick="garageService()">Сервис</button><button class="'+(active==='tuning'?'active':'')+' '+(g.level<8?'locked':'')+'" onclick="garageTuning()">Тюнинг</button><button onclick="economyGarage()">Бизнес</button></nav>';
   }
   function shell(title,active,body){var g=ensure();render('<div class="app garage-app">'+head(title)+scene(g.level)+tabs(active)+body+'</div>');}
   function statusText(c){
@@ -193,7 +193,8 @@
     g.serviceRequests=[];
     for(var i=0;i<3;i++){
       var seed=day*17+cycle*29+g.level*7,issue=SERVICE_ISSUES[(seed+i*2)%SERVICE_ISSUES.length],boost=1+(g.level-5)*.08;
-      g.serviceRequests.push({id:'service-'+createdAt+'-'+cycle+'-'+i,name:SERVICE_NAMES[(seed+i*3)%SERVICE_NAMES.length],car:SERVICE_CARS[(seed*3+i*5)%SERVICE_CARS.length],issue:issue.name,difficulty:issue.difficulty,hours:issue.hours,parts:Math.round(issue.parts*boost/1000)*1000,payout:Math.round(issue.payout*boost/1000)*1000,createdAt:createdAt,done:false});
+      var urgent=i===0&&(cycle+day)%2===0;
+      g.serviceRequests.push({id:'service-'+createdAt+'-'+cycle+'-'+i,name:SERVICE_NAMES[(seed+i*3)%SERVICE_NAMES.length],car:SERVICE_CARS[(seed*3+i*5)%SERVICE_CARS.length],issue:issue.name,difficulty:issue.difficulty,hours:urgent?Math.max(4,issue.hours-2):issue.hours,parts:Math.round(issue.parts*boost/1000)*1000,payout:Math.round(issue.payout*boost*(urgent?1.35:1)/1000)*1000,urgent:urgent,createdAt:createdAt,done:false});
     }
     saveGarage();
   }
@@ -230,7 +231,7 @@
       shell('Автосервис','service','<div class="garage-facility-build"><span>🔧</span><small>ДОСТУПНО С 5 УРОВНЯ</small><h2>Построить автосервис</h2><p>Клиенты будут писать с просьбой починить их автомобиль. Ты оплачиваешь детали и получаешь выплату с прибылью.</p><div><b>Стоимость строительства</b><strong>'+money(250000)+'</strong></div><button class="action green" onclick="garageBuildService()">Построить автосервис</button></div>');return;
     }
     generateServiceRequests();
-    var cards=g.serviceRequests.map(function(x){return '<article class="service-order"><div class="service-avatar">'+x.name.charAt(0)+'</div><div class="service-message"><small>'+x.name+' · '+x.car+'</small><div class="service-order-tags"><i>'+x.difficulty+'</i><i>'+x.hours+' ч.</i></div><p>Здравствуйте! '+x.issue.toLowerCase()+'. Сможете помочь?</p><div><span>Детали <b>'+money(x.parts)+'</b></span><span>Оплата <b>'+money(x.payout)+'</b></span><strong>Прибыль +'+money(x.payout-x.parts)+'</strong></div><button '+(Number(state.money||0)<x.parts?'disabled':'')+' onclick="garageTakeServiceJob(\''+x.id+'\')">'+(Number(state.money||0)<x.parts?'Не хватает на детали':'Взять в работу · '+x.hours+' ч.')+'</button></div></article>';}).join('');
+    var cards=g.serviceRequests.map(function(x){return '<article class="service-order '+(x.urgent?'urgent':'')+'"><div class="service-avatar">'+x.name.charAt(0)+'</div><div class="service-message"><small>'+x.name+' · '+x.car+'</small><div class="service-order-tags">'+(x.urgent?'<i>🔥 Срочный +35%</i>':'')+'<i>'+x.difficulty+'</i><i>'+x.hours+' ч.</i></div><p>Здравствуйте! '+x.issue.toLowerCase()+'. '+(x.urgent?'Нужно как можно быстрее, доплачу за срочность.':'Сможете помочь?')+'</p><div><span>Детали <b>'+money(x.parts)+'</b></span><span>Оплата <b>'+money(x.payout)+'</b></span><strong>Прибыль +'+money(x.payout-x.parts)+'</strong></div><button '+(Number(state.money||0)<x.parts?'disabled':'')+' onclick="garageTakeServiceJob(\''+x.id+'\')">'+(Number(state.money||0)<x.parts?'Не хватает на детали':'Взять в работу · '+x.hours+' ч.')+'</button></div></article>';}).join('');
     var body='<div class="service-dashboard"><div><small>ЗАКАЗОВ ВЫПОЛНЕНО</small><b>'+g.stats.serviceJobs+'</b></div><div><small>'+(g.activeServiceJob?'СТАТУС':'ДОСТУПНО КЛИЕНТОВ')+'</small><b>'+(g.activeServiceJob?'1 в работе':g.serviceRequests.length)+'</b></div></div>'+(g.activeServiceJob?serviceActiveCard(g.activeServiceJob):'<div class="service-choice-intro"><b>Выбери один заказ</b><p>После принятия остальные клиенты уедут. Новый выбор появится после завершения ремонта.</p></div>'+cards);
     shell('Автосервис','service',body);if(g.activeServiceJob&&serviceRemaining(g.activeServiceJob.finishAt)>0)scheduleServiceClock();
   };

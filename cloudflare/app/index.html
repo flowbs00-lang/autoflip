@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="community.css?v=20261008-2">
 <link rel="stylesheet" href="community-profile.css?v=20261008-1">
 <link rel="stylesheet" href="store.css?v=20261010-1">
+<link rel="stylesheet" href="economy-system.css?v=20261010-1">
 <link rel="stylesheet" href="theme-polish.css?v=20261010-2">
 </head>
 <body>
@@ -49,7 +50,7 @@
 <script src="script_base.js?v=20261010-2"></script>
 <script src="car-catalog.js?v=20261006-4"></script>
 <script src="v79_market.js"></script>
-<script src="script.js?v=20261010-1"></script>
+<script src="script.js?v=20261010-2"></script>
 <script>
 // V7.2 — у каждого продавца свой характер и поведение в торге.
 let negotiation={id:null,asking:0,minimum:0,seller:'',round:0,lastOffer:0,personality:null,counter:0};
@@ -504,8 +505,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       else if(ratio<=1.08)delay=55+Math.floor(Math.random()*96);
       else delay=100+Math.floor(Math.random()*151);
     }
-    const boosted=state.store&&Number(state.store.fastBuyersUntil||0)>Date.now();
-    return boosted?Math.max(1,Math.ceil(delay/2)):delay;
+    const boosted=state.store&&Number(state.store.fastBuyersUntil||0)>Date.now(),demand=typeof AUTOFLIP_MODEL_DEMAND_FACTOR==='function'?AUTOFLIP_MODEL_DEMAND_FACTOR(car):1;
+    delay=Math.ceil(delay/Math.max(.55,demand));return boosted?Math.max(1,Math.ceil(delay/2)):delay;
   }
   function addDiagForHidden(car,h){
     if(!car.diagnosed)return;
@@ -617,7 +618,8 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   };
 
   function buyerOffer(car,l,p){
-    const fair=car.repaired?Number(car.market||l.ask)*1.02:Number(car.market||l.ask)*.92;
+    const demand=typeof AUTOFLIP_MODEL_DEMAND_FACTOR==='function'?AUTOFLIP_MODEL_DEMAND_FACTOR(car):1;
+    const fair=(car.repaired?Number(car.market||l.ask)*1.02:Number(car.market||l.ask)*.92)*demand;
     let offer=Math.min(l.ask*p.offer,fair*(.96+Math.random()*.06));
     if(l.ask<=fair*.96)offer=Math.min(l.ask,l.ask*(.96+Math.random()*.035));
     offer=round1000(offer);
@@ -644,7 +646,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     const car=listingCar(l);if(!car){state.activeListings=listings().filter(x=>x.id!==l.id);if(state.activeListing===l)state.activeListing=state.activeListings[0]||null;saveLife();return false;}
     if(!Array.isArray(state.buyerInbox))state.buyerInbox=[];
     if(activeBuyerCount(l)>=6){l.nextBuyerAt=Number(total)+240;saveLife();return false;}
-    const p=buyerProfiles[Math.floor(Math.random()*buyerProfiles.length)],prices=buyerOffer(car,l,p);
+    const p=typeof AUTOFLIP_PICK_BUYER_PROFILE==='function'?AUTOFLIP_PICK_BUYER_PROFILE(car,l,buyerProfiles):buyerProfiles[Math.floor(Math.random()*buyerProfiles.length)],prices=buyerOffer(car,l,p);
     const wantsTrade=Math.random()<.36&&typeof makeExchangeCar==='function',tradeCar=wantsTrade?makeExchangeCar(car):null,tradeValue=tradeCar?round1000(Number(tradeCar.market||tradeCar.price||0)*(.94+Math.random()*.08)):0;
     const tradeText=tradeCar?('Предлагаю обмен на '+tradeCar.name+'. '+tradeSaleCashText(prices.offer,tradeValue)+'. Рассмотрим?'):buyerMessage(p,prices.offer);
     const msg={id:'buyer-'+Date.now()+'-'+Math.floor(Math.random()*9999),listingId:l.id,name:p.name,icon:tradeCar?'🔄':p.icon,kind:tradeCar?'Обмен + доплата':p.kind,text:tradeText,offer:prices.offer,max:prices.max,patience:p.patience,round:0,read:false,status:'new',time:clockText(total),trade:!!tradeCar,tradeCar:tradeCar,tradeValue:tradeValue};
@@ -666,6 +668,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     const now=gt();
     listings().slice().forEach(function(l){
       const car=listingCar(l);if(!car){state.activeListings=listings().filter(x=>x.id!==l.id);return;}
+      if(typeof AUTOFLIP_UPDATE_LISTING==='function')AUTOFLIP_UPDATE_LISTING(l,car,now);
       if(now>=Number(l.nextBuyerAt||0))enqueueBuyerAt(now,true,l);
     });
   }
@@ -1879,13 +1882,14 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261010-2"></script>
+<script src="ui.js?v=20261010-3"></script>
 <script src="plates.js?v=20261010-2"></script>
-<script src="garage-system.js?v=20261010-2"></script>
+<script src="garage-system.js?v=20261010-3"></script>
 <script src="world-system.js?v=20261007-6"></script>
-<script src="negotiations-system.js?v=20261010-1"></script>
+<script src="negotiations-system.js?v=20261010-2"></script>
+<script src="economy-system.js?v=20261010-1"></script>
 <script src="game-account.js?v=20261010-1"></script>
-<script src="community.js?v=20261010-1"></script>
+<script src="community.js?v=20261010-2"></script>
 <script src="store.js?v=20261010-3"></script>
 </body>
 </html>

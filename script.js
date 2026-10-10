@@ -559,7 +559,7 @@ function applyLiveMarket(force){
   var version=Number(state.liveMarket.cycle||0)+':'+Number(state.liveMarket.factorRevision||0)+':'+makes.length;
   if(!force&&liveMarketAppliedVersion===version)return false;
   makes.forEach(function(car,i){
-    var base=Number(car.basePrice||liveBasePrices[i]||car.price||0),factor=Number(state.liveMarket.priceFactors[car.id]||1);
+    var base=Number(car.basePrice||liveBasePrices[i]||car.price||0),factor=Number(state.liveMarket.priceFactors[car.id]||1)*(typeof AUTOFLIP_CITY_MARKET_FACTOR==='function'?AUTOFLIP_CITY_MARKET_FACTOR(car.city,car):1);
     car.price=Math.max(10000,Math.round(base*factor/1000)*1000);
   });
   liveMarketAppliedVersion=version;
@@ -647,6 +647,8 @@ window.openPhoneNotification=function(id){
   if(n.route&&n.route.indexOf('market-update:')===0&&typeof marketUpdateDetails==='function')return marketUpdateDetails(n.route.split(':')[1]);
   if(n.route==='market'&&typeof market==='function')return market('new',0);
   if(n.route==='garage'&&typeof garage==='function')return garage();
+  if(n.route==='service'&&typeof garageService==='function')return garageService();
+  if(n.route==='economy'&&typeof economyHub==='function')return economyHub();
   notificationCenter();
 };
 function syncBuyerNotifications(){

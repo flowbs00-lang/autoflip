@@ -29,7 +29,8 @@ test('balance privacy, widget toggle and quick settings work together',()=>{
 });
 test('launcher renders every app in one compact grid and exposes personal wallpaper picker',()=>{
   const g=game();g.c.home();
-  assert.equal((g.html().match(/class="os-app"/g)||[]).length,19);
+  assert.equal((g.html().match(/class="os-app"/g)||[]).length,20);
+  assert.match(g.html(),/Бизнес/);
   assert.match(g.html(),/os-home-glance/);
   g.c.settings();assert.match(g.html(),/accept="image\/\*"/);assert.match(g.html(),/Выбрать своё фото/);
 });
