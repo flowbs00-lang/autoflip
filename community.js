@@ -112,7 +112,7 @@
     var own = data.me.clan;
     var ownCount = Number((data.clanMembers || []).length);
     var ownHtml = own ? '<section class="community-own-clan"><small>ТВОЙ КЛАН · ' + roleLabel(own.role).toUpperCase() + '</small><h3>[' + esc(own.tag) + '] ' + esc(own.name) + '</h3><p>Состав: ' + ownCount + '/50 · тег отображается рядом с ником.</p><div class="community-clan-actions">' +
-      '<button onclick="openCommunity(\'clan_chat\')">Чат клана</button><button onclick="openCommunity(\'clan_members\')">Состав</button>' +
+      '<button onclick="openCommunity(\'clan_chat\')">Чат клана</button><button onclick="openCommunity(\'clan_members\')">Состав</button><button onclick="economyHub()">Задание клана</button>' +
       (own.ownerUserId === data.me.id ? '<button class="danger" onclick="communityDeleteClan()">Удалить</button>' : '<button onclick="communityLeaveClan()">Выйти</button>') + '</div></section>' :
       '<section class="community-create"><small>СОЗДАТЬ ГРУППУ</small><h3>Свой клан</h3><div><input id="clanName" maxlength="24" placeholder="Название"><input id="clanTag" maxlength="5" placeholder="Тег"></div><button onclick="communityCreateClan()">Создать клан</button></section>';
     var list = (data.clans || []).map(function (clan, index) {
@@ -145,7 +145,7 @@
   function publicCarRows(player) {
     var cars = (player.cars || []).map(function (car) {
       var visual = car.photo ? '<img src="' + esc(car.photo) + '" alt="" loading="lazy">' : '<span>🚘</span>';
-      return '<article class="community-profile-car"><div class="community-profile-car-photo">' + visual + '<small>' + (car.repaired ? 'ГОТОВА' : 'ТРЕБУЕТ РАБОТ') + '</small></div><div><b>' + esc(car.name) + '</b><span>' + Number(car.year || 0) + ' · ' + Number(car.km || 0).toLocaleString('ru-RU') + ' км</span><em>' + esc(car.city || player.city) + '</em><strong>' + formatMoney(car.value) + '</strong>' + (car.tuningStage ? '<i>Тюнинг · ' + Number(car.tuningStage) + '/3</i>' : '') + '</div></article>';
+      return '<article class="community-profile-car"><div class="community-profile-car-photo">' + visual + '<small>' + (car.repaired ? 'ГОТОВА' : 'ТРЕБУЕТ РАБОТ') + '</small></div><div><b>' + esc(car.name) + '</b><span>' + Number(car.year || 0) + ' · ' + Number(car.km || 0).toLocaleString('ru-RU') + ' км</span><em>' + esc(car.city || player.city) + '</em><strong>' + formatMoney(car.value) + '</strong></div></article>';
     }).join('');
     return cars || '<div class="community-empty">В гараже пока нет автомобилей.</div>';
   }
@@ -167,6 +167,11 @@
   function renderCommunity(data) {
     snapshot = data;
     window.AUTOFLIP_COMMUNITY_ME = data.me;
+    var membership = data.me.clan ? { id: data.me.clan.id, name: data.me.clan.name, tag: data.me.clan.tag, role: data.me.clan.role } : null;
+    if (JSON.stringify(state.communityMembership || null) !== JSON.stringify(membership)) {
+      state.communityMembership = membership;
+      if (typeof persist === 'function') persist();
+    }
     if (!region) region = data.me.city || state.city || 'Москва';
     decorateAccountName();
     var body = tab === 'rating' ? ratingHtml(data) : tab === 'clans' ? clansHtml(data) : tab === 'clan_members' ? clanMembersHtml(data) : messagesHtml(data);

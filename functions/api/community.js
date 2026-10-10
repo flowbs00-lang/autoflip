@@ -73,7 +73,6 @@ function publicCar(car) {
     city: validCommunityCity(car?.city) ? String(car.city) : "",
     value: Math.max(0, Math.floor(Number(car?.market || car?.sale || car?.buy) || 0)),
     repaired: Boolean(car?.repaired),
-    tuningStage: Math.max(0, Math.min(3, Math.floor(Number(car?.tuningStage) || 0))),
     photo: publicPhoto(car?.photoUrl)
   };
 }

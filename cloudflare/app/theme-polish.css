@@ -111,10 +111,10 @@
 #screen .garage-app{background:var(--os-bg);color:var(--os-text)}
 #screen .garage-tabs button{background:var(--os-raised);color:var(--os-muted);border:1px solid var(--os-line)}
 #screen .garage-tabs button.active{background:var(--os-accent);border-color:var(--os-accent);color:var(--os-accent-ink)}
-#screen :is(.garage-kpis div,.service-dashboard div,.garage-car-card,.garage-empty-slot,.garage-rep,.garage-task,.garage-complete,.garage-empty-day,.garage-facility-build,.service-order,.tuning-car){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text);box-shadow:var(--os-shadow)}
-#screen :is(.garage-kpis,.service-dashboard) small,#screen :is(.garage-car-main,.garage-rep,.garage-task,.garage-road-level,.service-message,.tuning-car) small{color:var(--os-muted)}
+#screen :is(.garage-kpis div,.service-dashboard div,.garage-car-card,.garage-empty-slot,.garage-rep,.garage-task,.garage-complete,.garage-empty-day,.garage-facility-build,.service-order){background:var(--os-surface);border-color:var(--os-line);color:var(--os-text);box-shadow:var(--os-shadow)}
+#screen :is(.garage-kpis,.service-dashboard) small,#screen :is(.garage-car-main,.garage-rep,.garage-task,.garage-road-level,.service-message) small{color:var(--os-muted)}
 #screen .garage-car-main{color:var(--os-text)}
-#screen .garage-car-main em,#screen .tuning-car em,#screen .garage-section-title span,#screen .garage-road-level small{color:var(--os-muted)}
+#screen .garage-car-main em,#screen .garage-section-title span,#screen .garage-road-level small{color:var(--os-muted)}
 #screen .garage-empty-slot{border-color:var(--os-line);color:var(--os-muted)}
 #screen .garage-warning{background:var(--os-warning-bg);color:var(--os-warning)}
 #screen .garage-max{background:var(--os-success-bg);color:var(--os-success)}
@@ -130,7 +130,7 @@
 #screen .service-message>small,#screen .service-message>div{color:var(--os-muted)}
 #screen .service-message>div span b{color:var(--os-text)}
 #screen .service-message>div strong{color:var(--os-success)}
-#screen :is(.service-message,.tuning-car) button{background:var(--os-accent);color:var(--os-accent-ink)}
+#screen .service-message button{background:var(--os-accent);color:var(--os-accent-ink)}
 #screen .service-choice-intro{background:var(--os-surface);border-color:var(--os-line);color:var(--os-text)}
 #screen .service-choice-intro p{color:var(--os-muted)}
 #screen .service-order-tags i{background:var(--os-raised);color:var(--os-muted)}

@@ -108,18 +108,7 @@
 .service-message>div{display:grid;grid-template-columns:1fr 1fr;font-size:8px;color:#8a929c}
 .service-message>div span b{display:block;color:#29323d;font-size:10px}
 .service-message>div strong{grid-column:1/3;color:#15905a;font-size:11px;margin-top:5px}
-.service-message button,.tuning-car button{border:0;border-radius:9px;background:#18212c;color:#fff;padding:8px 10px;font-size:9px;font-weight:800;margin-top:7px}
-.tuning-intro{display:flex;gap:10px;background:linear-gradient(135deg,#1a2039,#2d3971);color:#fff;border-radius:15px;padding:14px;margin-bottom:10px}
-.tuning-intro>span{font-size:30px}
-.tuning-intro b{font-size:13px}
-.tuning-intro p{font-size:9px;color:#c4cae4;margin:4px 0 0}
-.tuning-car{display:flex;background:#fff;border-radius:15px;border:1px solid #e3e7ed;padding:8px;gap:9px;margin-bottom:8px}
-.tuning-car>span{width:84px;border-radius:10px;background-size:cover;background-position:center}
-.tuning-car>div{display:flex;min-width:0;flex:1;flex-direction:column}
-.tuning-car small{font-size:8px;font-weight:900;color:#765be5}
-.tuning-car b{font-size:12px;margin:3px 0}
-.tuning-car em{font-size:9px;color:#68727e;font-style:normal}
-.tuning-car button:disabled{opacity:.45}
+.service-message button{border:0;border-radius:9px;background:#18212c;color:#fff;padding:8px 10px;font-size:9px;font-weight:800;margin-top:7px}
 .garage-empty-day h3{font-size:15px}
 .garage-empty-day p{font-size:10px;color:#7b8490}
 .service-choice-intro{margin-bottom:9px;padding:12px 13px;border:1px solid #dfe5eb;border-radius:14px;background:#eef3f7}

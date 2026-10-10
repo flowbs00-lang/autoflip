@@ -725,7 +725,7 @@ button[disabled]{cursor:default}
   animation:afFreshIn .18s ease both;
 }
 
-/* Compact phone tuning */
+/* Compact phone layout */
 @media(max-width:500px){
   .app{padding-left:13px;padding-right:13px}
   .apps{gap:11px 6px}

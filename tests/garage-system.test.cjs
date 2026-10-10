@@ -54,8 +54,8 @@ test('active service repair survives reload with the same finish time',()=>{
   const second=game(saved);second.c.garageService();assert.equal(second.c.state.garageProgress.activeServiceJob.finishAt,finish);assert.match(second.html(),/Можно закрыть игру/);
 });
 
-test('tuning unlocks at eight and raises actual market value',()=>{
-  const car={name:'Test Car',market:1000000,buy:800000,year:2020,km:10000};
-  const g=game({money:500000,rep:150,day:1,cars:[car],garageLevel:8,garageProgress:{level:8,stats:{},renovations:{},eventKeys:[]}});
-  g.c.garageTuneCar(0);assert.equal(g.c.state.money,450000);assert.equal(car.market,1080000);assert.equal(car.tuningLevel,1);assert.equal(g.c.state.garageProgress.stats.tunings,1);
+test('garage navigation and upper level requirements no longer contain tuning',()=>{
+  const g=game({money:500000,rep:150,day:1,cars:[],garageLevel:8,garageProgress:{level:8,stats:{},renovations:{},eventKeys:[]}});
+  g.c.garage();assert.doesNotMatch(g.html(),/Тюнинг/);assert.equal(typeof g.c.garageTuning,'undefined');assert.equal(typeof g.c.garageTuneCar,'undefined');
+  g.c.garageProgress();assert.doesNotMatch(g.html(),/тюнинг/i);
 });

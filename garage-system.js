@@ -1,4 +1,4 @@
-// AutoFlip Garage Progression — 10 levels, service shop and tuning.
+// AutoFlip Garage Progression — 10 levels and service shop.
 (function(){
   'use strict';
 
@@ -11,8 +11,8 @@
     {name:'Автоцентр',slots:4,reward:'Можно построить автосервис'},
     {name:'Дилерский гараж',slots:5,reward:'+1 место и Тайный кейс'},
     {name:'Премиум-бокс',slots:5,reward:'Повышенная прибыль сервиса'},
-    {name:'Тюнинг-центр',slots:5,reward:'Тюнинг авто и Коллекционный кейс'},
-    {name:'Автосалон',slots:6,reward:'+1 место и лучшие заказы'},
+    {name:'Шоурум',slots:5,reward:'Бонус к диагностике и Коллекционный кейс'},
+    {name:'Дилерский центр',slots:6,reward:'+1 место и лучшие заказы'},
     {name:'Империя AutoFlip',slots:7,reward:'+1 место и Легендарный кейс'}
   ];
   var UPGRADES={
@@ -22,9 +22,9 @@
     4:{rep:70,cost:100000,work:'Смонтировать подъёмник',tasks:[['sales',18,'Всего продать 18 автомобилей'],['trades',7,'Всего провести 7 обменов'],['loans',2,'Погасить 2 кредита'],['renovation',4,'Смонтировать подъёмник'],['coinflip5000',6,'Сделать 6 крупных ставок']]},
     5:{rep:85,cost:150000,work:'Оборудовать клиентскую зону',tasks:[['sales',25,'Всего продать 25 автомобилей'],['trades',9,'Всего провести 9 обменов'],['serviceBuilt',1,'Построить автосервис'],['serviceJobs',3,'Выполнить 3 заказа сервиса'],['renovation',5,'Оборудовать клиентскую зону']]},
     6:{rep:105,cost:220000,work:'Расширить ремонтную зону',tasks:[['sales',33,'Всего продать 33 автомобиля'],['trades',11,'Всего провести 11 обменов'],['serviceJobs',8,'Выполнить 8 заказов сервиса'],['coinflip5000',10,'Сделать 10 крупных ставок'],['renovation',6,'Расширить ремонтную зону']]},
-    7:{rep:125,cost:300000,work:'Подготовить тюнинг-бокс',tasks:[['sales',43,'Всего продать 43 автомобиля'],['trades',14,'Всего провести 14 обменов'],['serviceJobs',15,'Выполнить 15 заказов сервиса'],['loans',3,'Погасить 3 кредита'],['renovation',7,'Подготовить тюнинг-бокс']]},
-    8:{rep:150,cost:450000,work:'Открыть шоурум',tasks:[['sales',55,'Всего продать 55 автомобилей'],['trades',17,'Всего провести 17 обменов'],['serviceJobs',22,'Выполнить 22 заказа сервиса'],['tunings',3,'Затюнинговать 3 автомобиля'],['renovation',8,'Открыть шоурум']]},
-    9:{rep:180,cost:700000,work:'Построить флагманский центр',tasks:[['sales',70,'Всего продать 70 автомобилей'],['trades',20,'Всего провести 20 обменов'],['serviceJobs',30,'Выполнить 30 заказов сервиса'],['tunings',8,'Сделать 8 этапов тюнинга'],['renovation',9,'Построить флагманский центр']]}
+    7:{rep:125,cost:300000,work:'Оборудовать пост диагностики',tasks:[['sales',43,'Всего продать 43 автомобиля'],['trades',14,'Всего провести 14 обменов'],['serviceJobs',15,'Выполнить 15 заказов сервиса'],['loans',3,'Погасить 3 кредита'],['renovation',7,'Оборудовать пост диагностики']]},
+    8:{rep:150,cost:450000,work:'Открыть шоурум',tasks:[['sales',55,'Всего продать 55 автомобилей'],['trades',17,'Всего провести 17 обменов'],['serviceJobs',22,'Выполнить 22 заказа сервиса'],['loans',4,'Погасить 4 кредита'],['renovation',8,'Открыть шоурум']]},
+    9:{rep:180,cost:700000,work:'Построить флагманский центр',tasks:[['sales',70,'Всего продать 70 автомобилей'],['trades',20,'Всего провести 20 обменов'],['serviceJobs',30,'Выполнить 30 заказов сервиса'],['loans',5,'Погасить 5 кредитов'],['renovation',9,'Построить флагманский центр']]}
   };
   var SERVICE_NAMES=['Артём','Виктор','Денис','Кирилл','Максим','Роман','Сергей','Тимур'];
   var SERVICE_CARS=['Lada Vesta','Kia Rio','Toyota Camry','BMW 320i','Volkswagen Polo','Hyundai Solaris','Ford Focus II','Skoda Octavia'];
@@ -49,7 +49,7 @@
     g.version=2;
     g.level=clamp(g.level||state.garageLevel||1,1,10);
     if(!g.stats||typeof g.stats!=='object')g.stats={};
-    ['sales','trades','loans','coinflip5000','serviceJobs','tunings'].forEach(function(k){g.stats[k]=Math.max(0,Number(g.stats[k]||0));});
+    ['sales','trades','loans','coinflip5000','serviceJobs'].forEach(function(k){g.stats[k]=Math.max(0,Number(g.stats[k]||0));});
     if(!g.renovations||typeof g.renovations!=='object')g.renovations={};
     if(!Array.isArray(g.eventKeys))g.eventKeys=[];
     if(!Array.isArray(g.serviceRequests))g.serviceRequests=[];
@@ -142,11 +142,11 @@
 
   function scene(level){
     var cars=(Array.isArray(state.cars)?state.cars:[]).slice(0,3).map(function(c,i){return '<span class="garage-scene-car car-'+i+'">'+(i===0?'◆':'◇')+'</span>';}).join('');
-    return '<section class="garage-scene garage-level-'+level+'"><div class="garage-ceiling"></div><div class="garage-door"><i></i><i></i><i></i></div><div class="garage-floor"></div><div class="garage-props">'+(level<2?'🗑️ 📦':'')+(level>=4?' 🛠️':'')+(level>=5?' 🔧':'')+(level>=8?' ⚡':'')+'</div>'+cars+'<div class="garage-scene-copy"><small>УРОВЕНЬ '+level+' / 10</small><b>'+LEVELS[level].name+'</b><span>'+LEVELS[level].reward+'</span></div></section>';
+    return '<section class="garage-scene garage-level-'+level+'"><div class="garage-ceiling"></div><div class="garage-door"><i></i><i></i><i></i></div><div class="garage-floor"></div><div class="garage-props">'+(level<2?'🗑️ 📦':'')+(level>=4?' 🛠️':'')+(level>=5?' 🔧':'')+(level>=8?' 🧪':'')+'</div>'+cars+'<div class="garage-scene-copy"><small>УРОВЕНЬ '+level+' / 10</small><b>'+LEVELS[level].name+'</b><span>'+LEVELS[level].reward+'</span></div></section>';
   }
   function tabs(active){
     var g=ensure();
-    return '<nav class="garage-tabs"><button class="'+(active==='cars'?'active':'')+'" onclick="garage()">Авто</button><button class="'+(active==='progress'?'active':'')+'" onclick="garageProgress()">Развитие</button><button class="'+(active==='service'?'active':'')+' '+(g.level<5?'locked':'')+'" onclick="garageService()">Сервис</button><button class="'+(active==='tuning'?'active':'')+' '+(g.level<8?'locked':'')+'" onclick="garageTuning()">Тюнинг</button><button onclick="economyGarage()">Бизнес</button></nav>';
+    return '<nav class="garage-tabs"><button class="'+(active==='cars'?'active':'')+'" onclick="garage()">Авто</button><button class="'+(active==='progress'?'active':'')+'" onclick="garageProgress()">Развитие</button><button class="'+(active==='service'?'active':'')+' '+(g.level<5?'locked':'')+'" onclick="garageService()">Сервис</button><button onclick="economyGarage()">Бизнес</button></nav>';
   }
   function shell(title,active,body){var g=ensure();render('<div class="app garage-app">'+head(title)+scene(g.level)+tabs(active)+body+'</div>');}
   function statusText(c){
@@ -254,24 +254,6 @@
     if(typeof log==='function')log('Автосервис завершил '+x.car+': '+x.issue+'. Прибыль '+money(x.payout-x.parts)+'.');
     if(typeof pushPhoneNotification==='function')pushPhoneNotification('Автосервис','🔧','Ремонт '+x.car+' завершён. Оплата '+money(x.payout)+'.','garage','service-'+x.id);
     saveGarage();generateServiceRequests(true);garageService();
-  };
-
-  window.garageTuning=function(){
-    var g=ensure();if(g.level<8){alert('Тюнинг откроется на 8 уровне гаража.');return garageProgress();}
-    var cars=Array.isArray(state.cars)?state.cars:[];
-    var cards=cars.map(function(c,i){
-      var market=Number(c.market||c.sale||c.buy||0),stage=Number(c.tuningLevel||0),cost=Math.max(50000,Math.round(market*.04/1000)*1000),gain=Math.round(market*(g.level>=10?.10:.08)/1000)*1000;
-      return '<article class="tuning-car"><span style="background-image:url(\''+photo(c)+'\')"></span><div><small>ТЮНИНГ '+stage+' / 3</small><b>'+c.name+'</b><em>Сейчас '+money(market)+' → '+money(market+gain)+'</em><button '+(stage>=3?'disabled':'')+' onclick="garageTuneCar('+i+')">'+(stage>=3?'Максимальный тюнинг':('Улучшить · '+money(cost)))+'</button></div></article>';
-    }).join('');
-    shell('Тюнинг-центр','tuning','<div class="tuning-intro"><span>⚡</span><div><b>Повышай стоимость авто</b><p>Каждый этап добавляет 8% к рынку машины. На 10 уровне — 10%.</p></div></div>'+(cards||'<div class="garage-empty-day"><h3>Нет автомобилей</h3><p>Купи машину, чтобы начать тюнинг.</p></div>'));
-  };
-  window.garageTuneCar=function(index){
-    var g=ensure(),c=(state.cars||[])[index];if(g.level<8||!c)return garageTuning();
-    var stage=Number(c.tuningLevel||0);if(stage>=3)return alert('Эта машина уже получила максимальный тюнинг.');
-    var market=Number(c.market||c.sale||c.buy||0),cost=Math.max(50000,Math.round(market*.04/1000)*1000),gain=Math.round(market*(g.level>=10?.10:.08)/1000)*1000;
-    if(Number(state.money||0)<cost)return alert('Не хватает '+money(cost-Number(state.money||0))+'.');
-    state.money-=cost;c.market=market+gain;if(c.healthyMarket)c.healthyMarket=Number(c.healthyMarket)+gain;if(c.sale)c.sale=Number(c.sale)+gain;c.tuningLevel=stage+1;c.tuningSpent=Number(c.tuningSpent||0)+cost;g.stats.tunings++;state.rep=Number(state.rep||0)+1;
-    if(typeof log==='function')log('Тюнинг '+c.name+': стоимость выросла на '+money(gain)+'.');saveGarage();garageTuning();
   };
 
   ensure();saveGarage();
