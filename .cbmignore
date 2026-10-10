@@ -1,0 +1,6 @@
+# cloudflare/app is generated from the root game files by
+# scripts/sync-cloudflare-app.mjs. Index only the source copy.
+cloudflare/app/
+
+# Local or optionally exported graph artifacts are not source code.
+.codebase-memory/

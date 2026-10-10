@@ -1,0 +1,7 @@
+{
+  "extra_extensions": {
+    ".cjs": "javascript",
+    ".mjs": "javascript",
+    ".jsonc": "json"
+  }
+}
