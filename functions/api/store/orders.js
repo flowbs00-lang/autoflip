@@ -30,7 +30,7 @@ export async function onRequestGet(context) {
       if (order.status === "pending" && order.yookassa_payment_id) order = await reconcileOrderPayment(context.env.DB, context.env, order);
       return json({ ok: true, order: publicOrder(order) });
     }
-    const rows = await context.env.DB.prepare(`SELECT * FROM store_orders WHERE user_id = ? AND status IN ('paid','pending') ORDER BY created_at DESC LIMIT 50`)
+    const rows = await context.env.DB.prepare(`SELECT * FROM store_orders WHERE user_id = ? AND amount_rub > 0 ORDER BY created_at DESC LIMIT 50`)
       .bind(session.id).all();
     return json({ ok: true, orders: (rows.results || []).map(publicOrder) });
   } catch (error) {

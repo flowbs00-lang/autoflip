@@ -220,6 +220,7 @@
 
 /* Store — explicit semantic colors prevent dark-on-dark and light-on-light text. */
 :root{--store-accent-text:#86e9c3}
+.age-mark{position:fixed;z-index:99999;right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));display:grid;place-items:center;width:38px;height:38px;border:2px solid currentColor;border-radius:50%;background:#0c111bcc;color:#fff;font-size:12px;font-weight:950;box-shadow:0 8px 24px #0008;backdrop-filter:blur(10px)}
 :root[data-theme=light]{--store-accent-text:#126b4d}
 #screen .app.store-app :is(.store-group-title h2,.store-product h3,.store-checkout h2,.store-history-head h2,.store-history b,.store-security b,.store-email){color:var(--os-text)!important}
 #screen .app.store-app :is(.store-group-title small,.store-checkout>small,.store-history-head small){color:var(--store-accent-text)!important}

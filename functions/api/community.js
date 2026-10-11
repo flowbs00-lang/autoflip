@@ -1,7 +1,8 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
-import { communityCities, ensureCommunitySchema, syncCommunityProfile, validCommunityCity } from "../_lib/community.js";
+import { activeCommunityBan, communityCities, ensureCommunitySchema, runCommunityMaintenance, syncCommunityProfile, validCommunityCity, validateCommunityMessage } from "../_lib/community.js";
 import { ensureLegalSchema, LEGAL_VERSIONS, publicProfileAllowed } from "../_lib/legal.js";
+import { isAdminUser } from "../_lib/admin.js";
 
 const MESSAGE_LIMIT = 400;
 const PUBLIC_CAR_LIMIT = 30;
@@ -14,6 +15,7 @@ async function requireUser(context) {
   if (!session.nickname) throw new RequestError("profile_incomplete", 403);
   await ensureCommunitySchema(context.env.DB);
   await ensureLegalSchema(context.env.DB);
+  await runCommunityMaintenance(context.env.DB);
   return session;
 }
 
@@ -141,11 +143,12 @@ function channelFrom(value, ownClan) {
   throw new RequestError("invalid_channel");
 }
 
-async function snapshot(db, session, channelValue) {
+async function snapshot(db, env, session, channelValue) {
   const ownProfile = await profile(db, session.id);
   const ownClan = await membership(db, session.id);
   const channel = channelFrom(channelValue, ownClan);
-  const [messagesResult, playersResult, clansResult, clanMembersResult] = await Promise.all([
+  const admin = isAdminUser(env, session.id);
+  const [messagesResult, playersResult, clansResult, clanMembersResult, blockedResult, ban] = await Promise.all([
     db.prepare(`
       SELECT m.id, m.body, m.created_at AS createdAt, u.id AS userId, u.nickname,
              COALESCE(c.tag, '') AS clanTag
@@ -153,8 +156,10 @@ async function snapshot(db, session, channelValue) {
       JOIN users u ON u.id = m.user_id
       LEFT JOIN clan_members cm ON cm.user_id = u.id
       LEFT JOIN clans c ON c.id = cm.clan_id
-      WHERE m.channel = ? ORDER BY m.created_at DESC LIMIT 60
-    `).bind(channel).all(),
+      WHERE m.channel = ? AND m.deleted_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM community_blocks b WHERE b.blocker_user_id = ? AND b.blocked_user_id = m.user_id)
+      ORDER BY m.created_at DESC LIMIT 60
+    `).bind(channel, session.id).all(),
     db.prepare(`
       SELECT u.id, u.nickname, p.reputation, p.city, COALESCE(c.tag, '') AS clanTag
       FROM community_profiles p JOIN users u ON u.id = p.user_id
@@ -183,8 +188,23 @@ async function snapshot(db, session, channelValue) {
       ORDER BY CASE WHEN c.owner_user_id = u.id THEN 0 WHEN cm.role = 'coleader' THEN 1 ELSE 2 END,
                p.reputation DESC, u.nickname COLLATE NOCASE ASC
       LIMIT 50
-    `).bind(ownClan.id).all() : Promise.resolve({ results: [] })
+    `).bind(ownClan.id).all() : Promise.resolve({ results: [] }),
+    db.prepare("SELECT blocked_user_id AS userId FROM community_blocks WHERE blocker_user_id = ?").bind(session.id).all(),
+    activeCommunityBan(db, session.id)
   ]);
+  let moderation = null;
+  if (admin) {
+    const [reports, bans] = await Promise.all([
+      db.prepare(`SELECT r.id, r.reason, r.created_at AS createdAt, r.reported_user_id AS userId,
+          reporter.nickname AS reporterNickname, author.nickname, m.id AS messageId, m.body
+        FROM community_reports r JOIN community_messages m ON m.id = r.message_id
+        JOIN users reporter ON reporter.id = r.reporter_user_id JOIN users author ON author.id = r.reported_user_id
+        WHERE r.status = 'open' ORDER BY r.created_at ASC LIMIT 100`).all(),
+      db.prepare(`SELECT b.user_id AS userId, u.nickname, b.reason, b.expires_at AS expiresAt, b.created_at AS createdAt
+        FROM community_bans b JOIN users u ON u.id = b.user_id ORDER BY b.created_at DESC LIMIT 100`).all()
+    ]);
+    moderation = { reports: reports.results || [], bans: bans.results || [] };
+  }
   return {
     ok: true,
     channel,
@@ -194,14 +214,24 @@ async function snapshot(db, session, channelValue) {
       nickname: session.nickname,
       reputation: Number(ownProfile?.reputation || 0),
       city: ownProfile?.city || "Москва",
-      clan: ownClan || null
+      clan: ownClan || null,
+      isAdmin: admin,
+      chatBan: ban || null
     },
     messages: [...(messagesResult.results || [])].reverse(),
     players: playersResult.results || [],
     clans: clansResult.results || [],
     clanMembers: clanMembersResult.results || [],
-    clanLimit: 50
+    clanLimit: 50,
+    blockedUserIds: (blockedResult.results || []).map((row) => row.userId),
+    moderation
   };
+}
+
+async function moderationLog(db, adminId, action, targetUserId = null, messageId = null, reason = "") {
+  await db.prepare(`INSERT INTO community_moderation_log
+    (id, admin_user_id, target_user_id, message_id, action, reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .bind(crypto.randomUUID(), adminId, targetUserId, messageId, action, reason, Date.now()).run();
 }
 
 export async function onRequestGet(context) {
@@ -211,7 +241,7 @@ export async function onRequestGet(context) {
     if (url.searchParams.has("profile")) {
       return json(await publicPlayerProfile(context.env.DB, session.id, url.searchParams.get("profile")));
     }
-    return json(await snapshot(context.env.DB, session, url.searchParams.get("channel")));
+    return json(await snapshot(context.env.DB, context.env, session, url.searchParams.get("channel")));
   } catch (error) {
     return handleError(error);
   }
@@ -224,6 +254,7 @@ export async function onRequestPost(context) {
     const body = await readJson(context.request, 8_192);
     const action = String(body?.action || "");
     const db = context.env.DB;
+    const admin = isAdminUser(context.env, session.id);
 
     if (action === "sync") {
       await syncCommunityProfile(db, session.id, body.reputation, body.city);
@@ -232,9 +263,10 @@ export async function onRequestPost(context) {
 
     const ownClan = await membership(db, session.id);
     if (action === "send") {
+      const ban = await activeCommunityBan(db, session.id);
+      if (ban) throw new RequestError("chat_banned", 403);
       const channel = channelFrom(body.channel, ownClan);
-      const message = String(body.message || "").trim().replace(/\s+/gu, " ");
-      if (!message || message.length > MESSAGE_LIMIT) throw new RequestError("invalid_message");
+      const message = validateCommunityMessage(body.message);
       const recent = await db.prepare("SELECT created_at FROM community_messages WHERE user_id = ? ORDER BY created_at DESC LIMIT 1")
         .bind(session.id).first();
       const now = Date.now();
@@ -242,6 +274,80 @@ export async function onRequestPost(context) {
       await db.prepare("INSERT INTO community_messages (user_id, channel, body, created_at) VALUES (?, ?, ?, ?)")
         .bind(session.id, channel, message, now).run();
       return json({ ok: true });
+    }
+
+    if (action === "report_message") {
+      const messageId = Math.floor(Number(body.messageId));
+      const reason = publicText(body.reason, 300);
+      if (!messageId || reason.length < 5) throw new RequestError("invalid_report");
+      const message = await db.prepare("SELECT id, user_id AS userId FROM community_messages WHERE id = ? AND deleted_at IS NULL LIMIT 1").bind(messageId).first();
+      if (!message) throw new RequestError("message_not_found", 404);
+      if (message.userId === session.id) throw new RequestError("cannot_report_self");
+      try {
+        await db.prepare(`INSERT INTO community_reports
+          (id, message_id, reporter_user_id, reported_user_id, reason, status, created_at)
+          VALUES (?, ?, ?, ?, ?, 'open', ?)`)
+          .bind(crypto.randomUUID(), messageId, session.id, message.userId, reason, Date.now()).run();
+      } catch (error) {
+        if (/unique|constraint/iu.test(String(error?.message || error))) throw new RequestError("report_already_sent", 409);
+        throw error;
+      }
+      return json({ ok: true });
+    }
+
+    if (action === "block_user" || action === "unblock_user") {
+      const userId = publicText(body.userId, 80);
+      if (!userId || userId === session.id) throw new RequestError("invalid_player");
+      const target = await db.prepare("SELECT id FROM users WHERE id = ? LIMIT 1").bind(userId).first();
+      if (!target) throw new RequestError("player_not_found", 404);
+      if (action === "block_user") {
+        await db.prepare("INSERT OR IGNORE INTO community_blocks (blocker_user_id, blocked_user_id, created_at) VALUES (?, ?, ?)")
+          .bind(session.id, userId, Date.now()).run();
+      } else {
+        await db.prepare("DELETE FROM community_blocks WHERE blocker_user_id = ? AND blocked_user_id = ?").bind(session.id, userId).run();
+      }
+      return json({ ok: true });
+    }
+
+    if (action.startsWith("admin_")) {
+      if (!admin) throw new RequestError("admin_required", 403);
+      const reason = publicText(body.reason, 300) || "Нарушение правил сообщества";
+      if (action === "admin_delete_message") {
+        const messageId = Math.floor(Number(body.messageId));
+        const message = await db.prepare("SELECT user_id AS userId FROM community_messages WHERE id = ? LIMIT 1").bind(messageId).first();
+        if (!message) throw new RequestError("message_not_found", 404);
+        await db.prepare("UPDATE community_messages SET deleted_at = ?, deleted_by = ?, delete_reason = ? WHERE id = ?")
+          .bind(Date.now(), session.id, reason, messageId).run();
+        await moderationLog(db, session.id, "delete_message", message.userId, messageId, reason);
+        return json({ ok: true });
+      }
+      if (action === "admin_ban_user") {
+        const userId = publicText(body.userId, 80);
+        if (!userId || userId === session.id || isAdminUser(context.env, userId)) throw new RequestError("invalid_player");
+        const target = await db.prepare("SELECT id FROM users WHERE id = ? LIMIT 1").bind(userId).first();
+        if (!target) throw new RequestError("player_not_found", 404);
+        const hours = Math.max(0, Math.min(24 * 365, Math.floor(Number(body.durationHours) || 0)));
+        const expiresAt = hours ? Date.now() + hours * 60 * 60_000 : null;
+        await db.prepare(`INSERT INTO community_bans (user_id, reason, expires_at, created_at, created_by)
+          VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET reason=excluded.reason,
+          expires_at=excluded.expires_at, created_at=excluded.created_at, created_by=excluded.created_by`)
+          .bind(userId, reason, expiresAt, Date.now(), session.id).run();
+        await moderationLog(db, session.id, "ban_user", userId, null, reason);
+        return json({ ok: true });
+      }
+      if (action === "admin_unban_user") {
+        const userId = publicText(body.userId, 80);
+        await db.prepare("DELETE FROM community_bans WHERE user_id = ?").bind(userId).run();
+        await moderationLog(db, session.id, "unban_user", userId);
+        return json({ ok: true });
+      }
+      if (action === "admin_resolve_report") {
+        const reportId = publicText(body.reportId, 80);
+        await db.prepare(`UPDATE community_reports SET status = 'resolved', reviewed_at = ?, reviewed_by = ?, resolution = ? WHERE id = ?`)
+          .bind(Date.now(), session.id, reason, reportId).run();
+        await moderationLog(db, session.id, "resolve_report", null, null, reason);
+        return json({ ok: true });
+      }
     }
 
     if (action === "create_clan") {

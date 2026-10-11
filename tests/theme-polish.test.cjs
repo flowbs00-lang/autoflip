@@ -8,8 +8,8 @@ const css=fs.readFileSync(path.join(__dirname,'../theme-polish.css'),'utf8');
 
 test('final theme layer loads after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(links.at(-1),'theme-polish.css?v=20261010-3');
-  assert.ok(links.indexOf('theme-polish.css?v=20261010-3')>links.indexOf('community.css?v=20261008-2'));
+  assert.equal(links.at(-1),'theme-polish.css?v=20261011-1');
+  assert.ok(links.indexOf('theme-polish.css?v=20261011-1')>links.indexOf('community.css?v=20261011-1'));
 });
 
 test('dark feature cards keep light text when the OS theme is light',()=>{
@@ -19,9 +19,10 @@ test('dark feature cards keep light text when the OS theme is light',()=>{
   assert.match(css,/\.garage-upgrade-head p\{color:#c9d2dc\}/);
 });
 
-test('higher or lower card game is removed from the arcade',()=>{
+test('paid-risk coinflip and mines games are removed from the arcade',()=>{
   assert.doesNotMatch(html,/higherLowerGame|playHigherLower|Выше \/ ниже/);
-  assert.match(html,/Мини-игры<\/span><small>4 режима/);
+  assert.doesNotMatch(html,/coinflipGame|playCoinflip|gamesMinesStart|gamesMinesReveal/);
+  assert.match(html,/Мини-игры<\/span><small>2 режима/);
 });
 
 test('both themes define complete readable semantic palettes',()=>{

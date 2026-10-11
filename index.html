@@ -13,13 +13,14 @@
 <link rel="stylesheet" href="negotiations-system.css?v=20261007-2">
 <link rel="stylesheet" href="mobile-first.css?v=20261008-1">
 <link rel="stylesheet" href="account.css?v=20261010-1">
-<link rel="stylesheet" href="community.css?v=20261008-2">
+<link rel="stylesheet" href="community.css?v=20261011-1">
 <link rel="stylesheet" href="community-profile.css?v=20261008-1">
 <link rel="stylesheet" href="store.css?v=20261010-1">
 <link rel="stylesheet" href="economy-system.css?v=20261010-3">
-<link rel="stylesheet" href="theme-polish.css?v=20261010-3">
+<link rel="stylesheet" href="theme-polish.css?v=20261011-1">
 </head>
 <body>
+<div class="age-mark" aria-label="Возрастное ограничение 18 плюс">18+</div>
 <header>
   <a class="logo" href="#game"><span>●</span> AutoFlip</a>
   <nav><a href="#game">Игра</a><a href="#about">Система</a></nav>
@@ -1270,37 +1271,13 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     render('<div class="app games-app games-lobby">'+head('Games')+
       '<section class="games-hero"><div class="games-hero-orb">🎮</div><div class="games-hero-copy"><small>AUTOFLIP ARCADE</small><h3>Игровая пауза</h3><p>Быстрые мини-игры между сделками.</p></div><div class="games-wallet"><span>Баланс</span><b>'+money(state.money)+'</b></div></section>'+
       '<div class="games-stats"><div><small>ИГР</small><b>'+s.played+'</b></div><div><small>ПОБЕД</small><b>'+rate+'%</b></div><div><small>ИТОГ</small><b class="'+(s.net>=0?'profit':'market-bad')+'">'+(s.net>=0?'+':'')+money(s.net)+'</b></div></div>'+
-      '<div class="games-section-title"><span>Мини-игры</span><small>4 режима</small></div>'+
+      '<div class="games-section-title"><span>Мини-игры</span><small>2 режима</small></div>'+
       '<div class="games-list">'+
-        gameCard('🪙','Coinflip','Орёл или решка · выигрыш ×2','50 / 50','coinflipGame()','gold')+
-        gameCard('💣','Мины','Открывай клетки и забирай вовремя','РИСК','minesGame()','red')+
         gameCard('🎲','Кости','Угадай сторону от отметки 50','1–100','diceGame()','blue')+
         gameCard('🎰','Слоты','Поймай пару или джекпот','УДАЧА','slotsGame()','pink')+
       '</div>'+
       (h.length?'<div class="games-history"><div class="games-section-title"><span>Последние игры</span><small>'+h.length+'</small></div>'+h.slice(0,4).map(function(x){return '<div class="games-history-row"><span>'+x.name+'</span><b class="'+(x.net>=0?'profit':'market-bad')+'">'+(x.net>=0?'+':'')+money(x.net)+'</b></div>';}).join('')+'</div>':'')+
       '<p class="games-footnote">Внутриигровые деньги AutoFlip · без реальных ставок</p></div>');
-  };
-
-  // Coinflip
-  window.coinflipGame=function(result){
-    gamesBusy=false;ensureGames();
-    render('<div class="app games-app">'+gamesHead('Coinflip')+
-      '<div class="game-focus coin-focus"><div class="coin-static">₽</div><small>COINFLIP</small><h3>Выбери сторону</h3><p>Верный прогноз возвращает ставку ×2.</p></div>'+
-      (result||'')+gamesInput('coinBet',5000)+
-      '<div class="games-two"><button class="action games-choice" onclick="playCoinflip(\'Орёл\')"><span>🦅</span> Орёл</button><button class="action green games-choice" onclick="playCoinflip(\'Решка\')"><span>🪙</span> Решка</button></div></div>');
-  };
-  window.playCoinflip=function(choice){
-    var bet=readBet('coinBet');if(!bet)return;
-    beginBet(bet);
-    var landed=Math.random()<.5?'Орёл':'Решка';
-    stage('Coinflip','<div class="coin-anim"><div class="coin-face">₽</div></div>','Монета в воздухе…');
-    setTimeout(function(){
-      var win=landed===choice,payout=win?bet*2:0;
-      state.money+=payout;
-      var net=gameRecord('Coinflip',bet,payout,'');
-      finishBusy();
-      coinflipGame(resultHtml('ВЫПАЛ '+landed.toUpperCase(),landed==='Орёл'?'🦅':'🪙',win?'Твой выбор сыграл.':'Монета выбрала другую сторону.',net));
-    },1050);
   };
 
   // Dice
@@ -1356,59 +1333,6 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       finishBusy();
       slotsGame(resultHtml(triple?'ДЖЕКПОТ':pair?'ЕСТЬ ПАРА':'БЕЗ КОМБИНАЦИИ',a+' '+b+' '+c,triple?'Три одинаковых символа.':pair?'Два символа совпали.':'Барабаны не собрали комбинацию.',net));
     },1150);
-  };
-
-  // Mines
-  function minesMultipliers(){return [1,1.20,1.60,2.25,3.40,5.70,11.40,34.00];}
-  function minesNewState(bet){
-    var cells=[0,1,2,3,4,5,6,7,8],mines=[];
-    while(mines.length<2){var p=Math.floor(Math.random()*cells.length),v=cells.splice(p,1)[0];mines.push(v);}
-    return {active:true,bet:bet,mines:mines,revealed:[],ended:false,won:false,lastReveal:-1,lastMine:-1};
-  }
-  window.minesGame=function(message){
-    gamesBusy=false;
-    var g=ensureGames(),m=g.mines||null,mults=minesMultipliers(),safe=m&&Array.isArray(m.revealed)?m.revealed.length:0,mult=mults[Math.min(safe,mults.length-1)];
-    var grid='';
-    for(var i=0;i<9;i++){
-      var opened=m&&m.revealed&&m.revealed.indexOf(i)>=0,showMine=m&&m.ended&&m.mines.indexOf(i)>=0;
-      var cls=opened?' safe':showMine?' mine':'';
-      if(m&&m.lastReveal===i)cls+=' reveal-pop';
-      if(m&&m.lastMine===i)cls+=' explode';
-      grid+='<button class="mine-cell'+cls+'" '+(m&&m.active&&!opened?'onclick="gamesMinesReveal('+i+')"':'disabled')+'>'+(showMine?'💣':opened?'💎':'<span>?</span>')+'</button>';
-    }
-    render('<div class="app games-app">'+gamesHead('Мины')+
-      '<div class="game-focus mines-focus"><div class="mines-logo">💣</div><small>2 МИНЫ · 7 БЕЗОПАСНЫХ</small><h3>Открывай клетки</h3><p>Каждая безопасная клетка повышает множитель.</p></div>'+
-      (message||'')+
-      (m?'<div class="mines-board">'+grid+'</div><div class="mines-info"><span>СТАВКА<b>'+money(m.bet)+'</b></span><span>ОТКРЫТО<b>'+safe+'/7</b></span><span>МНОЖИТЕЛЬ<b>×'+mult.toFixed(2)+'</b></span></div>':'')+
-      ((!m||m.ended)?gamesInput('minesBet',5000)+'<button class="action green games-main-action" onclick="gamesMinesStart()">💣 Начать раунд</button>':'<button class="action green games-main-action" '+(safe<1?'disabled':'')+' onclick="gamesMinesCashout()">💰 Забрать '+money(Math.floor(m.bet*mult))+'</button>')+
-      '</div>');
-  };
-  window.gamesMinesStart=function(){
-    var bet=readBet('minesBet');if(!bet)return;
-    var g=ensureGames();state.money-=bet;g.mines=minesNewState(bet);gsave();minesGame();
-  };
-  window.gamesMinesReveal=function(index){
-    if(gamesBusy)return;
-    var g=ensureGames(),m=g.mines;if(!m||!m.active||m.revealed.indexOf(index)>=0)return;
-    gamesBusy=true;
-    if(m.mines.indexOf(index)>=0){
-      m.active=false;m.ended=true;m.won=false;m.lastMine=index;
-      var net=gameRecord('Мины',m.bet,0,'');
-      setTimeout(function(){finishBusy();minesGame(resultHtml('МИНА','💥','Раунд завершён — две мины показаны на поле.',net));},180);
-      return;
-    }
-    m.revealed.push(index);m.lastReveal=index;gsave();
-    if(m.revealed.length>=7){finishBusy();return gamesMinesCashout(true);}
-    minesGame();
-    setTimeout(function(){var gg=ensureGames();if(gg.mines)gg.mines.lastReveal=-1;gamesBusy=false;gsave();},420);
-  };
-  window.gamesMinesCashout=function(auto){
-    var g=ensureGames(),m=g.mines;if(!m||!m.active||!m.revealed.length)return;
-    var mult=minesMultipliers()[Math.min(m.revealed.length,7)],payout=Math.floor(m.bet*mult);
-    state.money+=payout;m.active=false;m.ended=true;m.won=true;
-    var net=gameRecord('Мины',m.bet,payout,'');
-    finishBusy();
-    minesGame(resultHtml(auto?'ПОЛЕ ПРОЙДЕНО':'ВЫИГРЫШ ЗАФИКСИРОВАН','💎',auto?'Все безопасные клетки открыты.':'Ты вовремя остановился на ×'+mult.toFixed(2)+'.',net));
   };
 
   ensureGames();
@@ -1888,8 +1812,8 @@ if(typeof window.autoBankHome==='function'){
 <script src="world-system.js?v=20261007-6"></script>
 <script src="negotiations-system.js?v=20261010-2"></script>
 <script src="economy-system.js?v=20261010-3"></script>
-<script src="game-account.js?v=20261010-2"></script>
-<script src="community.js?v=20261010-4"></script>
-<script src="store.js?v=20261011-2"></script>
+<script src="game-account.js?v=20261011-1"></script>
+<script src="community.js?v=20261011-1"></script>
+<script src="store.js?v=20261011-3"></script>
 </body>
 </html>

@@ -19,12 +19,9 @@ export async function upsertVkUser(db, vkUser) {
   if (existing) {
     await db.prepare(`
       UPDATE users
-      SET first_name = ?, last_name = ?, avatar_url = ?, updated_at = ?
+      SET first_name = '', last_name = '', avatar_url = '', updated_at = ?
       WHERE id = ?
     `).bind(
-      String(vkUser.first_name || "").slice(0, 100),
-      String(vkUser.last_name || "").slice(0, 100),
-      String(vkUser.avatar || "").slice(0, 500),
       now,
       existing.id
     ).run();
@@ -37,13 +34,10 @@ export async function upsertVkUser(db, vkUser) {
       await db.prepare(`
         INSERT INTO users (
           id, vk_user_id, nickname, first_name, last_name, avatar_url, created_at, updated_at
-        ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, NULL, '', '', '', ?, ?)
       `).bind(
         id,
         vkUserId,
-        String(vkUser.first_name || "").slice(0, 100),
-        String(vkUser.last_name || "").slice(0, 100),
-        String(vkUser.avatar || "").slice(0, 500),
         now,
         now
       ).run();
@@ -64,8 +58,8 @@ export function publicUser(row) {
   return {
     id: row.id,
     nickname: row.nickname || null,
-    firstName: row.first_name || "",
-    lastName: row.last_name || "",
-    avatarUrl: row.avatar_url || ""
+    firstName: "",
+    lastName: "",
+    avatarUrl: ""
   };
 }

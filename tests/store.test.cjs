@@ -9,15 +9,14 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 let storeModule;
 async function store(){return storeModule||=(await import(pathToFileURL(path.join(root,'functions/_lib/store.js')).href));}
 
-test('store catalog contains every requested product with server-owned prices',async()=>{
+test('store catalog excludes game currency and random paid rewards',async()=>{
   const {STORE_PRODUCTS,publicCatalog}=await store();
   assert.deepEqual(Object.keys(STORE_PRODUCTS),['cash_200k','cash_1m','cash_2m','plate_cool','plate_custom','buyers_1d','buyers_7d','buyers_30d','garage_5','garage_10']);
   const catalog=publicCatalog();
-  assert.equal(catalog.length,10);
+  assert.equal(catalog.length,6);
   assert.ok(catalog.every(product=>product.price>0&&!('grant' in product)));
   assert.deepEqual(Object.fromEntries(catalog.map(product=>[product.code,product.price])),{
-    cash_200k:99,cash_1m:399,cash_2m:699,plate_cool:499,plate_custom:999,
-    buyers_1d:99,buyers_7d:399,buyers_30d:1199,garage_5:499,garage_10:1499
+    plate_custom:999,buyers_1d:99,buyers_7d:399,buyers_30d:1199,garage_5:499,garage_10:1499
   });
 });
 
@@ -63,6 +62,7 @@ test('custom and premium plates are validated, uppercase and added once',async()
   const state={money:0},order={id:'01234567-89ab-cdef-0123-456789abcdef',product_code:'plate_custom',custom_payload:JSON.stringify({number:'А777АА',region:'43'}),paid_at:5};
   applyStoreOrder(state,order);applyStoreOrder(state,order);
   assert.equal(state.plates.items.length,1);assert.equal(state.plates.items[0].number,'А777АА');assert.equal(state.plates.items[0].region.city,'Киров');
+  assert.equal(state.plates.items[0].tradable,false);assert.equal(state.plates.items[0].value,0);
 });
 
 test('cool premium plate cannot be sold for in-game currency',async()=>{
@@ -87,5 +87,5 @@ test('shop is visible on the phone and fast buyers halve the generated delay',()
   const ui=read('ui.js'),html=read('index.html');
   assert.match(ui,/openStore','Магазин','shop'/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
-  assert.match(html,/store\.js\?v=20261011-2/);assert.match(html,/store\.css\?v=20261010-1/);
+  assert.match(html,/store\.js\?v=20261011-3/);assert.match(html,/store\.css\?v=20261010-1/);
 });

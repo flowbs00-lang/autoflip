@@ -1,3 +1,5 @@
+import { RequestError } from "./http.js";
+
 const COMMUNITY_CITIES = Object.freeze([
   "Москва", "Санкт-Петербург", "Нижний Новгород", "Екатеринбург", "Киров",
   "Краснодар", "Пермь", "Калининград", "Сургут", "Чита", "Казань",
@@ -6,6 +8,13 @@ const COMMUNITY_CITIES = Object.freeze([
 ]);
 
 let schemaReady = false;
+
+const FORBIDDEN_WORDS = Object.freeze([
+  "пидор", "пидорас", "хохол", "чурка", "ниггер", "нацист", "докс", "доксим",
+  "скам", "мошенник", "казино", "ставки", "наркотики", "наркота"
+]);
+
+const LINK_PATTERN = /(?:https?:\/\/|www\.|t\.me\/|vk\.com\/|discord\.gg\/|[a-z0-9-]+\.(?:ru|com|net|org|io|gg|me)(?:\b|\/))/iu;
 
 export function communityCities() {
   return [...COMMUNITY_CITIES];
@@ -52,6 +61,45 @@ export async function ensureCommunitySchema(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS community_messages_channel_idx ON community_messages(channel, created_at DESC)"),
     db.prepare("CREATE INDEX IF NOT EXISTS clan_members_clan_idx ON clan_members(clan_id)")
   ]);
+  const messageColumns = await db.prepare("PRAGMA table_info(community_messages)").all();
+  if (!(messageColumns.results || []).some((column) => column.name === "deleted_at")) {
+    await db.prepare("ALTER TABLE community_messages ADD COLUMN deleted_at INTEGER").run();
+  }
+  if (!(messageColumns.results || []).some((column) => column.name === "deleted_by")) {
+    await db.prepare("ALTER TABLE community_messages ADD COLUMN deleted_by TEXT").run();
+  }
+  if (!(messageColumns.results || []).some((column) => column.name === "delete_reason")) {
+    await db.prepare("ALTER TABLE community_messages ADD COLUMN delete_reason TEXT").run();
+  }
+  await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_reports (
+      id TEXT PRIMARY KEY, message_id INTEGER NOT NULL, reporter_user_id TEXT NOT NULL,
+      reported_user_id TEXT NOT NULL, reason TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open',
+      created_at INTEGER NOT NULL, reviewed_at INTEGER, reviewed_by TEXT, resolution TEXT,
+      FOREIGN KEY (message_id) REFERENCES community_messages(id) ON DELETE CASCADE,
+      FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS community_report_unique_idx ON community_reports(message_id, reporter_user_id)"),
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_blocks (
+      blocker_user_id TEXT NOT NULL, blocked_user_id TEXT NOT NULL, created_at INTEGER NOT NULL,
+      PRIMARY KEY (blocker_user_id, blocked_user_id),
+      FOREIGN KEY (blocker_user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (blocked_user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_bans (
+      user_id TEXT PRIMARY KEY, reason TEXT NOT NULL, expires_at INTEGER, created_at INTEGER NOT NULL,
+      created_by TEXT NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_moderation_log (
+      id TEXT PRIMARY KEY, admin_user_id TEXT NOT NULL, target_user_id TEXT, message_id INTEGER,
+      action TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS community_maintenance (
+      task TEXT PRIMARY KEY, completed_at INTEGER NOT NULL
+    )`),
+    db.prepare("CREATE INDEX IF NOT EXISTS community_reports_status_idx ON community_reports(status, created_at DESC)")
+  ]);
   const columns = await db.prepare("PRAGMA table_info(clan_members)").all();
   if (!(columns.results || []).some((column) => column.name === "role")) {
     await db.prepare("ALTER TABLE clan_members ADD COLUMN role TEXT NOT NULL DEFAULT 'member'").run();
@@ -61,6 +109,29 @@ export async function ensureCommunitySchema(db) {
     WHEN (SELECT COUNT(*) FROM clan_members WHERE clan_id = NEW.clan_id) >= 50
     BEGIN SELECT RAISE(ABORT, 'clan_full'); END`).run();
   schemaReady = true;
+}
+
+export function validateCommunityMessage(value) {
+  const message = String(value || "").normalize("NFKC").trim().replace(/\s+/gu, " ");
+  if (!message || message.length > 400) throw new RequestError("invalid_message");
+  if (LINK_PATTERN.test(message)) throw new RequestError("message_links_forbidden");
+  const normalized = message.toLocaleLowerCase("ru-RU").replace(/[0@]/gu, "о").replace(/3/gu, "з");
+  if (FORBIDDEN_WORDS.some((word) => normalized.includes(word))) throw new RequestError("message_forbidden_content");
+  return message;
+}
+
+export async function activeCommunityBan(db, userId) {
+  const now = Date.now();
+  await db.prepare("DELETE FROM community_bans WHERE expires_at IS NOT NULL AND expires_at <= ?").bind(now).run();
+  return db.prepare("SELECT reason, expires_at AS expiresAt FROM community_bans WHERE user_id = ? LIMIT 1").bind(userId).first();
+}
+
+export async function runCommunityMaintenance(db) {
+  const row = await db.prepare("SELECT completed_at FROM community_maintenance WHERE task = 'message_cleanup' LIMIT 1").first();
+  const now = Date.now();
+  if (row && now - Number(row.completed_at || 0) < 6 * 60 * 60_000) return;
+  await db.prepare("INSERT INTO community_maintenance (task, completed_at) VALUES ('message_cleanup', ?) ON CONFLICT(task) DO UPDATE SET completed_at = excluded.completed_at").bind(now).run();
+  await db.prepare("DELETE FROM community_messages WHERE created_at < ?").bind(now - 90 * 24 * 60 * 60_000).run();
 }
 
 export async function syncCommunityProfile(db, userId, reputation, city) {

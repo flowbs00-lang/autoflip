@@ -1,10 +1,10 @@
 import { RequestError } from "./http.js";
 
 export const STORE_PRODUCTS = Object.freeze({
-  cash_200k: { code: "cash_200k", title: "200 000 ₽", description: "Игровые деньги", category: "money", price: 99, grant: { type: "money", amount: 200_000 } },
-  cash_1m: { code: "cash_1m", title: "1 000 000 ₽", description: "Игровые деньги", category: "money", price: 399, grant: { type: "money", amount: 1_000_000 }, badge: "Выгодно" },
-  cash_2m: { code: "cash_2m", title: "2 000 000 ₽", description: "Игровые деньги", category: "money", price: 699, grant: { type: "money", amount: 2_000_000 }, badge: "Максимум" },
-  plate_cool: { code: "plate_cool", title: "Крутой номер", description: "Случайный премиальный номер · нельзя продать", category: "plates", price: 499, grant: { type: "plate", mode: "cool" } },
+  cash_200k: { code: "cash_200k", title: "200 000 ₽", description: "Архивный товар", category: "money", price: 99, public: false, grant: { type: "money", amount: 200_000 } },
+  cash_1m: { code: "cash_1m", title: "1 000 000 ₽", description: "Архивный товар", category: "money", price: 399, public: false, grant: { type: "money", amount: 1_000_000 } },
+  cash_2m: { code: "cash_2m", title: "2 000 000 ₽", description: "Архивный товар", category: "money", price: 699, public: false, grant: { type: "money", amount: 2_000_000 } },
+  plate_cool: { code: "plate_cool", title: "Крутой номер", description: "Архивный случайный товар", category: "plates", price: 499, public: false, grant: { type: "plate", mode: "cool" } },
   plate_custom: { code: "plate_custom", title: "Свой номер", description: "Выбери буквы, цифры и регион", category: "plates", price: 999, grant: { type: "plate", mode: "custom" }, badge: "Конструктор" },
   buyers_1d: { code: "buyers_1d", title: "Быстрые покупатели · сутки", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 99, grant: { type: "fast_buyers", durationMs: 86_400_000 } },
   buyers_7d: { code: "buyers_7d", title: "Быстрые покупатели · 7 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 399, grant: { type: "fast_buyers", durationMs: 604_800_000 }, badge: "Популярное" },
@@ -80,11 +80,24 @@ export async function ensureStoreSchema(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS store_orders_user_idx ON store_orders(user_id, created_at DESC)"),
     db.prepare("CREATE INDEX IF NOT EXISTS store_orders_payment_idx ON store_orders(yookassa_payment_id)")
   ]);
+  await db.prepare(`CREATE TABLE IF NOT EXISTS store_refund_requests (
+    id TEXT PRIMARY KEY, order_id TEXT NOT NULL UNIQUE, user_id TEXT NOT NULL, reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'requested', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+    reviewed_by TEXT, review_note TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (order_id) REFERENCES store_orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`).run();
+  await db.prepare("CREATE INDEX IF NOT EXISTS store_refunds_status_idx ON store_refund_requests(status, created_at DESC)").run();
   schemaReady = true;
 }
 
 export function publicCatalog() {
-  return Object.values(STORE_PRODUCTS).map(({ grant, ...product }) => product);
+  return Object.values(STORE_PRODUCTS).filter((product) => product.public !== false).map(({ grant, public: ignored, ...product }) => product);
+}
+
+export function purchasableProductByCode(code) {
+  const product = STORE_PRODUCTS[String(code || "")];
+  return product && product.public !== false ? product : null;
 }
 
 export function productByCode(code) {
@@ -129,11 +142,11 @@ function purchasedPlate(order, mode, payload) {
     number,
     region: { code: region, city: REGIONS[region], country: "Россия" },
     rarity: "secret",
-    value: mode === "cool" ? 0 : 500_000,
+    value: 0,
     createdAt: Number(order.paid_at || Date.now()),
     attachedCarId: null,
     premium: true,
-    tradable: mode !== "cool"
+    tradable: false
   };
 }
 

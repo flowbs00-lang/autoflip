@@ -64,6 +64,11 @@
       clan_member_not_found: 'Участник уже покинул клан.',
       invalid_clan_role: 'Эту должность назначить нельзя.',
       player_not_found: 'Профиль игрока больше недоступен.'
+      ,message_links_forbidden: 'Ссылки в игровых чатах запрещены.'
+      ,message_forbidden_content: 'Сообщение содержит запрещённые слова.'
+      ,chat_banned: 'Отправка сообщений заблокирована модератором.'
+      ,report_already_sent: 'Ты уже отправлял жалобу на это сообщение.'
+      ,invalid_report: 'Опиши нарушение подробнее.'
     }[code] || 'Не удалось выполнить действие. Попробуй ещё раз.';
   }
 
@@ -75,7 +80,7 @@
 
   function tabsHtml() {
     return '<nav class="community-tabs">' +
-      [['global', 'Общий'], ['region', 'Регионы'], ['rating', 'Рейтинг'], ['clans', 'Кланы']].map(function (item) {
+      ([['global', 'Общий'], ['region', 'Регионы'], ['rating', 'Рейтинг'], ['clans', 'Кланы']].concat(snapshot && snapshot.me.isAdmin ? [['moderation', 'Модерация']] : [])).map(function (item) {
         return '<button class="' + (tab === item[0] ? 'active' : '') + '" onclick="openCommunity(\'' + item[0] + '\')">' + item[1] + '</button>';
       }).join('') + '</nav>';
   }
@@ -83,7 +88,8 @@
   function messageRows(data) {
     var rows = (data.messages || []).map(function (message) {
       var mine = message.userId === data.me.id;
-      return '<article class="community-message ' + (mine ? 'mine' : '') + '"><div><button class="community-author" data-user-id="' + esc(message.userId) + '" onclick="communityOpenProfile(this.dataset.userId)">' + esc(displayName(message)) + '</button><time>' + formatTime(message.createdAt) + '</time></div><p>' + esc(message.body) + '</p></article>';
+      var controls = mine ? '' : '<footer><button onclick="communityReport('+Number(message.id)+')">Пожаловаться</button><button data-user-id="'+esc(message.userId)+'" onclick="communityBlock(this.dataset.userId)">Блокировать</button>'+(data.me.isAdmin?'<button class="danger" onclick="communityAdminDelete('+Number(message.id)+')">Удалить</button><button class="danger" data-user-id="'+esc(message.userId)+'" onclick="communityAdminBan(this.dataset.userId)">Бан</button>':'')+'</footer>';
+      return '<article class="community-message ' + (mine ? 'mine' : '') + '"><div><button class="community-author" data-user-id="' + esc(message.userId) + '" onclick="communityOpenProfile(this.dataset.userId)">' + esc(displayName(message)) + '</button><time>' + formatTime(message.createdAt) + '</time></div><p>' + esc(message.body) + '</p>'+controls+'</article>';
     }).join('');
     return rows || '<div class="community-empty">Пока сообщений нет. Начни разговор первым.</div>';
   }
@@ -98,7 +104,13 @@
       return '<option ' + (city === region ? 'selected' : '') + '>' + esc(city) + '</option>';
     }).join('') + '</select></label>' : '';
     return selector + '<div class="community-live-note"><span></span> Новые сообщения появляются автоматически</div><section id="communityChat" class="community-chat" data-signature="' + esc(messageSignature(data)) + '">' + messageRows(data) + '</section>' +
-      '<div class="community-compose"><textarea id="communityMessage" maxlength="400" placeholder="Написать сообщение…"></textarea><button onclick="communitySend()">➤</button></div>';
+      (data.me.chatBan?'<div class="community-empty">Чат заблокирован модератором: '+esc(data.me.chatBan.reason)+'</div>':'<div class="community-compose"><textarea id="communityMessage" maxlength="400" placeholder="Написать сообщение…"></textarea><button onclick="communitySend()">➤</button></div>');
+  }
+
+  function moderationHtml(data) {
+    var moderation=data.moderation||{}, reports=(moderation.reports||[]).map(function(r){return '<article class="community-member"><div class="community-member-copy"><b>'+esc(r.nickname)+' · сообщение #'+Number(r.messageId)+'</b><small>'+esc(r.body)+'</small><em>Жалоба: '+esc(r.reason)+' · '+esc(r.reporterNickname)+'</em></div><section><button class="danger" onclick="communityAdminDelete('+Number(r.messageId)+')">Удалить</button><button class="danger" data-user-id="'+esc(r.userId)+'" onclick="communityAdminBan(this.dataset.userId)">Бан</button><button onclick="communityResolveReport(\''+esc(r.id)+'\')">Закрыть</button></section></article>';}).join('');
+    var bans=(moderation.bans||[]).map(function(b){return '<article class="community-member"><div class="community-member-copy"><b>'+esc(b.nickname)+'</b><small>'+esc(b.reason)+'</small></div><section><button data-user-id="'+esc(b.userId)+'" onclick="communityAdminUnban(this.dataset.userId)">Снять бан</button></section></article>';}).join('');
+    return '<section class="community-title"><small>ПАНЕЛЬ АДМИНИСТРАТОРА</small><h3>Жалобы и блокировки</h3><p>Каждое действие записывается в журнал модерации.</p></section><h3>Открытые жалобы</h3>'+(reports||'<div class="community-empty">Открытых жалоб нет.</div>')+'<h3>Активные баны</h3>'+(bans||'<div class="community-empty">Активных банов нет.</div>');
   }
 
   function ratingHtml(data) {
@@ -162,6 +174,7 @@
     var clan = player.clan;
     var name = displayName({ nickname: player.nickname, clanTag: clan && clan.tag });
     render('<div class="app community-app community-profile-app">' + head('Профиль игрока') + '<button class="community-back" onclick="communityCloseProfile()">‹ Вернуться назад</button><section class="community-player-hero"><div class="community-player-avatar">' + esc(String(player.nickname || '?').slice(0, 1).toUpperCase()) + '</div><div><small>' + (player.isMe ? 'ТВОЙ ПУБЛИЧНЫЙ ПРОФИЛЬ' : 'ИГРОК AUTOFLIP') + '</small><h2>' + esc(name) + '</h2><p>📍 ' + esc(player.city) + (clan ? ' · ' + esc(roleLabel(clan.role)) : '') + '</p></div><span class="' + (player.online ? '' : 'offline') + '">● ' + (player.online ? 'ONLINE' : 'OFFLINE') + '</span></section><section class="community-player-id"><span>Уникальный ID</span><button data-player-id="' + esc(player.id) + '" onclick="communityCopyId(this.dataset.playerId)">' + esc(player.id) + ' ⧉</button><small>В игре с ' + esc(formatDate(player.createdAt)) + '</small></section><div class="community-player-stats"><div><small>РЕПУТАЦИЯ</small><b>' + Number(player.reputation || 0).toLocaleString('ru-RU') + '</b></div><div><small>ГАРАЖ</small><b>' + Number(player.garageLevel || 1) + ' уровень</b></div><div><small>ИНВЕНТАРЬ</small><b>' + Number((player.cars || []).length) + ' авто · ' + Number((player.plates || []).length) + ' ном.</b></div></div>' + (clan ? '<section class="community-player-clan"><small>КЛАН</small><b>[' + esc(clan.tag) + '] ' + esc(clan.name) + '</b><span>' + esc(roleLabel(clan.role)) + '</span></section>' : '') + '<section class="community-profile-section"><div><span>ГАРАЖ · УРОВЕНЬ ' + Number(player.garageLevel || 1) + '</span><b>' + formatMoney(player.garageValue) + '</b></div><main>' + publicCarRows(player) + '</main></section><section class="community-profile-section"><div><span>КОЛЛЕКЦИЯ НОМЕРОВ</span><b>' + Number((player.plates || []).length) + ' шт.</b></div><main class="community-profile-plates">' + publicPlateRows(player) + '</main></section></div>');
+    if(!player.isMe&&snapshot){var blocked=(snapshot.blockedUserIds||[]).indexOf(player.id)>=0,app=document.querySelector('.community-profile-app');if(app)app.insertAdjacentHTML('beforeend','<button class="action" data-user-id="'+esc(player.id)+'" onclick="communityToggleBlock(this.dataset.userId,'+blocked+')">'+(blocked?'Разблокировать игрока':'Блокировать сообщения игрока')+'</button>');}
   }
 
   function renderCommunity(data) {
@@ -174,7 +187,7 @@
     }
     if (!region) region = data.me.city || state.city || 'Москва';
     decorateAccountName();
-    var body = tab === 'rating' ? ratingHtml(data) : tab === 'clans' ? clansHtml(data) : tab === 'clan_members' ? clanMembersHtml(data) : messagesHtml(data);
+    var body = tab === 'rating' ? ratingHtml(data) : tab === 'clans' ? clansHtml(data) : tab === 'clan_members' ? clanMembersHtml(data) : tab === 'moderation' ? moderationHtml(data) : messagesHtml(data);
     var clanSubpage = tab === 'clan_chat' || tab === 'clan_members';
     var title = tab === 'clan_chat' && data.me.clan ? '[' + data.me.clan.tag + '] Чат клана' : tab === 'clan_members' ? 'Состав клана' : 'Сообщество';
     render('<div class="app community-app">' + head(title) + '<section class="community-hero"><div><small>AUTOFLIP ONLINE</small><h2>' + esc(displayName({ nickname: data.me.nickname, clanTag: data.me.clan && data.me.clan.tag })) + '</h2><p>' + Number(data.me.reputation || 0).toLocaleString('ru-RU') + ' репутации · ' + esc(data.me.city) + '</p></div><span>● ONLINE</span></section>' + (clanSubpage ? '<button class="community-back" onclick="openCommunity(\'clans\')">‹ Назад к кланам</button>' : tabsHtml()) + body + '</div>');
@@ -213,6 +226,13 @@
     if (!message) return;
     action({ action: 'send', channel: channel(), message: message });
   };
+  window.communityReport=function(messageId){var reason=prompt('Что нарушено? Опиши причину жалобы.');if(reason)action({action:'report_message',messageId:messageId,reason:reason});};
+  window.communityBlock=function(userId){if(confirm('Скрыть все сообщения этого игрока? Разблокировать можно после повторного открытия его профиля.'))action({action:'block_user',userId:userId});};
+  window.communityToggleBlock=function(userId,blocked){action({action:blocked?'unblock_user':'block_user',userId:userId});};
+  window.communityAdminDelete=function(messageId){var reason=prompt('Причина удаления сообщения:','Нарушение правил сообщества');if(reason)action({action:'admin_delete_message',messageId:messageId,reason:reason});};
+  window.communityAdminBan=function(userId){var hours=prompt('Срок блокировки в часах. 0 — бессрочно:','24');if(hours===null)return;var reason=prompt('Причина блокировки:','Нарушение правил сообщества');if(reason)action({action:'admin_ban_user',userId:userId,durationHours:Number(hours),reason:reason});};
+  window.communityAdminUnban=function(userId){if(confirm('Снять блокировку чата?'))action({action:'admin_unban_user',userId:userId});};
+  window.communityResolveReport=function(reportId){action({action:'admin_resolve_report',reportId:reportId,reason:'Рассмотрено модератором'});};
   window.communityCreateClan = function () {
     var name = document.getElementById('clanName'), tag = document.getElementById('clanTag');
     action({ action: 'create_clan', name: name && name.value, tag: tag && tag.value });

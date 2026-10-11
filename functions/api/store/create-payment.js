@@ -1,6 +1,6 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../../_lib/http.js";
 import { getSession } from "../../_lib/session.js";
-import { ensureStoreSchema, paymentsConfigured, productByCode, validateCustomPlate } from "../../_lib/store.js";
+import { ensureStoreSchema, paymentsConfigured, purchasableProductByCode, validateCustomPlate } from "../../_lib/store.js";
 
 function validToken(value) {
   return /^[a-f0-9-]{20,64}$/iu.test(String(value || ""));
@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
     const session = await getSession(context.env.DB, context.request);
     if (!session?.nickname) throw new RequestError("authentication_required", 401);
     const body = await readJson(context.request, 8_192);
-    const product = productByCode(body.productCode);
+    const product = purchasableProductByCode(body.productCode);
     if (!product) throw new RequestError("unknown_product", 404);
     if (!validToken(body.clientToken)) throw new RequestError("invalid_client_token", 400);
     if (!validEmail(body.email)) throw new RequestError("invalid_email", 400);
