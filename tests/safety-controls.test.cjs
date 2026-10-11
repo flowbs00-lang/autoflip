@@ -33,3 +33,15 @@ test('source and deployed safety clients stay identical',()=>{
     assert.equal(read(file),read('cloudflare/app/'+file),file);
   }
 });
+
+test('privacy migration self-applies once without a persistent Cloudflare token',()=>{
+  const middleware=read('functions/_middleware.js'),migrations=read('functions/_lib/migrations.js');
+  assert.match(middleware,/ensureRuntimeMigrations\(context\.env\.DB\)/);
+  assert.match(migrations,/CREATE TABLE IF NOT EXISTS app_migrations/);
+  assert.match(migrations,/0008_safety_and_privacy/);
+  assert.match(migrations,/ensureCommunitySchema/);
+  assert.match(migrations,/ensureStoreSchema/);
+  assert.match(migrations,/ensureSupportSchema/);
+  assert.match(migrations,/UPDATE users SET first_name = '', last_name = '', avatar_url = ''/);
+  assert.match(migrations,/INSERT OR IGNORE INTO app_migrations/);
+});

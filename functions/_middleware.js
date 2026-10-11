@@ -1,5 +1,6 @@
 import { getSession } from "./_lib/session.js";
 import { legalStatus } from "./_lib/legal.js";
+import { ensureRuntimeMigrations } from "./_lib/migrations.js";
 
 const SECURITY_HEADERS = Object.freeze({
   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -11,6 +12,7 @@ const SECURITY_HEADERS = Object.freeze({
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
+  if (context.env.DB) await ensureRuntimeMigrations(context.env.DB);
   const isGameEntry = url.pathname === "/app" || url.pathname === "/app/" || url.pathname === "/app/index.html";
   const isProfileSetup = url.pathname === "/setup-profile" || url.pathname === "/setup-profile/" || url.pathname === "/setup-profile/index.html";
   const isProtectedEntry = isGameEntry || isProfileSetup;
