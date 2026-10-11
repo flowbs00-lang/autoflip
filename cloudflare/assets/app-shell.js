@@ -8,6 +8,7 @@
     const response = await fetch("/api/session", { credentials: "same-origin" });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.authenticated) return location.replace("/login/");
+    if (result.needsLegalConsent) return location.replace("/login/?legal=required");
     if (result.needsNickname) return location.replace("/setup-profile/");
     profile.textContent = `${result.user.nickname} · ID ${result.user.id}`;
   }

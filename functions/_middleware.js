@@ -1,4 +1,5 @@
 import { getSession } from "./_lib/session.js";
+import { legalStatus } from "./_lib/legal.js";
 
 const SECURITY_HEADERS = Object.freeze({
   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -11,7 +12,9 @@ const SECURITY_HEADERS = Object.freeze({
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const isGameEntry = url.pathname === "/app" || url.pathname === "/app/" || url.pathname === "/app/index.html";
-  if (isGameEntry) {
+  const isProfileSetup = url.pathname === "/setup-profile" || url.pathname === "/setup-profile/" || url.pathname === "/setup-profile/index.html";
+  const isProtectedEntry = isGameEntry || isProfileSetup;
+  if (isProtectedEntry) {
     if (!context.env.DB) {
       return new Response("Database is not configured", { status: 503 });
     }
@@ -19,6 +22,10 @@ export async function onRequest(context) {
     const session = await getSession(context.env.DB, context.request);
     if (!session) {
       return Response.redirect(`${url.origin}/login/`, 302);
+    }
+    const legal = await legalStatus(context.env.DB, session.id);
+    if (!legal.requiredAccepted) {
+      return Response.redirect(`${url.origin}/login/?legal=required`, 302);
     }
     if (!session.nickname) {
       return Response.redirect(`${url.origin}/setup-profile/`, 302);

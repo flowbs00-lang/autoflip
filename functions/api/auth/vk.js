@@ -1,6 +1,12 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../../_lib/http.js";
 import { createSession } from "../../_lib/session.js";
 import { publicUser, upsertVkUser } from "../../_lib/users.js";
+import {
+  betaTesterAllowed,
+  publicRegistrationEnabled,
+  recordLegalAcceptance,
+  validateRequiredLegalAcceptance
+} from "../../_lib/legal.js";
 
 const VK_APP_ID = "54810634";
 const VK_USER_INFO_URL = `https://id.vk.ru/oauth2/user_info?client_id=${VK_APP_ID}`;
@@ -30,9 +36,17 @@ export async function onRequestPost(context) {
     if (accessToken.length < 20 || accessToken.length > 4096) {
       throw new RequestError("invalid_access_token");
     }
+    const legal = validateRequiredLegalAcceptance(body.legal);
 
     const vkUser = await verifyVkAccessToken(accessToken);
+    const vkUserId = String(vkUser.user_id || "");
+    const existing = await context.env.DB.prepare("SELECT id FROM users WHERE vk_user_id = ? LIMIT 1")
+      .bind(vkUserId).first();
+    if (!existing && !publicRegistrationEnabled(context.env) && !betaTesterAllowed(context.env, vkUserId)) {
+      throw new RequestError("closed_beta_only", 403);
+    }
     const userId = await upsertVkUser(context.env.DB, vkUser);
+    await recordLegalAcceptance(context.env.DB, userId, legal);
     const user = await context.env.DB.prepare(`
       SELECT id, nickname, first_name, last_name, avatar_url
       FROM users WHERE id = ? LIMIT 1

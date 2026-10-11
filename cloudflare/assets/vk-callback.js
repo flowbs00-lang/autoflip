@@ -25,8 +25,10 @@
     const returnedState = params.get("state") || "";
     const expectedState = sessionStorage.getItem("autoflip.vk.state") || "";
     const codeVerifier = sessionStorage.getItem("autoflip.vk.verifier") || "";
+    let legal = null;
+    try { legal = JSON.parse(sessionStorage.getItem("autoflip.legal") || "null"); } catch { legal = null; }
 
-    if (!VKID || !code || !deviceId || !expectedState || returnedState !== expectedState || !codeVerifier) {
+    if (!VKID || !code || !deviceId || !expectedState || returnedState !== expectedState || !codeVerifier || !legal) {
       fail("Ответ VK ID не прошёл проверку. Возвращаем на страницу входа…");
       return;
     }
@@ -45,16 +47,25 @@
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken: tokens.access_token })
+        body: JSON.stringify({ accessToken: tokens.access_token, legal })
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "server_error");
 
       sessionStorage.removeItem("autoflip.vk.state");
       sessionStorage.removeItem("autoflip.vk.verifier");
+      sessionStorage.removeItem("autoflip.legal");
       location.replace(result.needsNickname ? "/setup-profile/" : "/app/");
     } catch (error) {
       console.error(error);
+      if (error?.message === "closed_beta_only") {
+        fail("Сейчас вход открыт только приглашённым тестировщикам. Публичная регистрация появится после подготовки запуска.");
+        return;
+      }
+      if (error?.message === "legal_consent_required" || error?.message === "legal_consent_version_mismatch") {
+        fail("Не удалось подтвердить актуальные документы. Вернитесь ко входу и отметьте обязательные согласия.");
+        return;
+      }
       fail("Не удалось завершить вход. Попробуйте ещё раз…");
     }
   }

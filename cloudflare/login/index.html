@@ -19,12 +19,21 @@
         <li>Уникальный никнейм и внутренний ID игрока</li>
         <li>Пароль от VK не передаётся AutoFlip</li>
       </ul>
+      <div class="closed-note"><b>Закрытое тестирование</b><span>Новые аккаунты создаются только для тестировщиков из списка. Уже созданные тестовые аккаунты могут продолжать вход.</span></div>
+      <fieldset class="consents" aria-describedby="consent-help">
+        <legend>Перед входом</legend>
+        <label><input id="consent-terms" type="checkbox"><span>Принимаю <a href="/legal/terms/" target="_blank" rel="noopener">пользовательское соглашение</a>.</span></label>
+        <label><input id="consent-personal" type="checkbox"><span>Даю отдельное <a href="/legal/personal-data-consent/" target="_blank" rel="noopener">согласие на обработку персональных данных</a> и ознакомлен с <a href="/legal/privacy/" target="_blank" rel="noopener">политикой</a>.</span></label>
+        <label><input id="consent-community" type="checkbox"><span>Принимаю <a href="/legal/community-rules/" target="_blank" rel="noopener">правила чатов и кланов</a>.</span></label>
+        <label class="optional"><input id="consent-profile" type="checkbox"><span>Разрешаю показывать другим игрокам мой расширенный профиль, гараж и коллекцию номеров. <a href="/legal/profile-consent/" target="_blank" rel="noopener">Это необязательно</a>.</span></label>
+        <small id="consent-help">Первые три пункта необходимы для аккаунта. Публичный профиль можно не включать.</small>
+      </fieldset>
       <button class="button" id="vk-login" type="button">
         <span class="vk-mark" aria-hidden="true">VK</span>
         <span>Войти через VK ID</span>
       </button>
       <p class="status" id="status" role="status" aria-live="polite"></p>
-      <p class="legal">Продолжая, вы соглашаетесь с правилами сервиса и политикой конфиденциальности. Документы будут опубликованы до открытого запуска.</p>
+      <nav class="legal" aria-label="Юридические документы"><a href="/legal/">Все документы</a><span>·</span><a href="/legal/operator/">Владелец и контакты</a><span>·</span><a href="/legal/offer/">Оферта магазина</a></nav>
     </section>
   </main>
   <script src="/assets/vkid-sdk-2.6.1.js"></script>

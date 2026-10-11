@@ -1,6 +1,7 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
 import { communityCities, ensureCommunitySchema, syncCommunityProfile, validCommunityCity } from "../_lib/community.js";
+import { ensureLegalSchema, LEGAL_VERSIONS, publicProfileAllowed } from "../_lib/legal.js";
 
 const MESSAGE_LIMIT = 400;
 const PUBLIC_CAR_LIMIT = 30;
@@ -12,6 +13,7 @@ async function requireUser(context) {
   if (!session) throw new RequestError("authentication_required", 401);
   if (!session.nickname) throw new RequestError("profile_incomplete", 403);
   await ensureCommunitySchema(context.env.DB);
+  await ensureLegalSchema(context.env.DB);
   return session;
 }
 
@@ -91,6 +93,9 @@ function publicPlate(plate) {
 async function publicPlayerProfile(db, viewerId, userId) {
   const targetId = publicText(userId, 80);
   if (!targetId) throw new RequestError("player_not_found", 404);
+  if (targetId !== viewerId && !(await publicProfileAllowed(db, targetId))) {
+    throw new RequestError("player_profile_private", 403);
+  }
   const user = await db.prepare("SELECT id, nickname, created_at AS createdAt FROM users WHERE id = ? LIMIT 1").bind(targetId).first();
   if (!user) throw new RequestError("player_not_found", 404);
   const [targetProfile, targetClan, saveRow] = await Promise.all([
@@ -153,10 +158,12 @@ async function snapshot(db, session, channelValue) {
     db.prepare(`
       SELECT u.id, u.nickname, p.reputation, p.city, COALESCE(c.tag, '') AS clanTag
       FROM community_profiles p JOIN users u ON u.id = p.user_id
+      JOIN user_consents uc ON uc.user_id = u.id
+        AND uc.consent_type = 'public_profile' AND uc.document_version = ? AND uc.revoked_at IS NULL
       LEFT JOIN clan_members cm ON cm.user_id = u.id
       LEFT JOIN clans c ON c.id = cm.clan_id
       ORDER BY p.reputation DESC, u.nickname COLLATE NOCASE ASC LIMIT 100
-    `).all(),
+    `).bind(LEGAL_VERSIONS.publicProfile).all(),
     db.prepare(`
       SELECT c.id, c.name, c.tag, c.owner_user_id AS ownerUserId,
              COUNT(cm.user_id) AS members, COALESCE(SUM(p.reputation), 0) AS reputation
