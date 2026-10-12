@@ -1,5 +1,6 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../../_lib/http.js";
 import { clearSessionCookie, getSession } from "../../_lib/session.js";
+import { ensureSecuritySchema } from "../../_lib/security.js";
 
 export async function onRequestPost(context) {
   try {
@@ -9,7 +10,14 @@ export async function onRequestPost(context) {
     if (!session) throw new RequestError("authentication_required", 401);
     const body = await readJson(context.request, 2048);
     if (String(body.confirmation || "") !== session.id) throw new RequestError("account_delete_confirmation_failed", 400);
-    await context.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(session.id).run();
+    await ensureSecuritySchema(context.env.DB);
+    const accountSubject = `account:${session.id}`;
+    await context.env.DB.batch([
+      context.env.DB.prepare("DELETE FROM security_rate_windows WHERE subject = ?").bind(accountSubject),
+      context.env.DB.prepare("DELETE FROM security_blocks WHERE subject = ?").bind(accountSubject),
+      context.env.DB.prepare("DELETE FROM security_events WHERE subject = ? OR user_id = ?").bind(accountSubject, session.id),
+      context.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(session.id)
+    ]);
     return json({ ok: true }, 200, { "Set-Cookie": clearSessionCookie(), "Cache-Control": "no-store" });
   } catch (error) {
     return handleError(error);
