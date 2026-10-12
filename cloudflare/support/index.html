@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive"><title>Поддержка — AutoFlip</title>
   <link rel="stylesheet" href="/legal/legal.css">
-  <style>.support-form{display:grid;gap:10px;margin:22px 0;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--soft)}.support-form label{display:grid;gap:6px;color:var(--text);font-size:13px;font-weight:800}.support-form input,.support-form select,.support-form textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#0b1220;color:var(--text);font:inherit}.support-form textarea{min-height:120px;resize:vertical}.support-form button{border:0;cursor:pointer}.tickets{display:grid;gap:10px}.ticket{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}.ticket b,.ticket small,.ticket span{display:block}.ticket small{margin-top:5px;color:var(--muted)}.ticket span{margin-top:8px;color:var(--link);font-size:12px}.ticket button{margin-top:9px}.status{min-height:22px;color:var(--warn);font-size:13px}</style>
+  <link rel="stylesheet" href="/assets/support.css">
 </head>
 <body>
   <header><a class="brand" href="/">AutoFlip</a><a class="back" href="/app/">Вернуться в игру</a></header>
@@ -30,16 +30,6 @@
     <div class="actions"><a class="button" href="/app/">Открыть игру</a><a class="button secondary" href="/legal/">Документы</a></div>
   </main>
   <footer>AutoFlip · поддержка закрытого тестирования</footer>
-  <script>
-  (function(){
-    var status=document.getElementById('status'),tickets=document.getElementById('tickets');
-    function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-    async function request(method,body){var r=await fetch('/api/support',{method:method,credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});var d=await r.json().catch(function(){return{};});if(!r.ok)throw new Error(d.error||'request_failed');return d;}
-    function render(data){if(!data.tickets.length){tickets.innerHTML='<p>Обращений пока нет.</p>';return;}tickets.innerHTML=data.tickets.map(function(t){return '<article class="ticket"><b>'+esc(t.subject)+'</b><small>'+new Date(t.createdAt).toLocaleString('ru-RU')+' · '+esc(t.status)+(data.admin&&t.nickname?' · '+esc(t.nickname)+' ('+esc(t.userId)+')':'')+'</small><small>'+esc(t.message)+'</small>'+(t.response?'<span>Ответ: '+esc(t.response)+'</span>':'')+(data.admin&&t.status==='open'?'<button class="button secondary" data-id="'+esc(t.id)+'">Ответить и закрыть</button>':'')+'</article>';}).join('');Array.prototype.forEach.call(tickets.querySelectorAll('button[data-id]'),function(button){button.onclick=async function(){var response=prompt('Ответ пользователю:');if(!response)return;await request('POST',{action:'review',ticketId:button.dataset.id,status:'resolved',response:response});load();};});}
-    async function load(){try{render(await request('GET'));}catch(e){tickets.innerHTML=e.message==='authentication_required'?'<p>Войдите в аккаунт, чтобы отправлять и видеть обращения.</p>':'<p>Не удалось загрузить обращения.</p>';}}
-    document.getElementById('send').onclick=async function(){status.textContent='Отправляем…';try{await request('POST',{category:document.getElementById('category').value,subject:document.getElementById('subject').value,message:document.getElementById('message').value});status.textContent='Обращение отправлено.';document.getElementById('subject').value='';document.getElementById('message').value='';load();}catch(e){status.textContent=e.message==='authentication_required'?'Сначала войдите в аккаунт.':e.message==='support_rate_limited'?'Лимит: не более 5 обращений в сутки.':'Проверьте заполнение и попробуйте снова.';}};
-    load();
-  })();
-  </script>
+  <script src="/assets/support.js" defer></script>
 </body>
 </html>
