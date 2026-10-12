@@ -54,6 +54,35 @@ test('expanded player inventory is private without separate consent', () => {
 test('all legal pages exist and drafts cannot be mistaken for a ready public launch', () => {
   const pages = ['privacy', 'personal-data-consent', 'terms', 'profile-consent', 'community-rules', 'offer', 'refunds', 'operator'];
   for (const page of pages) assert.ok(fs.existsSync(path.join(root, 'cloudflare/legal', page, 'index.html')), page);
-  assert.match(read('cloudflare/legal/operator/index.html'), /публичная регистрация и магазин должны оставаться закрытыми/);
+  assert.match(read('cloudflare/legal/operator/index.html'), /публичная регистрация и магазин (?:должны оставаться|остаются) закрытыми/i);
   assert.match(read('cloudflare/legal/offer/index.html'), /Магазин и платежи отключены/);
+});
+
+test('legal documents match implemented data minimisation and retention', () => {
+  const privacy = read('cloudflare/legal/privacy/index.html');
+  const consent = read('cloudflare/legal/personal-data-consent/index.html');
+  const community = read('cloudflare/legal/community-rules/index.html');
+  const legal = read('functions/_lib/legal.js');
+  const login = read('cloudflare/assets/login.js');
+  assert.match(privacy, /не сохраняет имя, фамилию и изображение профиля VK/);
+  assert.match(consent, /не сохраняет имя, фамилию и изображение профиля VK/);
+  assert.match(privacy, /не дольше 30 дней/);
+  assert.match(privacy, /До 90 дней/);
+  assert.match(privacy, /До 365 дней/);
+  assert.match(community, /Жалобы поступают в панель модератора/);
+  assert.doesNotMatch(community, /После внедрения модерации/);
+  assert.match(legal, /2026-10-12/);
+  assert.match(login, /2026-10-12/);
+});
+
+test('operator and support pages contain verified public contact details without fake placeholders', () => {
+  const operator = read('cloudflare/legal/operator/index.html');
+  const support = read('cloudflare/support/index.html');
+  assert.match(operator, /Агаев Вахид Вагиф Оглы/);
+  assert.match(operator, /434571836044/);
+  assert.match(operator, /плательщик налога на профессиональный доход/);
+  assert.match(operator, /flowbs00@gmail\.com/);
+  assert.match(support, /flowbs00@gmail\.com/);
+  assert.doesNotMatch(operator, /\[Не заполнено\]|\[Рабочая электронная почта\]/);
+  assert.match(operator, /до этого публичный запуск запрещён/);
 });

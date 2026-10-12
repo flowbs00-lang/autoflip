@@ -45,3 +45,14 @@ test('privacy migration self-applies once without a persistent Cloudflare token'
   assert.match(migrations,/UPDATE users SET first_name = '', last_name = '', avatar_url = ''/);
   assert.match(migrations,/INSERT OR IGNORE INTO app_migrations/);
 });
+
+test('published retention periods are enforced by server cleanup',()=>{
+  const community=read('functions/_lib/community.js'),save=read('functions/api/save.js'),support=read('functions/_lib/support.js');
+  assert.match(community,/90 \* 24 \* 60 \* 60_000/);
+  assert.match(community,/community_moderation_log WHERE created_at < \?/);
+  assert.match(save,/removeExpiredBackups/);
+  assert.match(save,/30 \* 24 \* 60 \* 60_000/);
+  assert.match(save,/ORDER BY revision DESC LIMIT 5/);
+  assert.match(support,/status IN \('resolved', 'closed'\)/);
+  assert.match(support,/365 \* 24 \* 60 \* 60_000/);
+});
