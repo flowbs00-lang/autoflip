@@ -1,4 +1,5 @@
 const { test } = require('node:test');
+// This suite also acts as the deployment integrity check for legal and retention changes.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
