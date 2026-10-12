@@ -6,7 +6,12 @@
   const button = document.querySelector("#vk-login");
   const status = document.querySelector("#status");
   const VKID = window.VKIDSDK;
-  const VERSION = "2026-10-12";
+  const VERSIONS = Object.freeze({
+    terms: "2026-10-12",
+    personalData: "2026-10-12.1",
+    communityRules: "2026-10-12",
+    publicProfile: "2026-10-12"
+  });
   let authenticatedSession = null;
 
   function randomUrlSafe(length = 32) {
@@ -23,10 +28,10 @@
 
   function legalAcceptance() {
     return {
-      terms: { accepted: document.querySelector("#consent-terms").checked, version: VERSION },
-      personalData: { accepted: document.querySelector("#consent-personal").checked, version: VERSION },
-      communityRules: { accepted: document.querySelector("#consent-community").checked, version: VERSION },
-      publicProfile: { accepted: document.querySelector("#consent-profile").checked, version: VERSION }
+      terms: { accepted: document.querySelector("#consent-terms").checked, version: VERSIONS.terms },
+      personalData: { accepted: document.querySelector("#consent-personal").checked, version: VERSIONS.personalData },
+      communityRules: { accepted: document.querySelector("#consent-community").checked, version: VERSIONS.communityRules },
+      publicProfile: { accepted: document.querySelector("#consent-profile").checked, version: VERSIONS.publicProfile }
     };
   }
 
