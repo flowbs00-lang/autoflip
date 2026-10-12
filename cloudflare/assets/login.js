@@ -6,7 +6,7 @@
   const button = document.querySelector("#vk-login");
   const status = document.querySelector("#status");
   const VKID = window.VKIDSDK;
-  const VERSION = "2026-10-11";
+  const VERSION = "2026-10-12";
   let authenticatedSession = null;
 
   function randomUrlSafe(length = 32) {
