@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+// Deployment integrity marker: server-security-v1.
 
 test('central API protection covers high-risk actions and temporary blocks', () => {
   const security = read('functions/_lib/security.js');
