@@ -1,7 +1,9 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -81,4 +83,32 @@ test('privacy documents disclose security processing and exact retention', () =>
   assert.match(privacy, /Счётчики защиты[^<]*<\/th><td>До 7 дней/);
   assert.match(privacy, /Журнал подозрительных запросов<\/th><td>До 30 дней/);
   assert.match(consent, /Исходный IP-адрес и User-Agent[^.]+не сохраняются/);
+});
+
+test('Cloudflare Pages Functions compile with Wrangler', { timeout: 120_000 }, () => {
+  const outdir = fs.mkdtempSync(path.join(os.tmpdir(), 'autoflip-pages-functions-'));
+
+  try {
+    const result = spawnSync('npx', [
+      '--yes', 'wrangler@4.45.0',
+      'pages', 'functions', 'build', path.join(root, 'functions'),
+      '--outdir', outdir,
+      '--project-directory', root,
+      '--build-output-directory', path.join(root, 'cloudflare')
+    ], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 110_000
+    });
+
+    const output = [result.stdout, result.stderr].filter(Boolean).join('\n');
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, output);
+    assert.ok(
+      fs.readdirSync(outdir).some(file => file.endsWith('.js')),
+      'Wrangler completed without emitting a Worker bundle.\n' + output
+    );
+  } finally {
+    fs.rmSync(outdir, { recursive: true, force: true });
+  }
 });

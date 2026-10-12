@@ -231,7 +231,7 @@ export async function enforceApiSecurity(context, session = null) {
     if (Number(result?.count || 0) <= rule.limit) continue;
     if (rule.blockMs) await blockSubject(env.DB, subject, rule.scope, rule.bucket, now + rule.blockMs, now);
     await writeEvent(env.DB, { subject, subjectType: rule.scope, userId: session?.id, category: "rate_limited", path, method: request.method, details: { action, policy: rule.bucket, limit: rule.limit, windowMs: rule.windowMs }, now, dedupeMs: rule.windowMs });
-    return { response: limited(Math.max(1, Math.ceil((Math.floor(now / rule.windowMs) * rule.windowMs + rule.windowMs - now) / 1000)), audit: { ip, account, action } };
+    return { response: limited(Math.max(1, Math.ceil((Math.floor(now / rule.windowMs) * rule.windowMs + rule.windowMs - now) / 1000))), audit: { ip, account, action } };
   }
 
   return { response: null, audit: { ip, account, action } };
