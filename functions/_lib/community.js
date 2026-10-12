@@ -132,6 +132,7 @@ export async function runCommunityMaintenance(db) {
   if (row && now - Number(row.completed_at || 0) < 6 * 60 * 60_000) return;
   await db.prepare("INSERT INTO community_maintenance (task, completed_at) VALUES ('message_cleanup', ?) ON CONFLICT(task) DO UPDATE SET completed_at = excluded.completed_at").bind(now).run();
   await db.prepare("DELETE FROM community_messages WHERE created_at < ?").bind(now - 90 * 24 * 60 * 60_000).run();
+  await db.prepare("DELETE FROM community_moderation_log WHERE created_at < ?").bind(now - 365 * 24 * 60 * 60_000).run();
 }
 
 export async function syncCommunityProfile(db, userId, reputation, city) {

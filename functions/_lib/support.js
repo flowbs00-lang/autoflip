@@ -10,7 +10,20 @@ export async function ensureSupportSchema(db) {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`),
     db.prepare("CREATE INDEX IF NOT EXISTS support_tickets_status_idx ON support_tickets(status, created_at ASC)"),
-    db.prepare("CREATE INDEX IF NOT EXISTS support_tickets_user_idx ON support_tickets(user_id, created_at DESC)")
+    db.prepare("CREATE INDEX IF NOT EXISTS support_tickets_user_idx ON support_tickets(user_id, created_at DESC)"),
+    db.prepare(`CREATE TABLE IF NOT EXISTS support_maintenance (
+      task TEXT PRIMARY KEY, completed_at INTEGER NOT NULL
+    )`)
   ]);
   schemaReady = true;
+}
+
+export async function runSupportMaintenance(db) {
+  const row = await db.prepare("SELECT completed_at FROM support_maintenance WHERE task = 'ticket_cleanup' LIMIT 1").first();
+  const now = Date.now();
+  if (row && now - Number(row.completed_at || 0) < 6 * 60 * 60_000) return;
+  await db.prepare("INSERT INTO support_maintenance (task, completed_at) VALUES ('ticket_cleanup', ?) ON CONFLICT(task) DO UPDATE SET completed_at = excluded.completed_at").bind(now).run();
+  await db.prepare("DELETE FROM support_tickets WHERE status IN ('resolved', 'closed') AND updated_at < ?")
+    .bind(now - 365 * 24 * 60 * 60_000)
+    .run();
 }

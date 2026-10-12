@@ -1,10 +1,10 @@
 import { RequestError } from "./http.js";
 
 export const LEGAL_VERSIONS = Object.freeze({
-  terms: "2026-10-11",
-  personalData: "2026-10-11",
-  communityRules: "2026-10-11",
-  publicProfile: "2026-10-11"
+  terms: "2026-10-12",
+  personalData: "2026-10-12",
+  communityRules: "2026-10-12",
+  publicProfile: "2026-10-12"
 });
 
 const CONSENT_TYPES = Object.freeze({
