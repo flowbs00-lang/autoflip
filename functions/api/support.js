@@ -1,13 +1,14 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
 import { isAdminUser } from "../_lib/admin.js";
-import { ensureSupportSchema } from "../_lib/support.js";
+import { ensureSupportSchema, runSupportMaintenance } from "../_lib/support.js";
 
 async function requireUser(context) {
   if (!context.env.DB) throw new RequestError("database_not_configured", 503);
   const session = await getSession(context.env.DB, context.request);
   if (!session?.nickname) throw new RequestError("authentication_required", 401);
   await ensureSupportSchema(context.env.DB);
+  await runSupportMaintenance(context.env.DB);
   return session;
 }
 

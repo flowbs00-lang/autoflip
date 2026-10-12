@@ -50,6 +50,12 @@ async function preserveServerBackup(db, userId, row) {
   )`).bind(userId, userId).run();
 }
 
+async function removeExpiredBackups(db, userId) {
+  await db.prepare("DELETE FROM game_save_backups WHERE user_id = ? AND created_at < ?")
+    .bind(userId, Date.now() - 30 * 24 * 60 * 60_000)
+    .run();
+}
+
 async function requireUser(context) {
   if (!context.env.DB) throw new RequestError("database_not_configured", 503);
   const session = await getSession(context.env.DB, context.request);
@@ -156,6 +162,7 @@ export async function onRequestGet(context) {
   try {
     const session = await requireUser(context);
     await ensureSaveSchema(context.env.DB);
+    await removeExpiredBackups(context.env.DB, session.id);
     const { state, revision, updatedAt } = await loadSaveAndApplyOrders(context.env.DB, session.id);
 
     return json({
@@ -175,6 +182,7 @@ export async function onRequestPut(context) {
     if (!assertSameOrigin(context.request)) throw new RequestError("origin_rejected", 403);
     const session = await requireUser(context);
     await ensureSaveSchema(context.env.DB);
+    await removeExpiredBackups(context.env.DB, session.id);
     const body = await readJson(context.request, MAX_SAVE_BYTES);
     const uploaded = await decodeUploadedSave(body);
     const state = uploaded?.state || body?.state;
