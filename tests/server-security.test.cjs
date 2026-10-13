@@ -40,7 +40,7 @@ test('security storage uses rotating hashes, retention cleanup and no raw networ
 test('security log is admin-only and account privacy controls include it', () => {
   const endpoint = read('functions/api/security/events.js');
   const exported = read('functions/api/account/export.js');
-  const deleted = read('functions/api/account/delete.js');
+  const deleted = read('functions/_lib/account-data.js');
   assert.match(endpoint, /isAdminUser/);
   assert.match(endpoint, /admin_required/);
   assert.match(endpoint, /LIMIT \?/);
@@ -89,8 +89,8 @@ test('Cloudflare Pages Functions compile with Wrangler', { timeout: 120_000 }, (
   const outdir = fs.mkdtempSync(path.join(os.tmpdir(), 'autoflip-pages-functions-'));
 
   try {
-    const result = spawnSync('npx', [
-      '--yes', 'wrangler@4.45.0',
+    const wrangler = path.join(root, 'cloudflare/node_modules/.bin/wrangler');
+    const result = spawnSync(wrangler, [
       'pages', 'functions', 'build', path.join(root, 'functions'),
       '--outdir', outdir,
       '--project-directory', root,

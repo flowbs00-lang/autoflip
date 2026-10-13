@@ -16,7 +16,7 @@ test('account privacy, export and deletion controls are installed',()=>{
   const users=read('functions/_lib/users.js'),account=read('game-account.js');
   assert.match(users,/SET first_name = '', last_name = '', avatar_url = ''/);
   assert.match(read('functions/api/account/export.js'),/Content-Disposition/);
-  assert.match(read('functions/api/account/delete.js'),/DELETE FROM users/);
+  assert.match(read('functions/_lib/account-data.js'),/DELETE FROM users/);
   assert.match(account,/downloadAccountData/);assert.match(account,/deleteMyAccount/);
   assert.match(read('cloudflare/support/index.html'),/Поддержка AutoFlip/);assert.match(read('functions/api/support.js'),/support_tickets/);
 });
@@ -55,4 +55,11 @@ test('published retention periods are enforced by server cleanup',()=>{
   assert.match(save,/ORDER BY revision DESC LIMIT 5/);
   assert.match(support,/status IN \('resolved', 'closed'\)/);
   assert.match(support,/365 \* 24 \* 60 \* 60_000/);
+});
+
+test('CI runs every test and both Wrangler build checks on push and pull requests',()=>{
+  const workflow=read('.github/workflows/test.yml'),maintenance=read('tests/retention-maintenance.test.cjs');
+  assert.match(workflow,/push:/);assert.match(workflow,/pull_request:/);
+  assert.match(workflow,/node --test tests\/\*\.test\.cjs/);
+  assert.match(maintenance,/deploy', '--dry-run'/);
 });

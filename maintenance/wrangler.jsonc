@@ -1,0 +1,20 @@
+{
+  "$schema": "../cloudflare/node_modules/wrangler/config-schema.json",
+  "name": "autoflip-retention-maintenance",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": false,
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    "crons": ["17 2 * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "autoflip-prod",
+      "database_id": "c66f5289-e865-4df6-b5ce-e7e3b9702582"
+    }
+  ]
+}
