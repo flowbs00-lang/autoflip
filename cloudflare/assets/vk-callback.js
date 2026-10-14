@@ -2,7 +2,7 @@
   "use strict";
 
   const APP_ID = 54810634;
-  const CALLBACK_URL = "https://autoflip.pages.dev/auth/vk/callback";
+  const CALLBACK_URL = "https://autoflip-game.ru/auth/vk/callback";
   const status = document.querySelector("#status");
   const VKID = window.VKIDSDK;
 
