@@ -41,6 +41,26 @@ function saveVersion(state, declared) {
   return version;
 }
 
+function ownedCarCount(state) {
+  return Array.isArray(state?.cars) ? state.cars.length : 0;
+}
+
+function hasMeaningfulProgress(state) {
+  return Number(state?.deals || 0) > 0
+    || Number(state?.rep || 0) > 0
+    || Number(state?.day || 1) > 1
+    || ownedCarCount(state) > 0
+    || Boolean(state?.car);
+}
+
+function looksLikeFreshSave(state) {
+  return Number(state?.deals || 0) === 0
+    && Number(state?.rep || 0) === 0
+    && Number(state?.day || 1) <= 1
+    && ownedCarCount(state) === 0
+    && !state?.car;
+}
+
 async function preserveServerBackup(db, userId, row) {
   if (!row) return;
   await db.prepare(`INSERT OR IGNORE INTO game_save_backups (user_id, revision, data_json, created_at)
@@ -200,6 +220,18 @@ export async function onRequestPut(context) {
     const currentRevision = Number(current?.revision || 0);
     if (baseRevision !== currentRevision) {
       return json({ ok: false, error: "revision_conflict", revision: currentRevision, updatedAt: Number(current?.updated_at || 0), saveVersion: CURRENT_SAVE_VERSION }, 409);
+    }
+
+    const currentState = await parseStoredSave(current);
+    if (looksLikeFreshSave(state) && hasMeaningfulProgress(currentState)) {
+      return json({
+        ok: false,
+        error: "revision_conflict",
+        reason: "save_regression_rejected",
+        revision: currentRevision,
+        updatedAt: Number(current?.updated_at || 0),
+        saveVersion: CURRENT_SAVE_VERSION
+      }, 409);
     }
 
     const purchasesApplied = await applyPaidOrdersToState(context.env.DB, session.id, state);

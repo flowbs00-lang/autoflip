@@ -17,7 +17,7 @@ test('cloud save API is authenticated, same-origin and size bounded', () => {
   assert.match(source, /baseRevision/);
   assert.match(source, /revision_conflict/);
   assert.match(source, /WHERE user_id = \? AND revision = \?/);
-  assert.match(source, /game_save_backups/);
+  assert.match(source, /game_save_backups/);\n  assert.match(source, /looksLikeFreshSave/);\n  assert.match(source, /hasMeaningfulProgress/);\n  assert.match(source, /save_regression_rejected/);
 });
 
 test('large saves are compressed in the browser before upload', () => {
