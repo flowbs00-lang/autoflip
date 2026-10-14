@@ -30,8 +30,8 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /uploadInFlight/);
   assert.match(client, /DIRTY_KEY = 'autoflip-cloud-dirty'/);
   assert.match(client, /dirtyAtBoot = localStorage\.getItem\(DIRTY_KEY\) === '1'/);
-  assert.match(client, /payload\.save && storedRevision === 0 && revision > 0/);
-  assert.match(client, /Облачный прогресс восстановлен/);
+  assert.match(client, /payload\.save && storedRevision !== revision/);
+  assert.match(client, /Облачный прогресс восстановлен/);\n  assert.match(client, /Загружена облачная версия · локальная сохранена в резерве/);\n  assert.doesNotMatch(client, /localAt >= remoteAt/);
   assert.match(client, /MIN_UPLOAD_GAP = 15000/);
   assert.match(client, /localStorage\.getItem\(SAVE_KEY\) === raw/);
   assert.match(client, /uploadQueue = Promise\.resolve\(\)/);

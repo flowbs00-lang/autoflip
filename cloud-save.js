@@ -190,13 +190,10 @@
   }
 
   async function resolveConflict(localRaw) {
-    var remote = await fetchRemote(), localState = safeJson(localRaw) || {}, remoteState = remote.save || {};
+    var remote = await fetchRemote();
     checkpointRaw(localRaw, 'Конфликт устройств · локальная версия', { cloudRevision: remote.revision });
     revision = Number(remote.revision || 0); originalSetItem.call(localStorage, REVISION_KEY, String(revision));
-    var localAt = Number(localStorage.getItem(DIRTY_AT_KEY) || localState._saveMeta && localState._saveMeta.updatedAt || 0);
-    var remoteAt = Number(remoteState._saveMeta && remoteState._saveMeta.updatedAt || remote.updatedAt || 0);
-    if (localAt >= remoteAt) return { retry: true, revision: revision };
-    applyRemoteSave(remote, 'Загружена более новая версия из облака');
+    applyRemoteSave(remote, 'Загружена облачная версия · локальная сохранена в резерве');
     if (sessionStorage.getItem(RELOAD_KEY) !== String(remote.updatedAt)) { sessionStorage.setItem(RELOAD_KEY, String(remote.updatedAt)); location.reload(); }
     return { retry: false };
   }
@@ -274,8 +271,8 @@
       var storedRevision = Number(localStorage.getItem(REVISION_KEY) || 0), localDirty = dirtyAtBoot;
       hydrated = true;
       if (localRaw && localDirty) {
-        if (payload.save && storedRevision === 0 && revision > 0) {
-          checkpointRaw(localRaw, 'Локальная версия без облачной ревизии', { cloudRevision: revision });
+        if (payload.save && storedRevision !== revision) {
+          checkpointRaw(localRaw, 'Устаревшая локальная ревизия', { localRevision: storedRevision, cloudRevision: revision });
           if (applyRemoteSave(payload, 'Облачный прогресс восстановлен') && sessionStorage.getItem(RELOAD_KEY) !== String(remoteStamp)) {
             sessionStorage.setItem(RELOAD_KEY, String(remoteStamp));
             location.reload();
