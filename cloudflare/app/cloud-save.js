@@ -274,6 +274,14 @@
       var storedRevision = Number(localStorage.getItem(REVISION_KEY) || 0), localDirty = dirtyAtBoot;
       hydrated = true;
       if (localRaw && localDirty) {
+        if (payload.save && storedRevision === 0 && revision > 0) {
+          checkpointRaw(localRaw, 'Локальная версия без облачной ревизии', { cloudRevision: revision });
+          if (applyRemoteSave(payload, 'Облачный прогресс восстановлен') && sessionStorage.getItem(RELOAD_KEY) !== String(remoteStamp)) {
+            sessionStorage.setItem(RELOAD_KEY, String(remoteStamp));
+            location.reload();
+          }
+          return;
+        }
         if (storedRevision !== revision) {
           var resolution = await resolveConflict(localRaw);
           if (resolution.retry) await queueUpload();
