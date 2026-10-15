@@ -1,0 +1,34 @@
+[Unit]
+Description=AutoFlip Node.js application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=autoflip
+Group=autoflip
+WorkingDirectory=/opt/autoflip/current
+EnvironmentFile=/etc/autoflip/autoflip.env
+ExecStart=/usr/bin/node server/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+ReadWritePaths=/var/lib/autoflip
+
+[Install]
+WantedBy=multi-user.target
