@@ -58,6 +58,11 @@ test('runtime migration installs server protection idempotently', () => {
   assert.match(migrations, /INSERT OR IGNORE INTO app_migrations/);
 });
 
+test('Node directory redirects preserve OAuth callback parameters', () => {
+  const server = read('server/server.js');
+  assert.match(server, /\$\{url\.origin\}\$\{pathname\}\/\$\{url\.search\}/);
+});
+
 test('CSP isolates unsafe-inline to the legacy game and VK inline styles', () => {
   const headers = read('cloudflare/_headers');
   const middleware = read('functions/_middleware.js');
