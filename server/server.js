@@ -96,7 +96,10 @@ async function staticResponse(request) {
     await access(filename);
     const fileStat = await stat(filename);
     if (fileStat.isDirectory() && !pathname.endsWith("/")) {
-      return Response.redirect(`${url.origin}${pathname}/`, 302);
+      // OAuth providers append short-lived verification parameters to the
+      // callback URL. Preserve them when normalizing directory URLs, otherwise
+      // the VK ID callback reaches the browser without its code and state.
+      return Response.redirect(`${url.origin}${pathname}/${url.search}`, 302);
     }
     if (!fileStat.isFile()) return new Response("Not Found", { status: 404 });
     const body = request.method === "HEAD" ? null : await readFile(filename);
