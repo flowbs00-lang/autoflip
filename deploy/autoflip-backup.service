@@ -1,0 +1,26 @@
+[Unit]
+Description=Create and verify an AutoFlip SQLite backup
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/autoflip-backup
+UMask=0077
+
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictNamespaces=true
+LockPersonality=true
+ReadOnlyPaths=/var/lib/autoflip
+ReadWritePaths=/var/backups/autoflip
+
