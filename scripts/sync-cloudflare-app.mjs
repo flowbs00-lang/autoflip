@@ -19,6 +19,7 @@ const files = [
   'store.css',
   'economy-system.css',
   'theme-polish.css',
+  'mobile-redesign.css',
   'account.css',
   'cloud-save.js',
   'game-account.js',

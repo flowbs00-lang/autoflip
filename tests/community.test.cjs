@@ -59,7 +59,7 @@ test('community is a permanent visible home-screen application', () => {
   const modernHome = read('ui.js');
   assert.match(home, /id="communityApp" onclick="openCommunity\('global'\)"/);
   assert.match(home, /<small>Сообщество<\/small>/);
-  assert.match(modernHome, /\['openCommunity','Сообщество','spark','violet'\]/);
+  assert.match(modernHome, /\['openCommunity','Сообщество','users','violet'\]/);
   assert.match(modernHome, /apps\.map\(appButton\)/);
   assert.match(modernHome, /grid-template-rows|os-app-grid/);
 });

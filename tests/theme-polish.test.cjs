@@ -5,11 +5,23 @@ const path=require('node:path');
 
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../theme-polish.css'),'utf8');
+const mobileCss=fs.readFileSync(path.join(__dirname,'../mobile-redesign.css'),'utf8');
 
-test('final theme layer loads after feature styles',()=>{
+test('theme and mobile redesign layers load after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(links.at(-1),'theme-polish.css?v=20261011-1');
+  assert.equal(links.at(-1),'mobile-redesign.css?v=20261018-1');
   assert.ok(links.indexOf('theme-polish.css?v=20261011-1')>links.indexOf('community.css?v=20261011-1'));
+  assert.ok(links.indexOf('mobile-redesign.css?v=20261018-1')>links.indexOf('theme-polish.css?v=20261011-1'));
+});
+
+test('phone redesign has safe areas, readable controls and stable bottom navigation',()=>{
+  assert.match(mobileCss,/@media \(max-width:600px\)/);
+  assert.match(mobileCss,/env\(safe-area-inset-bottom\)/);
+  assert.match(mobileCss,/--af-touch:48px/);
+  assert.match(mobileCss,/\.auto-bottom-nav/);
+  assert.match(mobileCss,/backdrop-filter:blur\(28px\)/);
+  assert.match(mobileCss,/\.os-home>\.os-app-grid/);
+  assert.match(mobileCss,/prefers-reduced-motion:reduce/);
 });
 
 test('dark feature cards keep light text when the OS theme is light',()=>{
