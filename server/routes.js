@@ -1,5 +1,6 @@
 import { onRequest as session } from "../functions/api/session.js";
 import { onRequest as save } from "../functions/api/save.js";
+import { onRequest as saveBackups } from "../functions/api/save/backups.js";
 import { onRequest as community } from "../functions/api/community.js";
 import { onRequest as support } from "../functions/api/support.js";
 import { onRequest as authVk } from "../functions/api/auth/vk.js";
@@ -20,6 +21,7 @@ import { onRequest as securityEvents } from "../functions/api/security/events.js
 export const apiRoutes = new Map([
   ["/api/session", session],
   ["/api/save", save],
+  ["/api/save/backups", saveBackups],
   ["/api/community", community],
   ["/api/support", support],
   ["/api/auth/vk", authVk],

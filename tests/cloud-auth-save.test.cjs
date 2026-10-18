@@ -17,7 +17,10 @@ test('cloud save API is authenticated, same-origin and size bounded', () => {
   assert.match(source, /baseRevision/);
   assert.match(source, /revision_conflict/);
   assert.match(source, /WHERE user_id = \? AND revision = \?/);
-  assert.match(source, /game_save_backups/);\n  assert.match(source, /looksLikeFreshSave/);\n  assert.match(source, /hasMeaningfulProgress/);\n  assert.match(source, /save_regression_rejected/);
+  assert.match(source, /game_save_backups/);
+  assert.match(source, /looksLikeFreshSave/);
+  assert.match(source, /hasMeaningfulProgress/);
+  assert.match(source, /save_regression_rejected/);
 });
 
 test('large saves are compressed in the browser before upload', () => {
@@ -31,7 +34,9 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /DIRTY_KEY = 'autoflip-cloud-dirty'/);
   assert.match(client, /dirtyAtBoot = localStorage\.getItem\(DIRTY_KEY\) === '1'/);
   assert.match(client, /payload\.save && storedRevision !== revision/);
-  assert.match(client, /Облачный прогресс восстановлен/);\n  assert.match(client, /Загружена облачная версия · локальная сохранена в резерве/);\n  assert.doesNotMatch(client, /localAt >= remoteAt/);
+  assert.match(client, /Облачный прогресс восстановлен/);
+  assert.match(client, /Загружена облачная версия · локальная сохранена в резерве/);
+  assert.doesNotMatch(client, /localAt >= remoteAt/);
   assert.match(client, /MIN_UPLOAD_GAP = 15000/);
   assert.match(client, /localStorage\.getItem\(SAVE_KEY\) === raw/);
   assert.match(client, /uploadQueue = Promise\.resolve\(\)/);
@@ -45,6 +50,20 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /pagehide/);
   assert.match(server, /decodeUploadedSave/);
   assert.match(server, /body\?\.encoding !== "gzip-base64"/);
+});
+
+test('server save backups can be listed and restored with revision protection', () => {
+  const api = read('functions/api/save/backups.js');
+  const routes = read('server/routes.js');
+  const client = read('cloud-save.js');
+  assert.match(api, /getSession/);
+  assert.match(api, /assertSameOrigin/);
+  assert.match(api, /backup_not_found/);
+  assert.match(api, /WHERE user_id = \? AND revision = \?/);
+  assert.match(api, /revision_conflict/);
+  assert.match(routes, /\/api\/save\/backups/);
+  assert.match(client, /AUTOFLIP_RESTORE_CLOUD_BACKUP/);
+  assert.match(client, /Серверные резервные копии/);
 });
 
 test('save backups migration and important operation journal are installed', () => {

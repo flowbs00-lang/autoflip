@@ -20,6 +20,10 @@ test("SQLite adapter applies migrations and exposes the D1 methods used by the A
     assert.ok(tables.results.some((row) => row.name === "users"));
     assert.ok(tables.results.some((row) => row.name === "game_saves"));
     assert.ok(tables.results.some((row) => row.name === "security_events"));
+    const economyColumns = await database.prepare("PRAGMA table_info(economy_transactions)").all();
+    assert.ok(economyColumns.results.some((row) => row.name === "status"));
+    assert.ok(economyColumns.results.some((row) => row.name === "client_id"));
+    assert.ok(economyColumns.results.some((row) => row.name === "updated_at"));
 
     const now = Date.now();
     const insert = await database.prepare(`INSERT INTO users

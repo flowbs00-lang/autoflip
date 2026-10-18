@@ -9,12 +9,13 @@ export async function onRequestGet(context) {
     await context.env.DB.prepare(`CREATE TABLE IF NOT EXISTS economy_transactions (
       user_id TEXT NOT NULL, transaction_id TEXT NOT NULL, type TEXT NOT NULL,
       amount INTEGER NOT NULL DEFAULT 0, payload_json TEXT NOT NULL DEFAULT '{}', created_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'prepared', client_id TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (user_id, transaction_id), FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`).run();
     const rows = await context.env.DB.prepare(`SELECT type, COUNT(*) AS count, COALESCE(SUM(amount), 0) AS amount
-      FROM economy_transactions WHERE user_id = ? GROUP BY type`).bind(session.id).all();
+      FROM economy_transactions WHERE user_id = ? AND status = 'committed' GROUP BY type`).bind(session.id).all();
     const recent = await context.env.DB.prepare(`SELECT transaction_id AS id, type, amount, payload_json AS payload, created_at AS createdAt
-      FROM economy_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 25`).bind(session.id).all();
+      FROM economy_transactions WHERE user_id = ? AND status = 'committed' ORDER BY updated_at DESC LIMIT 25`).bind(session.id).all();
     return json({ ok: true, totals: rows.results || [], recent: recent.results || [] });
   } catch (error) {
     return handleError(error);

@@ -8,6 +8,8 @@ const root=path.join(__dirname,'..');
 const economy=fs.readFileSync(path.join(root,'economy-system.js'),'utf8');
 const confirmApi=fs.readFileSync(path.join(root,'functions/api/economy/confirm.js'),'utf8');
 const migration=fs.readFileSync(path.join(root,'cloudflare/migrations/0006_economy_transactions.sql'),'utf8');
+const commitMigration=fs.readFileSync(path.join(root,'cloudflare/migrations/0011_economy_commit_state.sql'),'utf8');
+const statsApi=fs.readFileSync(path.join(root,'functions/api/economy/stats.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 
 function game(){
@@ -21,8 +23,15 @@ test('financial settlements require an authenticated idempotent server confirmat
   assert.match(confirmApi,/getSession/);
   assert.match(confirmApi,/INSERT OR IGNORE INTO economy_transactions/);
   assert.match(confirmApi,/transaction_conflict/);
+  assert.match(confirmApi,/status = 'committed'/);
+  assert.match(confirmApi,/transaction_in_progress/);
+  assert.match(confirmApi,/transaction_owner_mismatch/);
   assert.match(migration,/PRIMARY KEY \(user_id, transaction_id\)/);
-  assert.match(economy,/await window\.AUTOFLIP_CONFIRM_ECONOMY\(tx,type/);
+  assert.match(commitMigration,/ADD COLUMN status/);
+  assert.match(economy,/await window\.AUTOFLIP_CONFIRM_ECONOMY\(tx,type,amount,payload,'prepare'\)/);
+  assert.match(economy,/reconcileCommits/);
+  assert.match(economy,/AUTOFLIP_CLOUD_FLUSH/);
+  assert.match(statsApi,/status = 'committed'/);
   assert.match(economy,/busy\.has\(id\)/);
 });
 

@@ -34,7 +34,10 @@
   var bootState = safeJson(localStorage.getItem(SAVE_KEY) || '') || {};
   var saveSequence = Number(bootState._saveMeta && bootState._saveMeta.sequence || 0);
   var clientId = localStorage.getItem(CLIENT_KEY) || ('device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+  var cloudBackups = null;
+  var loadingCloudBackups = false;
   originalSetItem.call(localStorage, CLIENT_KEY, clientId);
+  window.AUTOFLIP_CLOUD_CLIENT_ID = clientId;
 
   function safeJson(raw) {
     try { var value = JSON.parse(raw); return value && typeof value === 'object' && !Array.isArray(value) ? value : null; }
@@ -189,6 +192,14 @@
     return payload;
   }
 
+  async function fetchCloudBackups() {
+    var response = await fetch('/api/save/backups', { credentials: 'same-origin', cache: 'no-store' });
+    var payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || ('HTTP ' + response.status));
+    cloudBackups = Array.isArray(payload.backups) ? payload.backups : [];
+    return cloudBackups;
+  }
+
   async function resolveConflict(localRaw) {
     var remote = await fetchRemote();
     checkpointRaw(localRaw, 'Конфликт устройств · локальная версия', { cloudRevision: remote.revision });
@@ -315,14 +326,33 @@
     function esc(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]; }); }
     var icons = { purchase: '🚗', sale: '💰', repair: '🔧', exchange: '🔄', donation: '◆' };
     var rows = operations.map(function (item) { return '<article class="save-operation"><span>' + (icons[item.type] || '•') + '</span><div><b>' + esc(item.label || 'Операция') + '</b><small>' + (item.car ? esc(item.car) + ' · ' : '') + new Date(Number(item.at || 0)).toLocaleString('ru-RU') + '</small></div>' + (item.amount ? '<strong>' + Number(item.amount).toLocaleString('ru-RU') + ' ₽</strong>' : '') + '</article>'; }).join('');
-    render('<div class="app save-center">' + head('Сохранения') + '<section class="save-cloud-card ' + esc(cloud.status || 'local') + '"><span>☁</span><div><small>ОСНОВНОЕ СОХРАНЕНИЕ</small><h3>' + (cloud.status === 'saved' ? 'Сохранено в облаке' : cloud.status === 'syncing' || cloud.status === 'pending' ? 'Идёт синхронизация' : 'Сохранено на устройстве') + '</h3><p>' + esc(cloud.detail || 'Прогресс защищён локальной копией') + '</p></div></section><div class="save-safety-grid"><div><small>ВЕРСИЯ</small><b>' + SAVE_VERSION + '</b></div><div><small>РЕВИЗИЯ</small><b>' + revision + '</b></div><div><small>РЕЗЕРВНАЯ КОПИЯ</small><b>' + (backup ? new Date(backup.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '—') + '</b></div></div><button class="action green" onclick="AUTOFLIP_CREATE_BACKUP()">Создать резервную копию</button>' + (backup ? '<button class="action" onclick="AUTOFLIP_RESTORE_BACKUP()">Восстановить последнюю копию</button>' : '') + '<h3 class="save-log-title">Последние важные операции</h3><div class="save-operation-list">' + (rows || '<div class="note">Покупки, продажи, ремонты, обмены и донаты появятся здесь.</div>') + '</div><button class="action" onclick="settings()">‹ Назад в настройки</button></div>');
+    var serverRows = cloudBackups === null ? '<div class="note">Загружаем серверные копии…</div>' : cloudBackups.length ? cloudBackups.map(function (item) { return '<button class="action" onclick="AUTOFLIP_RESTORE_CLOUD_BACKUP(' + Number(item.revision) + ')">Версия ' + Number(item.revision) + ' · ' + new Date(Number(item.createdAt || 0)).toLocaleString('ru-RU') + '</button>'; }).join('') : '<div class="note">Серверные копии появятся после следующих облачных сохранений.</div>';
+    render('<div class="app save-center">' + head('Сохранения') + '<section class="save-cloud-card ' + esc(cloud.status || 'local') + '"><span>☁</span><div><small>ОСНОВНОЕ СОХРАНЕНИЕ</small><h3>' + (cloud.status === 'saved' ? 'Сохранено в облаке' : cloud.status === 'syncing' || cloud.status === 'pending' ? 'Идёт синхронизация' : 'Сохранено на устройстве') + '</h3><p>' + esc(cloud.detail || 'Прогресс защищён локальной копией') + '</p></div></section><div class="save-safety-grid"><div><small>ВЕРСИЯ</small><b>' + SAVE_VERSION + '</b></div><div><small>РЕВИЗИЯ</small><b>' + revision + '</b></div><div><small>РЕЗЕРВНАЯ КОПИЯ</small><b>' + (backup ? new Date(backup.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '—') + '</b></div></div><button class="action green" onclick="AUTOFLIP_CREATE_BACKUP()">Создать резервную копию</button>' + (backup ? '<button class="action" onclick="AUTOFLIP_RESTORE_BACKUP()">Восстановить последнюю копию на устройстве</button>' : '') + '<h3 class="save-log-title">Серверные резервные копии</h3><div class="save-operation-list">' + serverRows + '</div><h3 class="save-log-title">Последние важные операции</h3><div class="save-operation-list">' + (rows || '<div class="note">Покупки, продажи, ремонты, обмены и донаты появятся здесь.</div>') + '</div><button class="action" onclick="settings()">‹ Назад в настройки</button></div>');
     if (!backup && !indexedBackup) latestIndexedBackup().then(function (entry) { if (entry) window.openSaveCenter(entry); });
+    if (cloudBackups === null && !loadingCloudBackups) { loadingCloudBackups = true; fetchCloudBackups().catch(function () { cloudBackups = []; }).finally(function () { loadingCloudBackups = false; window.openSaveCenter(indexedBackup); }); }
   };
   window.AUTOFLIP_CREATE_BACKUP = function () { checkpointRaw(localStorage.getItem(SAVE_KEY), 'Ручная резервная копия', {}); openSaveCenter(); };
   window.AUTOFLIP_RESTORE_BACKUP = function () {
     var entry = safeJson(localStorage.getItem(BACKUP_KEY) || '');
     if (!entry || !entry.raw) return latestIndexedBackup().then(function (stored) { if (stored && stored.raw) restoreBackup(stored); else openSaveCenter(); });
     restoreBackup(entry);
+  };
+  window.AUTOFLIP_RESTORE_CLOUD_BACKUP = async function (backupRevision) {
+    if (!confirm('Восстановить серверную копию версии ' + backupRevision + '? Текущее облачное состояние также останется в резерве.')) return;
+    checkpointRaw(localStorage.getItem(SAVE_KEY), 'Перед восстановлением серверной копии', { revision: revision });
+    emit('syncing', 'Восстанавливаем серверную копию');
+    try {
+      await flushPendingSave();
+      var response = await fetch('/api/save/backups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ revision: Number(backupRevision), currentRevision: revision }) });
+      var payload = await responsePayload(response);
+      if (!response.ok) throw new Error(payload.error || ('HTTP ' + response.status));
+      var remote = await fetchRemote();
+      applyRemoteSave(remote, 'Серверная копия восстановлена');
+      location.reload();
+    } catch (error) {
+      emit('blocked', 'Не удалось восстановить копию: ' + (error.message || 'ошибка'));
+      alert('Не удалось восстановить серверную копию. Обнови страницу и попробуй ещё раз.');
+    }
   };
   function restoreBackup(entry) {
     var restored = safeJson(entry.raw), restoredVersion = Number(restored && restored._saveMeta && restored._saveMeta.version || 1);
