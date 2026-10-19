@@ -16,6 +16,35 @@ const FORBIDDEN_WORDS = Object.freeze([
 
 const LINK_PATTERN = /(?:https?:\/\/|www\.|t\.me\/|vk\.com\/|discord\.gg\/|[a-z0-9-]+\.(?:ru|com|net|org|io|gg|me)(?:\b|\/))/iu;
 
+const PROFANITY_PATTERNS = Object.freeze([
+  /^(?:бля$|бляд|блят)/u,
+  /^(?:(?:о|а|на|за|по|вы|про|до|при)?ху(?:й|я|е|ё|и)|хуйн|хули)/u,
+  /^(?:пизд|пезд)/u,
+  /^(?:еб|ёб|заеб|заёб|наеб|наёб|поеб|поёб|подъеб|подъёб|уеб|уёб|выеб|выёб|доеб|доёб|проеб|проёб|перееб|переёб|отъеб|отъёб|съеб|съёб)/u,
+  /^(?:сука|суки|суку|суке|сукой|сучар|сучк)/u,
+  /^(?:мудак|мудил|долбо|долба|гандон|гондон|залуп|дроч|жоп|шлюх|мраз|говн|пидор|пидар)/u
+]);
+
+const PROFANITY_LOOKALIKES = Object.freeze({
+  a: "а", b: "б", c: "с", e: "е", k: "к", m: "м", o: "о", p: "р", t: "т", x: "х",
+  "0": "о", "3": "з", "6": "б"
+});
+
+function profanityKey(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLocaleLowerCase("ru-RU")
+    .replace(/[abcekmoptx036]/gu, (char) => PROFANITY_LOOKALIKES[char] || char)
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+export function maskCommunityProfanity(value) {
+  return String(value == null ? "" : value).replace(/[\p{L}\p{N}]+(?:[.*_~+-][\p{L}\p{N}]+)*/gu, (token) => {
+    const key = profanityKey(token);
+    return PROFANITY_PATTERNS.some((pattern) => pattern.test(key)) ? "*".repeat([...token].length) : token;
+  });
+}
+
 export function communityCities() {
   return [...COMMUNITY_CITIES];
 }

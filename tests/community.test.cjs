@@ -73,6 +73,21 @@ test('open chats poll for new messages without replacing the draft', () => {
   assert.doesNotMatch(client.match(/async function pollMessages[\s\S]*?\n  }/)[0], /renderCommunity/);
 });
 
+test('chat masks profanity for players and hides moderation actions in a compact menu', async () => {
+  const { maskCommunityProfanity } = await import('../functions/_lib/community.js');
+  const client = read('community.js');
+  const api = read('functions/api/community.js');
+  const css = read('community.css');
+  assert.equal(maskCommunityProfanity('Ты блядь и хуй.'), 'Ты ***** и ***.');
+  assert.equal(maskCommunityProfanity('б.л.я.д.ь'), '*********');
+  assert.equal(maskCommunityProfanity('небо, хлеб, худой и учеба'), 'небо, хлеб, худой и учеба');
+  assert.match(api, /displayBody: maskCommunityProfanity\(message\.body\)/);
+  assert.match(client, /message\.displayBody == null \? message\.body : message\.displayBody/);
+  assert.match(client, /<details class="community-message-menu"/);
+  assert.match(client, /aria-label="Действия с сообщением"/);
+  assert.match(css, /\.community-message-menu footer\{position:absolute/);
+});
+
 test('clans are limited to 50 and expose managed member roles', () => {
   const schema = read('functions/_lib/community.js');
   const api = read('functions/api/community.js');

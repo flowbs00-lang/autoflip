@@ -1,6 +1,6 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../_lib/http.js";
 import { getSession } from "../_lib/session.js";
-import { activeCommunityBan, communityCities, ensureCommunitySchema, runCommunityMaintenance, syncCommunityProfile, validCommunityCity, validateCommunityMessage } from "../_lib/community.js";
+import { activeCommunityBan, communityCities, ensureCommunitySchema, maskCommunityProfanity, runCommunityMaintenance, syncCommunityProfile, validCommunityCity, validateCommunityMessage } from "../_lib/community.js";
 import { ensureLegalSchema, LEGAL_VERSIONS, publicProfileAllowed } from "../_lib/legal.js";
 import { isAdminUser } from "../_lib/admin.js";
 
@@ -218,7 +218,10 @@ async function snapshot(db, env, session, channelValue) {
       isAdmin: admin,
       chatBan: ban || null
     },
-    messages: [...(messagesResult.results || [])].reverse(),
+    messages: [...(messagesResult.results || [])].reverse().map((message) => ({
+      ...message,
+      displayBody: maskCommunityProfanity(message.body)
+    })),
     players: playersResult.results || [],
     clans: clansResult.results || [],
     clanMembers: clanMembersResult.results || [],
