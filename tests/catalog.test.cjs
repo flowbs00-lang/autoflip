@@ -56,7 +56,7 @@ test('every city always has ten distinct starter cars for 40,000 to 80,000 ruble
    assert.equal(new Set(starter.map(c=>c.name)).size,10,city+' models');
    assert.equal(new Set(starter.map(c=>c.photoUrl)).size,10,city+' photos');
    assert.ok(starter.every(c=>c.price>=40000&&c.price<=80000),city+' prices');
-   assert.ok(starter.every(c=>c.restorationProject&&c.damageSummary&&c.photoUrl.includes('commons.wikimedia.org')),city+' restoration projects');
+   assert.ok(starter.every(c=>c.restorationProject&&c.damageSummary&&c.photoUrl.startsWith('assets/restoration/')&&c.photoUrl.endsWith('.webp')),city+' restoration projects');
    assert.ok(starter.every(c=>(c.market-c.price)/c.price>=.10&&(c.market-c.price)/c.price<=.20),city+' balanced market spread');
    assert.ok(starter.every(c=>c.market>c.price+c.repair),city+' repair must leave a small profit');
  }

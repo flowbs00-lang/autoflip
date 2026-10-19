@@ -9,17 +9,18 @@ var marketTargetSize=cities.length*marketListingsPerCity;
 var marketCatalogVersion=9;
 var marketStarterPerCity=10;
 var marketRestorationTemplates=[
- {name:'ВАЗ 2101 · проект',year:1984,km:286000,body:'Седан',risk:'сквозная коррозия кузова',repair:32000,photo:'Abandoned Car (88134285).jpeg',damage:'Сквозная коррозия, повреждён кузов',credit:'Wikimedia Commons · CC license'},
- {name:'Lada Niva · проект',year:1993,km:241000,body:'Внедорожник',risk:'кузов и пороги',repair:28000,photo:'Rusty Lada Niva.jpg',damage:'Сильная коррозия кузова и порогов',credit:'PeteVerdon · CC BY-SA 3.0'},
- {name:'Opel Kadett D · проект',year:1983,km:254000,body:'Хэтчбек',risk:'передняя часть кузова',repair:26000,photo:'1979-84 Opel Kadett D (abandoned) (10250799795).jpg',damage:'Нет бампера, кузов требует восстановления',credit:'Wikimedia Commons · CC BY 2.0'},
- {name:'Ford Sierra · проект',year:1984,km:279000,body:'Универсал',risk:'ходовая и кузов',repair:30000,photo:'1982-83 Ford Sierra Base estate (abandoned?!) (10315412895).jpg',damage:'Долгий простой, коррозия и неисправная ходовая',credit:'Wikimedia Commons · CC BY 2.0'},
- {name:'Toyota Corolla E70 · проект',year:1979,km:318000,body:'Седан',risk:'кузов и днище',repair:35000,photo:'1977-79 Toyota Corolla in an appaling "roadworthy" condition (10274398094).jpg',damage:'Гнилое днище и множественная коррозия',credit:'Wikimedia Commons · CC BY 2.0'},
- {name:'Cadillac DeVille · проект',year:1978,km:225000,body:'Седан',risk:'кузов и двигатель',repair:42000,photo:'Rusty Cadillac.JPG',damage:'Кузов покрыт ржавчиной, двигатель не запускается',credit:'Wikimedia Commons · свободная лицензия'},
- {name:'Ford Falcon · проект',year:1969,km:340000,body:'Седан',risk:'аварийный кузов',repair:45000,photo:'03 Falcon Wreck.jpg',damage:'Сильные повреждения кузова после простоя',credit:'Wikimedia Commons · свободная лицензия'},
- {name:'TagAZ Vortex Estina · проект',year:2010,km:198000,body:'Седан',risk:'коррозия и стёкла',repair:27000,photo:'Moscow, Tagaz Vortex Estina (Chery A5) decrepit Sept 2026 07.jpg',damage:'Коррозия, разбитое стекло и разукомплектованный салон',credit:'Wikimedia Commons · CC0'},
- {name:'Opel Kadett E · проект',year:1988,km:267000,body:'Универсал',risk:'пороги и арки',repair:29000,photo:'Rusty old Kadett van (15658910431).jpg',damage:'Сгнившие арки и пороги',credit:'Wikimedia Commons · CC BY 2.0'},
- {name:'Авто со свалки · проект',year:1996,km:301000,body:'Хэтчбек',risk:'стёкла и колёса',repair:38000,photo:'Damaged blue car sits in junkyard with open door and missing wheels.jpg',damage:'Нет колёс, разбиты стёкла, повреждены двери',credit:'Shixart1985 · CC BY 2.0'}
+ {name:'ВАЗ 2101 · проект',year:1984,km:286000,body:'Седан',risk:'сквозная коррозия кузова',repair:32000,photo:'Abandoned Car (88134285).jpeg',asset:'assets/restoration/vaz-2101.webp',damage:'Сквозная коррозия, повреждён кузов',credit:'Wikimedia Commons · CC license'},
+ {name:'Lada Niva · проект',year:1993,km:241000,body:'Внедорожник',risk:'кузов и пороги',repair:28000,photo:'Rusty Lada Niva.jpg',asset:'assets/restoration/lada-niva.webp',damage:'Сильная коррозия кузова и порогов',credit:'PeteVerdon · CC BY-SA 3.0'},
+ {name:'Opel Kadett D · проект',year:1983,km:254000,body:'Хэтчбек',risk:'передняя часть кузова',repair:26000,photo:'1979-84 Opel Kadett D (abandoned) (10250799795).jpg',asset:'assets/restoration/opel-kadett-d.webp',damage:'Нет бампера, кузов требует восстановления',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Ford Sierra · проект',year:1984,km:279000,body:'Универсал',risk:'ходовая и кузов',repair:30000,photo:'1982-83 Ford Sierra Base estate (abandoned?!) (10315412895).jpg',asset:'assets/restoration/ford-sierra.webp',damage:'Долгий простой, коррозия и неисправная ходовая',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Toyota Corolla E70 · проект',year:1979,km:318000,body:'Седан',risk:'кузов и днище',repair:35000,photo:'1977-79 Toyota Corolla in an appaling "roadworthy" condition (10274398094).jpg',asset:'assets/restoration/toyota-corolla-e70.webp',damage:'Гнилое днище и множественная коррозия',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Cadillac DeVille · проект',year:1978,km:225000,body:'Седан',risk:'кузов и двигатель',repair:42000,photo:'Rusty Cadillac.JPG',asset:'assets/restoration/cadillac-deville.webp',damage:'Кузов покрыт ржавчиной, двигатель не запускается',credit:'Wikimedia Commons · свободная лицензия'},
+ {name:'Ford Falcon · проект',year:1969,km:340000,body:'Седан',risk:'аварийный кузов',repair:45000,photo:'03 Falcon Wreck.jpg',asset:'assets/restoration/ford-falcon.webp',damage:'Сильные повреждения кузова после простоя',credit:'Wikimedia Commons · свободная лицензия'},
+ {name:'TagAZ Vortex Estina · проект',year:2010,km:198000,body:'Седан',risk:'коррозия и стёкла',repair:27000,photo:'Moscow, Tagaz Vortex Estina (Chery A5) decrepit Sept 2026 07.jpg',asset:'assets/restoration/tagaz-vortex-estina.webp',damage:'Коррозия, разбитое стекло и разукомплектованный салон',credit:'Wikimedia Commons · CC0'},
+ {name:'Opel Kadett E · проект',year:1988,km:267000,body:'Универсал',risk:'пороги и арки',repair:29000,photo:'Rusty old Kadett van (15658910431).jpg',asset:'assets/restoration/opel-kadett-e.webp',damage:'Сгнившие арки и пороги',credit:'Wikimedia Commons · CC BY 2.0'},
+ {name:'Авто со свалки · проект',year:1996,km:301000,body:'Хэтчбек',risk:'стёкла и колёса',repair:38000,photo:'Damaged blue car sits in junkyard with open door and missing wheels.jpg',asset:'assets/restoration/junkyard-car.webp',damage:'Нет колёс, разбиты стёкла, повреждены двери',credit:'Shixart1985 · CC BY 2.0'}
 ];
+function restorationPhoto(car){var known=marketRestorationTemplates.find(function(x){return car&&(car.asset===x.asset||car.photo===x.photo||car.name===x.name);});return car&&car.asset?car.asset:(known&&known.asset?known.asset:commons(car&&car.photo||''));}
 var marketBudgetRevision={
  'Fiat Punto II':[160000,120000],
  'Renault Clio II':[190000,135000],
@@ -248,7 +249,7 @@ function createMarketListing(template,forcedVariant,forcedCity,forcedActive){
 }
 function starterTemplatesForCity(city){
  var cityIndex=Math.max(0,cities.indexOf(city));
- return marketRestorationTemplates.map(function(template,index){return Object.assign({id:3000+index,price:60000,market:110000,sale:110000,yearMin:template.year-2,yearMax:template.year+2,city:city,photoUrl:commons(template.photo),photoCredit:template.credit,photoSource:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(template.photo)},template,{rotation:(cityIndex+index)%marketRestorationTemplates.length});});
+ return marketRestorationTemplates.map(function(template,index){return Object.assign({id:3000+index,price:60000,market:110000,sale:110000,yearMin:template.year-2,yearMax:template.year+2,city:city,photoUrl:restorationPhoto(template),photoCredit:template.credit,photoSource:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(template.photo)},template,{rotation:(cityIndex+index)%marketRestorationTemplates.length});});
 }
 function createStarterListing(template,city,slot){
  var cityIndex=Math.max(0,cities.indexOf(city)),fresh=createMarketListing(template,cityIndex*100+slot,city,true);
@@ -313,7 +314,7 @@ function ensureMarketListingMeta(car,index){
  if(!car.sellerKind)car.sellerKind=marketSellerKinds[Math.abs(variant*3)%marketSellerKinds.length];
  if(!car.sellerUrgency)car.sellerUrgency=car.sellerKind==='Срочная продажа'?'high':(car.sellerKind==='Перекупщик'?'medium':'normal');
  if(!car.photoPosition)car.photoPosition=marketPhotoPositions[Math.abs(variant)%marketPhotoPositions.length];
- if(car.restorationProject&&car.photo)car.photoUrl=commons(car.photo);
+ if(car.restorationProject&&car.photo)car.photoUrl=restorationPhoto(car);
  else if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion)car.photoUrl=marketPhotoFor(car,variant);
  if(Number(state.marketPhotoColorCatalogVersion||0)<marketPhotoColorCatalogVersion)car.color=marketColorFor(car,variant);
  return balanceRestorationProject(car);
@@ -496,9 +497,9 @@ pruneConsumedMarketListings();
 reindexMarketListings();
 localStorage.setItem(KEY,JSON.stringify(state));
 if(Number(state.marketPhotoCatalogVersion||0)<marketPhotoCatalogVersion){
- if(typeof makes!=='undefined')makes.forEach(function(car,i){car.photoUrl=car.restorationProject&&car.photo?commons(car.photo):marketPhotoFor(car,i);});
- if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=car.restorationProject&&car.photo?commons(car.photo):marketPhotoFor(car,i);});
- if(state.car)state.car.photoUrl=state.car.restorationProject&&state.car.photo?commons(state.car.photo):marketPhotoFor(state.car,0);
+ if(typeof makes!=='undefined')makes.forEach(function(car,i){car.photoUrl=car.restorationProject&&car.photo?restorationPhoto(car):marketPhotoFor(car,i);});
+ if(Array.isArray(state.cars))state.cars.forEach(function(car,i){if(car)car.photoUrl=car.restorationProject&&car.photo?restorationPhoto(car):marketPhotoFor(car,i);});
+ if(state.car)state.car.photoUrl=state.car.restorationProject&&state.car.photo?restorationPhoto(state.car):marketPhotoFor(state.car,0);
  state.marketPhotoCatalogVersion=marketPhotoCatalogVersion;
  reindexMarketListings();
  localStorage.setItem(KEY,JSON.stringify(state));
