@@ -77,7 +77,9 @@ const exactPhotos={
 'Toyota Land Cruiser Prado':commons('Toyota Land Cruiser Prado 150.jpg')
 };
 function fallbackPhoto(c){return `https://images.unsplash.com/${photos[c.id%photos.length]}?auto=format&fit=crop&w=700&q=75`}
-function photo(c){return c&&c.photoUrl?c.photoUrl:(exactPhotos[c.name]||fallbackPhoto(c))}
+const localCarImageVersion='20261019-2';
+function versionedLocalCarPhoto(url){return /^assets\/(?:cars|restoration)\//.test(String(url||''))?url+(String(url).includes('?')?'&':'?')+'v='+localCarImageVersion:url}
+function photo(c){return versionedLocalCarPhoto(c&&c.photoUrl?c.photoUrl:(exactPhotos[c.name]||fallbackPhoto(c)))}
 const initial={money:100000,rep:0,deals:0,city:'Москва',car:null,loan:0,logs:['Старт: капитал 100 000 ₽. Найди первую выгодную машину.'],sound:true,day:1,locked:false,notifications:2,seen:{},notes:['Цель: купить первую машину ниже рынка.']};
 let state=JSON.parse(localStorage.getItem(KEY)||'null')||structuredClone(initial);
 if(Number(state.money||0)===50000&&Number(state.deals||0)===0&&!state.car&&(!Array.isArray(state.cars)||state.cars.length===0)&&Number(state.loan||0)===0)state.money=100000;
