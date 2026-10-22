@@ -19,6 +19,23 @@ test('login links every required legal document and keeps profile consent option
   assert.doesNotMatch(client.match(/function requiredAccepted[\s\S]*?\n  }/)[0], /publicProfile/);
 });
 
+test('cookie notice is shown on login and in the game and links to the disclosure', () => {
+  const login = read('cloudflare/login/index.html');
+  const notice = read('cloudflare/assets/cookie-notice.js');
+  const gameNotice = read('cloudflare/app/ui.js');
+  const gameStyles = read('cloudflare/app/mobile-redesign.css');
+  const privacy = read('cloudflare/legal/privacy/index.html');
+  assert.match(login, /cookie-notice\.css/);
+  assert.match(login, /cookie-notice\.js/);
+  assert.match(notice, /autoflip-cookie-notice-v1/);
+  assert.match(notice, /\/legal\/privacy\/#cookies/);
+  assert.match(notice, /Рекламных cookies нет/);
+  assert.match(gameNotice, /autoflip-cookie-notice-v1/);
+  assert.match(gameNotice, /\/legal\/privacy\/#cookies/);
+  assert.match(gameStyles, /\.cookie-notice/);
+  assert.match(privacy, /id="cookies"/);
+});
+
 test('new account registration is closed at the server unless explicitly enabled or allowlisted', () => {
   const auth = read('functions/api/auth/vk.js');
   const legal = read('functions/_lib/legal.js');

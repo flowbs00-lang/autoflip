@@ -75,3 +75,15 @@
   (typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(function(){document.querySelectorAll('[data-os-time]').forEach(el=>el.textContent=time());document.querySelectorAll('[data-os-date]').forEach(el=>el.textContent=date());},1000);
   apply();home();
 })();
+
+// Inform players about the strictly necessary session cookie and local game data.
+(()=>{
+  const key='autoflip-cookie-notice-v1';
+  if(typeof document==='undefined'||!document.body||typeof document.createElement!=='function')return;
+  try{if(localStorage.getItem(key)==='acknowledged')return;}catch(_){}
+  const notice=document.createElement('section');
+  notice.className='cookie-notice';notice.setAttribute('role','region');notice.setAttribute('aria-label','Уведомление об использовании cookies');
+  notice.innerHTML='<div class="cookie-notice__copy"><strong class="cookie-notice__title">Необходимые cookies и данные на устройстве</strong><p class="cookie-notice__text">AutoFlip использует техническую cookie для безопасного входа и локальное хранилище для настроек, синхронизации и резервной копии игры. Рекламных cookies нет. <a href="/legal/privacy/#cookies">Подробнее в политике</a>.</p></div><button class="cookie-notice__button" type="button">Понятно</button>';
+  notice.querySelector('button').addEventListener('click',()=>{try{localStorage.setItem(key,'acknowledged');}catch(_){}notice.hidden=true;});
+  document.body.appendChild(notice);
+})();
