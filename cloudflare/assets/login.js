@@ -3,6 +3,7 @@
 
   const APP_ID = 54810634;
   const CALLBACK_URL = "https://autoflip-game.ru/auth/vk/callback";
+  const PENDING_LOGIN_KEY = "autoflip.vk.pending";
   const button = document.querySelector("#vk-login");
   const status = document.querySelector("#status");
   const VKID = window.VKIDSDK;
@@ -37,6 +38,17 @@
 
   function requiredAccepted(legal) {
     return legal.terms.accepted && legal.personalData.accepted && legal.communityRules.accepted;
+  }
+
+  function rememberPendingLogin(state, codeVerifier, legal) {
+    const pending = JSON.stringify({ state, codeVerifier, legal, createdAt: Date.now() });
+    sessionStorage.setItem("autoflip.vk.state", state);
+    sessionStorage.setItem("autoflip.vk.verifier", codeVerifier);
+    sessionStorage.setItem("autoflip.legal", JSON.stringify(legal));
+    // VK ID can return mobile users in a newly created browser tab. In that
+    // case sessionStorage is empty, so keep the same short-lived PKCE payload
+    // as a fallback. The callback deletes it immediately after use.
+    try { localStorage.setItem(PENDING_LOGIN_KEY, pending); } catch (_) {}
   }
 
   async function acceptForCurrentSession(legal) {
@@ -81,9 +93,7 @@
 
     const state = randomUrlSafe(24);
     const codeVerifier = randomUrlSafe(48);
-    sessionStorage.setItem("autoflip.vk.state", state);
-    sessionStorage.setItem("autoflip.vk.verifier", codeVerifier);
-    sessionStorage.setItem("autoflip.legal", JSON.stringify(legal));
+    rememberPendingLogin(state, codeVerifier, legal);
 
     try {
       VKID.Config.init({

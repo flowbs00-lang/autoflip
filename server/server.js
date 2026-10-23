@@ -142,6 +142,10 @@ async function send(response, outgoing) {
     if (name.toLowerCase() !== "set-cookie") outgoing.setHeader(name, value);
   }
   const cookies = response.headers.getSetCookie?.() || [];
+  if (!cookies.length) {
+    const cookie = response.headers.get("set-cookie");
+    if (cookie) cookies.push(cookie);
+  }
   if (cookies.length) outgoing.setHeader("Set-Cookie", cookies);
   if (!response.body) return outgoing.end();
   Readable.fromWeb(response.body).pipe(outgoing);

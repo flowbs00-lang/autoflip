@@ -3,6 +3,8 @@
 
   const APP_ID = 54810634;
   const CALLBACK_URL = "https://autoflip-game.ru/auth/vk/callback";
+  const PENDING_LOGIN_KEY = "autoflip.vk.pending";
+  const PENDING_LOGIN_TTL_MS = 10 * 60 * 1000;
   const status = document.querySelector("#status");
   const VKID = window.VKIDSDK;
 
@@ -18,15 +20,40 @@
     return query.size ? query : hash;
   }
 
+  function pendingLogin() {
+    let legal = null;
+    try { legal = JSON.parse(sessionStorage.getItem("autoflip.legal") || "null"); } catch { legal = null; }
+    const current = {
+      state: sessionStorage.getItem("autoflip.vk.state") || "",
+      codeVerifier: sessionStorage.getItem("autoflip.vk.verifier") || "",
+      legal
+    };
+    if (current.state && current.codeVerifier && current.legal) return current;
+
+    try {
+      const fallback = JSON.parse(localStorage.getItem(PENDING_LOGIN_KEY) || "null");
+      const age = Date.now() - Number(fallback?.createdAt || 0);
+      if (fallback && age >= 0 && age <= PENDING_LOGIN_TTL_MS) return fallback;
+    } catch (_) {}
+    return current;
+  }
+
+  function clearPendingLogin() {
+    sessionStorage.removeItem("autoflip.vk.state");
+    sessionStorage.removeItem("autoflip.vk.verifier");
+    sessionStorage.removeItem("autoflip.legal");
+    try { localStorage.removeItem(PENDING_LOGIN_KEY); } catch (_) {}
+  }
+
   async function complete() {
     const params = callbackParams();
     const code = params.get("code") || "";
     const deviceId = params.get("device_id") || "";
     const returnedState = params.get("state") || "";
-    const expectedState = sessionStorage.getItem("autoflip.vk.state") || "";
-    const codeVerifier = sessionStorage.getItem("autoflip.vk.verifier") || "";
-    let legal = null;
-    try { legal = JSON.parse(sessionStorage.getItem("autoflip.legal") || "null"); } catch { legal = null; }
+    const pending = pendingLogin();
+    const expectedState = pending.state || "";
+    const codeVerifier = pending.codeVerifier || "";
+    const legal = pending.legal || null;
 
     if (!VKID || !code || !deviceId || !expectedState || returnedState !== expectedState || !codeVerifier || !legal) {
       fail("Ответ VK ID не прошёл проверку. Возвращаем на страницу входа…");
@@ -52,9 +79,13 @@
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "server_error");
 
-      sessionStorage.removeItem("autoflip.vk.state");
-      sessionStorage.removeItem("autoflip.vk.verifier");
-      sessionStorage.removeItem("autoflip.legal");
+      const sessionResponse = await fetch("/api/session", { credentials: "same-origin", cache: "no-store" });
+      const session = await sessionResponse.json().catch(() => null);
+      if (!sessionResponse.ok || !session?.authenticated || session.needsLegalConsent) {
+        throw new Error("session_not_created");
+      }
+
+      clearPendingLogin();
       location.replace(result.needsNickname ? "/setup-profile/" : "/app/");
     } catch (error) {
       console.error(error);
