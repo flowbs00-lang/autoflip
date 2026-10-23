@@ -25,3 +25,8 @@ test('VK callback verifies the server session before entering the game', () => {
   assert.match(callback, /!session\?\.authenticated \|\| session\.needsLegalConsent/);
   assert.match(server, /response\.headers\.get\("set-cookie"\)/);
 });
+
+test('login and callback HTML bypass stale cached auth scripts', () => {
+  assert.match(read('cloudflare/login/index.html'), /login\.js\?v=20261023-1/);
+  assert.match(read('cloudflare/auth/vk/callback/index.html'), /vk-callback\.js\?v=20261023-1/);
+});
