@@ -27,6 +27,16 @@ test('VK callback verifies the server session before entering the game', () => {
 });
 
 test('login and callback HTML bypass stale cached auth scripts', () => {
-  assert.match(read('cloudflare/login/index.html'), /login\.js\?v=20261023-1/);
-  assert.match(read('cloudflare/auth/vk/callback/index.html'), /vk-callback\.js\?v=20261023-1/);
+  assert.match(read('cloudflare/login/index.html'), /login\.js\?v=20261023-2/);
+  assert.match(read('cloudflare/auth/vk/callback/index.html'), /vk-callback\.js\?v=20261023-2/);
+});
+
+test('VK login uses same-tab redirects supported by mobile in-app browsers', () => {
+  const login = read('cloudflare/assets/login.js');
+  const callback = read('cloudflare/assets/vk-callback.js');
+
+  assert.match(login, /mode: VKID\.ConfigAuthMode\.Redirect/);
+  assert.match(login, /responseMode: VKID\.ConfigResponseMode\.Redirect/);
+  assert.match(login, /VK ID не открылся/);
+  assert.match(callback, /mode: VKID\.ConfigAuthMode\.Redirect/);
 });

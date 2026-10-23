@@ -66,6 +66,8 @@
         redirectUrl: CALLBACK_URL,
         state: expectedState,
         codeVerifier,
+        mode: VKID.ConfigAuthMode.Redirect,
+        responseMode: VKID.ConfigResponseMode.Redirect,
         scope: ""
       });
 

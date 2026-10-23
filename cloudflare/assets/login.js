@@ -95,16 +95,25 @@
     const codeVerifier = randomUrlSafe(48);
     rememberPendingLogin(state, codeVerifier, legal);
 
+    let openingTimeout;
     try {
       VKID.Config.init({
         app: APP_ID,
         redirectUrl: CALLBACK_URL,
         state,
         codeVerifier,
+        mode: VKID.ConfigAuthMode.Redirect,
+        responseMode: VKID.ConfigResponseMode.Redirect,
         scope: ""
       });
+      openingTimeout = setTimeout(() => {
+        button.disabled = false;
+        show("VK ID не открылся. Нажмите кнопку ещё раз или откройте сайт в Safari.", "error");
+      }, 8_000);
       await VKID.Auth.login();
+      clearTimeout(openingTimeout);
     } catch (error) {
+      clearTimeout(openingTimeout);
       console.error(error);
       button.disabled = false;
       show("Вход не начался. Попробуйте ещё раз.", "error");
