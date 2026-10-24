@@ -1,9 +1,14 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" class="autoflip-booting">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AutoFlip — твой следующий ход</title>
+<style id="autoflip-boot-style">
+html.autoflip-booting #screen{visibility:hidden!important}
+html.autoflip-booting .phone{position:relative;overflow:hidden}
+html.autoflip-booting .phone::after{content:"AUTOFLIP OS";position:absolute;inset:5px;z-index:50;display:grid;place-items:center;border-radius:39px;background:radial-gradient(circle at 50% 42%,#31596b 0,transparent 38%),linear-gradient(155deg,#13283b,#0b111d 72%);color:#eaf8f5;font:800 14px/1 system-ui,sans-serif;letter-spacing:.22em}
+</style>
 <link rel="stylesheet" href="style.css?v=20261019-1">
 <link rel="stylesheet" href="ui.css?v=20261008-1">
 <link rel="stylesheet" href="plates.css?v=20261006-4">
@@ -35,7 +40,7 @@
 <section id="game" class="game">
   <div class="game-title"><small>AUTOFLIP · ТВОЙ СЛЕДУЮЩИЙ ХОД</small><h2>Большие сделки. В твоих руках.</h2><p>Находи автомобили, договаривайся и развивай свой автобизнес.</p></div>
   <div class="layout">
-    <div class="phone"><div class="notch"></div><div id="screen"></div><div class="homebar"></div></div>
+    <div class="phone"><div class="notch"></div><div id="screen" aria-busy="true"></div><div class="homebar"></div></div>
     <aside><div class="objective"><small>ЦЕЛЬ</small><b id="objective">Найди выгодный автомобиль</b><span id="objectiveSub">Открой рынок и изучи объявления.</span></div><div id="statsbox" class="statsbox"></div><div id="journal" class="journal"></div><div class="side-buttons"><button onclick="randomEvent()">🎲 Событие</button><button onclick="resetGame()">↻ Сброс</button></div></aside>
   </div>
 </section>
@@ -1814,7 +1819,7 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261018-1"></script>
+<script src="ui.js?v=20261024-1"></script>
 <script src="plates.js?v=20261010-2"></script>
 <script src="garage-system.js?v=20261010-4"></script>
 <script src="world-system.js?v=20261007-6"></script>
