@@ -4,6 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const ui=fs.readFileSync(path.join(__dirname,'../ui.js'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 function game(saved){
   let output='',stored;
   const properties={};
@@ -41,4 +42,11 @@ test('saved custom wallpaper is restored as the active phone background',()=>{
   const g=game({money:20,cars:[],city:'Киров',appearance:{wallpaper:'custom',customWallpaper:image,theme:'dark',accent:'mint',motion:true,widgets:true,privateBalance:false}});
   assert.equal(g.root.dataset.wallpaper,'custom');assert.match(g.properties['--os-wallpaper'],/data:image\/jpeg;base64,abc123/);
   g.c.clearCustomWallpaper();assert.equal(g.c.state.appearance.wallpaper,'aurora');assert.equal(g.c.state.appearance.customWallpaper,'');
+});
+test('legacy launcher stays hidden until the modern interface is ready',()=>{
+  assert.match(html,/<html lang="ru" class="autoflip-booting">/);
+  assert.match(html,/autoflip-booting #screen\{visibility:hidden!important\}/);
+  assert.match(html,/id="screen" aria-busy="true"/);
+  assert.match(html,/ui\.js\?v=20261024-1/);
+  assert.match(ui,/classList\.remove\('autoflip-booting'\)/);
 });
