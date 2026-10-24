@@ -99,11 +99,11 @@ test('operator and support pages contain verified public contact details without
   assert.match(operator, /Агаев Вахид Вагиф Оглы/);
   assert.match(operator, /434571836044/);
   assert.match(operator, /плательщик налога на профессиональный доход/);
-  assert.match(operator, /support@autoflip-game\.ru/);
-  assert.match(operator, /privacy@autoflip-game\.ru/);
-  assert.match(support, /support@autoflip-game\.ru/);
+  assert.match(operator, /autoflip\.privacy@yandex\.ru/);
+  assert.match(support, /autoflip\.privacy@yandex\.ru/);
   assert.doesNotMatch(operator, /flowbs00@gmail\.com/);
   assert.doesNotMatch(support, /flowbs00@gmail\.com/);
   assert.doesNotMatch(operator, /\[Не заполнено\]|\[Рабочая электронная почта\]/);
-  assert.match(operator, /до этого публичный запуск запрещён/);
+  assert.match(operator, /Оператор внесён в реестр Роскомнадзора/);
+  assert.match(operator, /Публичная регистрация и магазин остаются закрытыми/);
 });
