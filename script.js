@@ -37,7 +37,9 @@ var marketRestoreRevision={
 };
 var marketColors=['Белый','Серебристый','Чёрный','Синий','Красный','Бежевый','Серый','Зелёный'];
 var marketPhotoPositions=['50% 50%','42% 50%','58% 50%','50% 42%','50% 58%','35% 50%','65% 50%'];
-var marketPhotoCatalogVersion=2;
+// Bump this whenever stored listing URLs must be remapped. Version 3 replaces
+// historical direct Wikimedia URLs with the reviewed local blurred assets.
+var marketPhotoCatalogVersion=3;
 var marketPhotoColorCatalogVersion=1;
 var marketPhotoColors={};
 [
