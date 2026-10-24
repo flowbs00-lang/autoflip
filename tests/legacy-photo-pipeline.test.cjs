@@ -20,6 +20,14 @@ test('legacy commons helper prefers reviewed local assets',()=>{
  }
 });
 
+test('existing saved markets are migrated to reviewed local photos',()=>{
+ for(const file of ['script.js','cloudflare/app/script.js']){
+  const source=fs.readFileSync(path.join(root,file),'utf8');
+  assert.match(source,/marketPhotoCatalogVersion=3/,file+' increments the migration version');
+  assert.match(source,/car\.photoUrl=marketPhotoFor\(car,variant\)/,file+' rewrites saved listing photos');
+ }
+});
+
 test('all generated legacy assets exist in both app trees',()=>{
  const annotations=JSON.parse(fs.readFileSync(path.join(root,'config/legacy-photo-annotations.json'),'utf8'));
  const records=Object.values(annotations.photos);
