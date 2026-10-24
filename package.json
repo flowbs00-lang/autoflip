@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node server/server.js",
     "check:server": "node --check server/server.js && node --check server/db.js && node --check server/routes.js",
+    "photos:verify": "python3 scripts/legacy_photo_pipeline.py verify",
+    "photos:review": "python3 scripts/legacy_photo_pipeline.py review",
+    "photos:build": "python3 scripts/legacy_photo_pipeline.py build",
     "test": "node --test tests/*.test.cjs tests/*.test.mjs"
   },
   "engines": {

@@ -1,0 +1,2722 @@
+{
+  "schemaVersion": 1,
+  "photos": {
+    "1992 Lada 2106.jpg": {
+      "asset": "legacy-001.webp",
+      "sourceSha256": "12f1f389553035559b3e03fa8df4b581a170877d6ccc7264ebfd090a8facd760",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.74,
+            0.5,
+            0.82,
+            0.59
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.74,
+            0.5,
+            0.92,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.62,
+            0.57,
+            0.84,
+            0.7
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada 2107 (VAZ-2107) 01.jpg": {
+      "asset": "legacy-002.webp",
+      "sourceSha256": "5522e29c41267fe7b570cd46e2987c418b3318beb1817c291f17598e588f7862",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.79,
+            0.44,
+            0.9,
+            0.57
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.73,
+            0.59,
+            0.91,
+            0.73
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "VAZ-2109 \"Devyatka\" (4714544714).jpg": {
+      "asset": "legacy-003.webp",
+      "sourceSha256": "4229dc053fa5dedd00b92b1b1952f5682609c285c020058a248a3c026f9ce1e4",
+      "reviewed": true,
+      "regions": [],
+      "noVisible": [
+        "badge",
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada 110-VAZ-2110 (4713570255).jpg": {
+      "asset": "legacy-004.webp",
+      "sourceSha256": "e31177b8c9d6726f828c5f0dc794f490acded7ddb8327a471882c668d94326d1",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.61,
+            0.58,
+            0.71,
+            0.68
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.59,
+            0.68,
+            0.77,
+            0.81
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada priora.jpg": {
+      "asset": "legacy-005.webp",
+      "sourceSha256": "e8a8216cdc1c36c738b030656d21087da5ef0450b56636068de08ae6aae14580",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.85,
+            0.59,
+            0.96,
+            0.71
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.82,
+            0.71,
+            1,
+            0.87
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada Kalina 1.jpg": {
+      "asset": "legacy-006.webp",
+      "sourceSha256": "eddf3e339c6dfbb5c20f70b6d78ec0fd4fa91b16b9c1ea2ed956d2b922145bf1",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.15,
+            0.56,
+            0.25,
+            0.69
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.14,
+            0.45,
+            0.34,
+            0.59
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.44,
+            0.47,
+            0.64,
+            0.63
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.09,
+            0.65,
+            0.28,
+            0.79
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.8,
+            0.64,
+            0.93,
+            0.79
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "20110809 daewoo nexia 01.jpg": {
+      "asset": "legacy-007.webp",
+      "sourceSha256": "81761a299233ed7c3f71677dc93f2f5c9f4376570ad32910619ea6faee3c7cf9",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.1,
+            0.41,
+            0.2,
+            0.56
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.05,
+            0.55,
+            0.19,
+            0.73
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Renault Logan .jpg": {
+      "asset": "legacy-008.webp",
+      "sourceSha256": "8cfac2bb8d80f12e2105eef620bc844faf18efd987f4f2a7ee8fdaa3457015f4",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.19,
+            0.49,
+            0.31,
+            0.69
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.15,
+            0.72,
+            0.32,
+            0.91
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Ford Focus II.jpg": {
+      "asset": "legacy-009.webp",
+      "sourceSha256": "2f35870643783ab8a7f4e47396c9a5712742b85c1bb6ef8b90201caba3ea556d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.27,
+            0.59,
+            0.36,
+            0.69
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.21,
+            0.67,
+            0.39,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2014-2017 Hyundai Solaris Sedan (front).jpg": {
+      "asset": "legacy-010.webp",
+      "sourceSha256": "6f313910639f5e9e55fda92eb542db87c20b4df2da1fe14ff51335a4c3fc641d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.88,
+            0.42,
+            0.98,
+            0.61
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.88,
+            0.55,
+            1,
+            0.73
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Kia Rio (UB) sedan in Babat Pertamina Petrol Station - Bbt. Supat, Musi Banyuasin, SS.jpg": {
+      "asset": "legacy-011.webp",
+      "sourceSha256": "9a90fae696ed92e3ea4b9620b65470ef6a88ddc503c22e409299e173de995a34",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.05,
+            0.4,
+            0.19,
+            0.61
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "LADA Vesta.jpg": {
+      "asset": "legacy-012.webp",
+      "sourceSha256": "bf9e49767b6878b3d3d56812ead71d7e14241aa1d6bc692d6d443100a5d14553",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.03,
+            0.56,
+            0.12,
+            0.7
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.03,
+            0.67,
+            0.14,
+            0.8
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.77,
+            0.52,
+            0.87,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.76,
+            0.64,
+            0.91,
+            0.78
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.22,
+            0.25,
+            0.38,
+            0.39
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.84,
+            0.17,
+            0.93,
+            0.29
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2012 Škoda Rapid (NH) sedan (2012-10-26).jpg": {
+      "asset": "legacy-013.webp",
+      "sourceSha256": "a8b386549c3399e499a9314581bf40a8a3c88b7b26467500439d4f5e42403f9d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.13,
+            0.44,
+            0.22,
+            0.56
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.09,
+            0.65,
+            0.26,
+            0.77
+          ]
+        }
+      ],
+      "noVisible": [
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Vw polo sedan.jpg": {
+      "asset": "legacy-014.webp",
+      "sourceSha256": "52a0fb8ad21ee49004edc9cd0a045a2a3ca7d5ed489571d02a5210add0e97590",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.13,
+            0.55,
+            0.22,
+            0.67
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.06,
+            0.65,
+            0.26,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2015 Toyota Corolla Altis (ZRE172R) 2.0V sedan (2015-12-30).jpg": {
+      "asset": "legacy-015.webp",
+      "sourceSha256": "f79aaa75a59d11a62647592fe5879a21ad4f8fe44453b6a900f22503ae9eeca0",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.23,
+            0.31,
+            0.35,
+            0.44
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.38,
+            0.33,
+            0.62,
+            0.46
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.2,
+            0.45,
+            0.4,
+            0.66
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "BMW 320i F30 (10118122084).jpg": {
+      "asset": "legacy-016.webp",
+      "sourceSha256": "44b40719b5b8a4efa3dde44b344efc3b76a4b7474ee7cf5592bcd5adc5ae85c0",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.1,
+            0.53,
+            0.2,
+            0.66
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.08,
+            0.64,
+            0.25,
+            0.77
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.8,
+            0.08,
+            0.89,
+            0.18
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.78,
+            0.0,
+            0.94,
+            0.08
+          ]
+        }
+      ],
+      "noVisible": [
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2018 Toyota Camry (XV70).jpg": {
+      "asset": "legacy-017.webp",
+      "sourceSha256": "df7e38b8d0f7e79b6c614308ac89df540bc20c1796b1bed1ea22468d4e1cd0c6",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.21,
+            0.44,
+            0.33,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.2,
+            0.54,
+            0.34,
+            0.69
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Kia K5 DL3 grey (1).jpg": {
+      "asset": "legacy-018.webp",
+      "sourceSha256": "f5faf9ed4c66b7ff9363721ce5098eac168a174757be876910463c0415c0613b",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.71,
+            0.34,
+            0.84,
+            0.46
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.78,
+            0.44,
+            0.93,
+            0.56
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.82,
+            0.31,
+            0.91,
+            0.42
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.84,
+            0.43,
+            0.96,
+            0.57
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "BMW X5 F15.jpg": {
+      "asset": "legacy-019.webp",
+      "sourceSha256": "3cb707dfaa858f91826baf86441154c4ec61d8c0863916c517d7cdd751a2308e",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.66,
+            0.41,
+            0.76,
+            0.53
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.63,
+            0.61,
+            0.82,
+            0.76
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mercedes-Benz C180 W205 (16005105286).jpg": {
+      "asset": "legacy-020.webp",
+      "sourceSha256": "a927e3869bfc087d252c2e79e68fced9f4dc9b97eb848805b93ba80bb144ff0f",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.12,
+            0.41,
+            0.23,
+            0.54
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.14,
+            0.49,
+            0.29,
+            0.58
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.09,
+            0.53,
+            0.26,
+            0.66
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Audi A4 B9.jpg": {
+      "asset": "legacy-021.webp",
+      "sourceSha256": "dc86034ec6d699c0cc792655f9cbcae508bac0ed3f94f1996298ea556ed334c8",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.08,
+            0.64,
+            0.19,
+            0.77
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.05,
+            0.73,
+            0.23,
+            0.89
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2018 Volkswagen Tiguan 280 TSI (front).jpg": {
+      "asset": "legacy-022.webp",
+      "sourceSha256": "57e36d75850025297697e8422a0c5fb3a586a7e1924c4b8b9e71bfffe7dc5d28",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.81,
+            0.5,
+            0.92,
+            0.64
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.81,
+            0.66,
+            0.98,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Toyota RAV4 (XA50) IMG 1998.jpg": {
+      "asset": "legacy-023.webp",
+      "sourceSha256": "748ea43f8591ab6b8c8dfdd640814255f63a5dd816c97d3982262665e353826a",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.17,
+            0.49,
+            0.27,
+            0.63
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.14,
+            0.67,
+            0.36,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Geely Monjaro.jpg": {
+      "asset": "legacy-024.webp",
+      "sourceSha256": "3c48ff94d8b13f8cf2f79268e2b397d78bfa1e2d6c9ae4ee070c8ed094a5a1c9",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.25,
+            0.49,
+            0.34,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.2,
+            0.61,
+            0.39,
+            0.72
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Haval F7 IMG001.jpg": {
+      "asset": "legacy-025.webp",
+      "sourceSha256": "159fb58ddae5a1c2f1b90872b577d4cb995040ded21d4355a6723f406d3d5217",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "brand_text",
+          "box": [
+            0.79,
+            0.54,
+            0.92,
+            0.67
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.77,
+            0.66,
+            0.94,
+            0.83
+          ]
+        }
+      ],
+      "noVisible": [
+        "badge"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mercedes-Benz E 200 Sports (W213) front.jpg": {
+      "asset": "legacy-026.webp",
+      "sourceSha256": "f1640f9175dae5a1a62b0cfb59cb63408af5bbb5cb6b13403424a25420cf8a0d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.08,
+            0.54,
+            0.22,
+            0.7
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.16,
+            0.38,
+            0.25,
+            0.49
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.07,
+            0.63,
+            0.24,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Audi Q5 FY Facelift IMG 5684.jpg": {
+      "asset": "legacy-027.webp",
+      "sourceSha256": "f8df311f2c62282b71349c77a89e0e189d10c4687ce0de0c794d809c5bea7ac5",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.19,
+            0.5,
+            0.29,
+            0.62
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "BMW X5 xDrive45e M Sport (G05, 2022) (54537623230).jpg": {
+      "asset": "legacy-028.webp",
+      "sourceSha256": "2d1b80845f325dff2a79ff8be6016a36152c865bb505911e3575c4551d52ec50",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.33,
+            0.44,
+            0.44,
+            0.59
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.2,
+            0.52,
+            0.35,
+            0.63
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.47,
+            0.52,
+            0.63,
+            0.63
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.29,
+            0.55,
+            0.49,
+            0.7
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mercedes-Benz W167 GLE 300d 4MATIC 2022.jpg": {
+      "asset": "legacy-029.webp",
+      "sourceSha256": "506b39f97cc76b62b65f685d3cbc3f47ce71378a7f61a9270f8975aff56a9907",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.19,
+            0.46,
+            0.29,
+            0.6
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.13,
+            0.67,
+            0.32,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2022 Porsche Macan 1X7A6048.jpg": {
+      "asset": "legacy-030.webp",
+      "sourceSha256": "08cc6553fab7deb472e1c610ce17cb147b67948951afef6c6899b0ec3c643238",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "brand_text",
+          "box": [
+            0.0,
+            0.36,
+            0.21,
+            0.46
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.09,
+            0.47,
+            0.2,
+            0.56
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.05,
+            0.54,
+            0.22,
+            0.69
+          ]
+        }
+      ],
+      "noVisible": [
+        "badge"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chevrolet Lacetti front.jpg": {
+      "asset": "legacy-031.webp",
+      "sourceSha256": "71554b35b670c76eaf6fdda6cc90cf061e7cd20bcaa3917677f8498b58114328",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.77,
+            0.51,
+            0.86,
+            0.63
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.75,
+            0.47,
+            0.94,
+            0.57
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.82,
+            0.6,
+            0.94,
+            0.72
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chevrolet Cruze J300 sedan China 2012-06-16.jpg": {
+      "asset": "legacy-032.webp",
+      "sourceSha256": "34782b25bae45e495841bb2555110fbe6bdf796368804a9c2c247b362cc8f769",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.05,
+            0.4,
+            0.16,
+            0.55
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.02,
+            0.52,
+            0.13,
+            0.68
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Opel Astra J.JPG": {
+      "asset": "legacy-033.webp",
+      "sourceSha256": "c3ad6282f7a4135f7ebd4fed6ee54e03d418984a650310a1b072fc9a7964e74b",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.82,
+            0.54,
+            0.9,
+            0.64
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.76,
+            0.67,
+            0.91,
+            0.81
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Nissan Almera.jpg": {
+      "asset": "legacy-034.webp",
+      "sourceSha256": "7e4221b9e25c66fb6f9ca2815d91b23e777da57a35b7068672cac9f44188350d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.44,
+            0.37,
+            0.55,
+            0.5
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.31,
+            0.42,
+            0.47,
+            0.52
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.48,
+            0.47,
+            0.69,
+            0.62
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mitsubishi Lancer X 001.jpg": {
+      "asset": "legacy-035.webp",
+      "sourceSha256": "812bfa3238b3d1aa167ee442a0af441e0096029cc243f161c88cbea0e73459b7",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.18,
+            0.58,
+            0.31,
+            0.73
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.16,
+            0.7,
+            0.33,
+            0.86
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mazda 3 3rd generation sedan.jpg": {
+      "asset": "legacy-036.webp",
+      "sourceSha256": "6330d473f3296ff4fa58500e77d304c1299203817ea67a936e74a5eff51e2a62",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.68,
+            0.44,
+            0.79,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.67,
+            0.52,
+            0.81,
+            0.68
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Skoda Octavia III facelift IMG001.jpg": {
+      "asset": "legacy-037.webp",
+      "sourceSha256": "4c2f81dc9adb0decfc33abf4559b9f93ef860c3c3db3586f99e495227abac7ff",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "brand_text",
+          "box": [
+            0.16,
+            0.43,
+            0.38,
+            0.54
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.28,
+            0.56,
+            0.42,
+            0.66
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.12,
+            0.53,
+            0.31,
+            0.68
+          ]
+        }
+      ],
+      "noVisible": [
+        "badge"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Hyundai Elantra (AD).jpg": {
+      "asset": "legacy-038.webp",
+      "sourceSha256": "7c83fe1da2bcc401357281acc1ff7ffe2dd72e0b57659756a217d199c4e73641",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.86,
+            0.5,
+            0.96,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.89,
+            0.62,
+            1,
+            0.78
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Kia Ceed - Mondial de l'Automobile de Paris 2018 - 001.jpg": {
+      "asset": "legacy-039.webp",
+      "sourceSha256": "abc486ed3af0b06953d0a06330494ccc8f1b20cfad36206d2aaca8c1bf968b5e",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.84,
+            0.5,
+            0.94,
+            0.62
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.81,
+            0.61,
+            0.96,
+            0.72
+          ]
+        }
+      ],
+      "noVisible": [
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Renault Duster.JPG": {
+      "asset": "legacy-040.webp",
+      "sourceSha256": "da034f27965b6156ed0fc0a6552b6bcb538c2cfc26f45069bfe0a7a9c39c4d43",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.54,
+            0.52,
+            0.64,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.53,
+            0.7,
+            0.72,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Nissan Qashqai J11 Enmis.jpeg": {
+      "asset": "legacy-041.webp",
+      "sourceSha256": "a903f07d74f5cdb3c1c61b2c0832e1edcbefd0c30fab3a27cfb16f203776e098",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.01,
+            0.57,
+            0.12,
+            0.71
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mazda6 (GJ) front.jpg": {
+      "asset": "legacy-042.webp",
+      "sourceSha256": "bef89caf254ff4c59588714e34b70e557923880ab670e7b73313cdefbfb69d8a",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.47,
+            0.52,
+            0.57,
+            0.67
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.43,
+            0.68,
+            0.61,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "HONDA ACCORD (CR1-CR3, CR6-CR7, CT1-CT2) China (63).jpg": {
+      "asset": "legacy-043.webp",
+      "sourceSha256": "3f690a3a0141c16910f2c31cbef9dd76aaa812ec64eab295f637be7c86093d9e",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.69,
+            0.47,
+            0.78,
+            0.62
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.67,
+            0.6,
+            0.86,
+            0.76
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Subaru Forester 2018 (SK) CUV Front.jpg": {
+      "asset": "legacy-044.webp",
+      "sourceSha256": "0ce2870bb771f33483390959ecb6e64c4121fcbb820c9e1bc0c8b85689c8c40d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.43,
+            0.47,
+            0.54,
+            0.61
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.41,
+            0.63,
+            0.63,
+            0.79
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chery Tiggo7 Pro 2023 (53631773981).jpg": {
+      "asset": "legacy-045.webp",
+      "sourceSha256": "f1e8b346237e6a6f74392fa8f522bbe46f362ecee0ac0c56c74f52c489f83820",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.04,
+            0.52,
+            0.14,
+            0.65
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Coolray Front.jpg": {
+      "asset": "legacy-046.webp",
+      "sourceSha256": "c9d0e22d333b6327fd10a63b46b343434810577d065d7cecc5b97bc3299bd677",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.75,
+            0.44,
+            0.89,
+            0.6
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.74,
+            0.57,
+            0.91,
+            0.74
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Volvo XC60 II Shishi 01 2022-09-09.jpg": {
+      "asset": "legacy-047.webp",
+      "sourceSha256": "26a614e561b3ff8e70b00c00d0f66cf10eaab729921b4c8758a20197db500136",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.83,
+            0.52,
+            0.95,
+            0.66
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.84,
+            0.63,
+            1,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2018 Lexus RX 350L 3.5L front 3.24.19.jpg": {
+      "asset": "legacy-048.webp",
+      "sourceSha256": "286d4ba9912b540ab06a4c42d83992181c2aade2bbc52ce625ca282e7e15bc77",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.13,
+            0.5,
+            0.23,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.12,
+            0.66,
+            0.3,
+            0.81
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Toyota Land Cruiser Prado 150.jpg": {
+      "asset": "legacy-049.webp",
+      "sourceSha256": "7247a314270111b1b4a2c0f34ca67de593e5bd4600ab3eb4f925694d704d3772",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.82,
+            0.43,
+            0.93,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.79,
+            0.57,
+            0.96,
+            0.73
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "VAZ-2106.jpg": {
+      "asset": "legacy-050.webp",
+      "sourceSha256": "6dbbfa47d732aa9b73eb031fd6dde05056663ace7d12f1e7ddcf174233a13e38",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.41,
+            0.52,
+            0.53,
+            0.66
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.17,
+            0.62,
+            0.35,
+            0.77
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada 2106.jpg": {
+      "asset": "legacy-051.webp",
+      "sourceSha256": "267014e91c42f7508212951ed9ead1ac50bb2ba5be6fac633265cccdf84d586b",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.78,
+            0.59,
+            0.89,
+            0.72
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Vaz 2107.jpg": {
+      "asset": "legacy-052.webp",
+      "sourceSha256": "dd5c5294ce294bef23137e1f6de826ce07dae6d700802454990b950fb0fdc9ce",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.24,
+            0.56,
+            0.34,
+            0.68
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.16,
+            0.67,
+            0.35,
+            0.81
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada VAZ 2107.jpg": {
+      "asset": "legacy-053.webp",
+      "sourceSha256": "2d96453c29932efb0aa70416e400a2184dfc71c791ee8320d5dac80895781c0d",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.17,
+            0.57,
+            0.27,
+            0.69
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.12,
+            0.69,
+            0.32,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Vaz-2107.JPG": {
+      "asset": "legacy-054.webp",
+      "sourceSha256": "8765cde890ee2050e5816e287e21f919c32729832059ec3fbc0d836f19887206",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.15,
+            0.61,
+            0.25,
+            0.73
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.15,
+            0.75,
+            0.37,
+            0.89
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Vaz2107.jpg": {
+      "asset": "legacy-055.webp",
+      "sourceSha256": "bc369cad4dba7830583c60004ac80dcd50386feeed74a93f551f73c25505f4e2",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.69,
+            0.54,
+            0.76,
+            0.63
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.74,
+            0.57,
+            0.83,
+            0.64
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.63,
+            0.66,
+            0.8,
+            0.79
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "LADA-110.jpg": {
+      "asset": "legacy-056.webp",
+      "sourceSha256": "e3988417f129900f7de9eafd49f2634a32e158255d8c60516e2365f0bccb911e",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.16,
+            0.58,
+            0.25,
+            0.7
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.07,
+            0.66,
+            0.24,
+            0.78
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada Priora.jpg": {
+      "asset": "legacy-057.webp",
+      "sourceSha256": "084c152ffd67ebefd426e1d9b0ee33f660aaee339f9404869f97e12144897d79",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.18,
+            0.58,
+            0.29,
+            0.7
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.13,
+            0.69,
+            0.33,
+            0.84
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada Kalina.jpg": {
+      "asset": "legacy-058.webp",
+      "sourceSha256": "413f37d2b40efd9e089c3ac88193eabf1baca4f6db982b7882802c80e7b67a84",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.24,
+            0.44,
+            0.35,
+            0.58
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.22,
+            0.53,
+            0.4,
+            0.65
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.71,
+            0.3,
+            0.85,
+            0.54
+          ]
+        }
+      ],
+      "noVisible": [
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Lada Kalina.JPG": {
+      "asset": "legacy-059.webp",
+      "sourceSha256": "cd9db5defffc54e1d04cd749bf6cd502f945bab8a9af308cc949d705606ea4f1",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.08,
+            0.58,
+            0.18,
+            0.69
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.05,
+            0.68,
+            0.24,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chevrolet Lacetti 170530.jpg": {
+      "asset": "legacy-060.webp",
+      "sourceSha256": "e925822cda52d97bc4e623e186332065c569d9f60570062e72c0e40dcb260368",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.36,
+            0.47,
+            0.45,
+            0.58
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.18,
+            0.42,
+            0.31,
+            0.52
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.43,
+            0.42,
+            0.59,
+            0.52
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.31,
+            0.53,
+            0.49,
+            0.68
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chevrolet Lacetti (7158279272).jpg": {
+      "asset": "legacy-061.webp",
+      "sourceSha256": "64580cd335a0f3e7596580fe03a104a346c91cbb346963070955cb09b48959ae",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.5,
+            0.46,
+            0.63,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.47,
+            0.57,
+            0.71,
+            0.72
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chevrolet Cruze J300 sedan China 2012-06-23.jpg": {
+      "asset": "legacy-062.webp",
+      "sourceSha256": "ab57c1e8d71521b24418c39bf3113a266aea19bb3d892a21ff024d1ecb640635",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.12,
+            0.49,
+            0.21,
+            0.61
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.09,
+            0.61,
+            0.26,
+            0.79
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chevrolet Cruze J300 sedan China 2012-04-14.jpg": {
+      "asset": "legacy-063.webp",
+      "sourceSha256": "eb51e080e49c7385ecc28c6b000a7f5e86ab5c3b9e730f1311ddb2358dccffca",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.04,
+            0.53,
+            0.14,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.01,
+            0.64,
+            0.2,
+            0.82
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Opel Astra J 100805.jpg": {
+      "asset": "legacy-064.webp",
+      "sourceSha256": "974866f19c72453a2ea004cb8b26192d8735e9fc69ee3e292ec465d716d06441",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.73,
+            0.39,
+            0.84,
+            0.52
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.66,
+            0.48,
+            0.81,
+            0.58
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.74,
+            0.53,
+            0.92,
+            0.69
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Opel Astra J in Pendik.jpg": {
+      "asset": "legacy-065.webp",
+      "sourceSha256": "d6d540de904f12a36081e48024dbf1ddc1bd6424dec612e63fd4dac4557d81d3",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.83,
+            0.55,
+            0.94,
+            0.69
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.84,
+            0.68,
+            1,
+            0.85
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "HYUNDAI ELANTRA (AD) China.jpg": {
+      "asset": "legacy-066.webp",
+      "sourceSha256": "ec6d1810fd4cb57ef1c039d8ca2ef6a4e7cdb5d32b8912e42b64718284a873f6",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.43,
+            0.52,
+            0.6,
+            0.69
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.43,
+            0.64,
+            0.63,
+            0.83
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.0,
+            0.3,
+            0.09,
+            0.43
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.0,
+            0.38,
+            0.12,
+            0.52
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.91,
+            0.29,
+            1,
+            0.43
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.88,
+            0.39,
+            1,
+            0.53
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Kia Ceed Monrepos 2018 IMG 0107.jpg": {
+      "asset": "legacy-067.webp",
+      "sourceSha256": "5bdc64a1e696a3b84606ff647d39f390716c8a6d602b23e08b40f1fa09c34458",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.06,
+            0.4,
+            0.16,
+            0.53
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.2,
+            0.49,
+            0.36,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.04,
+            0.52,
+            0.19,
+            0.7
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Kia Ceed, GIMS 2018, Le Grand-Saconnex (1X7A1901).jpg": {
+      "asset": "legacy-068.webp",
+      "sourceSha256": "8bc8a92eb10704755671a7d18c48d928a47b1d18993730e5279e8553fa975c42",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.69,
+            0.55,
+            0.8,
+            0.66
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.67,
+            0.67,
+            0.84,
+            0.78
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.66,
+            0.65,
+            0.85,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Renault-Duster-.jpg": {
+      "asset": "legacy-069.webp",
+      "sourceSha256": "20ca49bbf0e62de28bbde86e6bde1c54d889035bd105bedebe302e2acba53b34",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.08,
+            0.56,
+            0.19,
+            0.7
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text",
+        "plate"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Nissan Qashqai (J11) 190039.jpg": {
+      "asset": "legacy-070.webp",
+      "sourceSha256": "5afb299717cfd7149ea2edb319c87f94439e6d47d9ad930b4aa3a5efa1d708d8",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.2,
+            0.45,
+            0.31,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.19,
+            0.53,
+            0.35,
+            0.68
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "0 Nissan Qashqai (J11) 1.jpg": {
+      "asset": "legacy-071.webp",
+      "sourceSha256": "7065cdf53366fe9f93d2930e85e6ae68e43260a7cb222750624381ad7d122be4",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.07,
+            0.5,
+            0.17,
+            0.64
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.0,
+            0.6,
+            0.13,
+            0.75
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Mazda6 (GJ) in Jambi City, JA.jpg": {
+      "asset": "legacy-072.webp",
+      "sourceSha256": "c652157d7555a3fe238e26304b592d772545ae26d570d346cb1bf11cec63bd1c",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.7,
+            0.43,
+            0.82,
+            0.58
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.69,
+            0.53,
+            0.84,
+            0.68
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "MAZDA6 (GJ) China (37).jpg": {
+      "asset": "legacy-073.webp",
+      "sourceSha256": "5b4987822f8b87ae29553ada7927b537f91633e616d1533736977eb672940c42",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.82,
+            0.27,
+            0.92,
+            0.41
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.64,
+            0.58,
+            0.79,
+            0.7
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.76,
+            0.4,
+            0.96,
+            0.59
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "HONDA ACCORD (CR1-CR3, CR6-CR7, CT1-CT2) China (facelift).jpg": {
+      "asset": "legacy-074.webp",
+      "sourceSha256": "eb6e8c8ecace4498ffda336b0703ee11973743a1192de7cbb116ed06ae755bb5",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.24,
+            0.51,
+            0.35,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.24,
+            0.62,
+            0.45,
+            0.8
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Subaru FORESTER Premium (5BA-SK9) front.jpg": {
+      "asset": "legacy-075.webp",
+      "sourceSha256": "f843c0bd0acab9889ab232ea9aab0b96ba879fa740496da32804028a9b26c94c",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.2,
+            0.42,
+            0.33,
+            0.58
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.2,
+            0.57,
+            0.37,
+            0.73
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.2,
+            0.57,
+            0.38,
+            0.75
+          ]
+        },
+        {
+          "kind": "badge",
+          "box": [
+            0.11,
+            0.24,
+            0.23,
+            0.36
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2023 Chery Tiggo 7 Pro, Pakuwon Mall, West Surabaya.jpg": {
+      "asset": "legacy-076.webp",
+      "sourceSha256": "4053e9b66434d5b82d68cac8f8a48b0223fe453fa9d8f09169ed10783fb32891",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.7,
+            0.38,
+            0.85,
+            0.54
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.71,
+            0.5,
+            0.9,
+            0.67
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.05,
+            0.15,
+            0.16,
+            0.31
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Chery Tiggo 7 Pro каршеринга Ситидрайв в Москве (июнь 2022) (01).jpg": {
+      "asset": "legacy-077.webp",
+      "sourceSha256": "4b2bfbd8819595b7c05249520697f4278aa58f946aa42d8e3e296245c5223d2a",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.83,
+            0.41,
+            0.93,
+            0.55
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.75,
+            0.53,
+            0.91,
+            0.65
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.79,
+            0.62,
+            0.97,
+            0.78
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Geely Coolray 2022 (1).jpg": {
+      "asset": "legacy-078.webp",
+      "sourceSha256": "f947ff6733d49789613445e73eef7300a7dcdf29c149c50c246776b03cf5c8f1",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.62,
+            0.39,
+            0.78,
+            0.56
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.59,
+            0.52,
+            0.81,
+            0.68
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.58,
+            0.52,
+            0.82,
+            0.7
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Geely Coolray 2023.jpg": {
+      "asset": "legacy-079.webp",
+      "sourceSha256": "766f5ea2aa2ce0412897c7e6d1bd2cec8a020350291b022e2f547dbddf7097c7",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.66,
+            0.43,
+            0.78,
+            0.58
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.66,
+            0.62,
+            0.85,
+            0.78
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Volvo XC60 II Shishi 02 2022-09-09.jpg": {
+      "asset": "legacy-080.webp",
+      "sourceSha256": "6d3799aa5396bbab00b7e8f269c53ca90c018c9ad6fd62d6842d576840849160",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "brand_text",
+          "box": [
+            0.08,
+            0.4,
+            0.36,
+            0.56
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.5,
+            0.44,
+            0.63,
+            0.59
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.09,
+            0.46,
+            0.29,
+            0.63
+          ]
+        }
+      ],
+      "noVisible": [
+        "badge"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "Volvo XC60 II Shishi 01 2022-03-11.jpg": {
+      "asset": "legacy-081.webp",
+      "sourceSha256": "52b4482a7c62f841a73b383acb01cde437c3086230a87d8dd383a0543dc3932f",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.73,
+            0.43,
+            0.85,
+            0.6
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.73,
+            0.57,
+            0.94,
+            0.74
+          ]
+        }
+      ],
+      "noVisible": [
+        "brand_text"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    },
+    "2018 Lexus RX 350L 3.5L rear 3.24.19.jpg": {
+      "asset": "legacy-082.webp",
+      "sourceSha256": "59c7769d75d8d11f95c280014143f08147195b69ab70f4dcb4ecc0e94b160bac",
+      "reviewed": true,
+      "regions": [
+        {
+          "kind": "badge",
+          "box": [
+            0.07,
+            0.35,
+            0.19,
+            0.5
+          ]
+        },
+        {
+          "kind": "brand_text",
+          "box": [
+            0.18,
+            0.55,
+            0.33,
+            0.68
+          ]
+        },
+        {
+          "kind": "plate",
+          "box": [
+            0.08,
+            0.44,
+            0.25,
+            0.61
+          ]
+        }
+      ],
+      "noVisible": [],
+      "reviewedAt": "2026-10-23",
+      "reviewMethod": "full-set contact-sheet plus normalized-coordinate review"
+    }
+  }
+}

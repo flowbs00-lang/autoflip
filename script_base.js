@@ -24,7 +24,7 @@ const makes=[
 ['Toyota Land Cruiser Prado','Казань',2018,129000,4250000,4790000,'ходовая',165000]
 ].map((x,i)=>({id:i,name:x[0],city:x[1],year:x[2],km:x[3],price:x[4],market:x[5],risk:x[6],repair:x[7],sale:x[5]}));
 const photos=['photo-1555215695-3004980ad54e','photo-1621007947382-bb3c3994e3fb','photo-1619767886558-efdc259cde1a','photo-1556189250-72ba954cfc2b','photo-1503376780353-7e6692767b70'];
-function commons(file){return 'https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(file)+'?width=900'}
+function commons(file){return (window.AUTOFLIP_LEGACY_PHOTOS&&window.AUTOFLIP_LEGACY_PHOTOS[file])||('https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(file)+'?width=900')}
 const exactPhotos={
 'ВАЗ 2106':commons('1992 Lada 2106.jpg'),
 'ВАЗ 2107':commons('Lada 2107 (VAZ-2107) 01.jpg'),
