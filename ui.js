@@ -74,6 +74,12 @@
   // Update only the clock nodes; never replace a form while the player is typing.
   (typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(function(){document.querySelectorAll('[data-os-time]').forEach(el=>el.textContent=time());document.querySelectorAll('[data-os-date]').forEach(el=>el.textContent=date());},1000);
   apply();home();
+  const revealModernInterface=function(){
+    const root=document.documentElement,screen=document.getElementById('screen');
+    if(root&&root.classList)root.classList.remove('autoflip-booting');
+    if(screen&&screen.removeAttribute)screen.removeAttribute('aria-busy');
+  };
+  if(typeof setTimeout==='function')setTimeout(revealModernInterface,120);else revealModernInterface();
 })();
 
 // Inform players about the strictly necessary session cookie and local game data.
