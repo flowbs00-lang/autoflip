@@ -15,7 +15,9 @@ function game(saved){
 test('plates launcher opens with the real lexical game state, buys, sells and reloads',async()=>{
  const g=game();assert.equal(g.c.state,undefined);
  g.c.openPlatesApp();assert.equal(g.run('state.plates.items.length'),0);
- const balance=g.run('state.money');g.c.openPlateCase('standard');
+ g.c.AUTOFLIP_CLOUD_CLIENT_ID='catalog-plate-test';g.c.AUTOFLIP_CLOUD_FLUSH=async()=>true;
+ g.c.fetch=async(_url,options)=>{const body=JSON.parse(options.body);return{ok:true,json:async()=>body.phase==='commit'?{ok:true,committed:true}:{ok:true,openingId:body.openingId,caseId:'standard',price:3000,plate:{id:'plate-'+body.openingId,openingId:body.openingId,number:'А123ВС',region:{code:'77',city:'Москва',country:'Россия'},rarity:'ordinary',value:1000,createdAt:Date.now(),attachedCarId:null,premium:false,tradable:true}}};};
+ const balance=g.run('state.money');await g.c.openPlateCase('standard');
  assert.equal(g.run('state.money'),balance-3000);assert.equal(g.run('state.plates.items.length'),1);
  const restored=game(g.saved());restored.c.openPlatesApp();
  assert.equal(restored.run('state.plates.items.length'),1);
