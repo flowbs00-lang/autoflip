@@ -48,9 +48,12 @@ test("economy confirmation is prepared, committed and never committed twice", as
   try {
     const save = {
       money: 100000,
+      day: 2,
+      cars: [{ _garageId: "car-sale-1", name: "ВАЗ 2106", market: 125000, sale: 125000, buy: 90000 }],
+      activeListings: [{ id: "listing-sale-1", carKey: "car-sale-1", ask: 125000, status: "active" }],
       meetings: [{
         id: "test-123", status: "scheduled", kind: "buyer_sale", price: 125000,
-        sourceId: "buyer-1", carName: "ВАЗ 2106", city: "Киров"
+        sourceId: "buyer-1", carName: "ВАЗ 2106", city: "Киров", payload: { listingId: "listing-sale-1" }
       }]
     };
     await f.db.prepare("INSERT INTO game_saves (user_id, revision, data_json, updated_at) VALUES (?, 1, ?, ?)")
@@ -111,6 +114,37 @@ test("economy confirmation rejects a client-modified amount and source", async (
     assert.equal((await response.json()).error, "invalid_transaction_source");
     const rows = await f.db.prepare("SELECT COUNT(*) AS count FROM economy_transactions WHERE user_id = ?").bind("user-api").first();
     assert.equal(rows.count, 0);
+  } finally {
+    await f.close();
+  }
+});
+
+test("server fixes the purchased car, condition, extra costs and result across retries", async () => {
+  const f = await fixture();
+  try {
+    const listing = { id: 9, listingId: "listing-authority-9", name: "Toyota Corolla", city: "Пермь", year: 2017, km: 99000, body: "Седан", price: 240000, market: 300000, sale: 300000 };
+    const save = {
+      money: 500000, garageLevel: 1, cars: [], marketListings: [listing],
+      meetings: [{ id: "authority-9", status: "scheduled", kind: "seller_purchase", price: 220000, sourceId: listing.listingId, carName: listing.name, city: listing.city, payload: { car: listing } }]
+    };
+    await f.db.prepare("INSERT INTO game_saves (user_id, revision, data_json, updated_at) VALUES (?, 1, ?, ?)")
+      .bind("user-api", JSON.stringify(save), Date.now()).run();
+    const request = { transactionId: "meeting:authority-9", type: "purchase", amount: 220000, clientId: "device-authority-9", car: listing.name, city: listing.city, sourceId: listing.listingId, gameDay: 1, phase: "prepare" };
+    let response = await confirmEconomy({ request: f.request("https://autoflip-game.ru/api/economy/confirm", request), env: { DB: f.db } });
+    const first = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(first.result.moneyDelta, -220000);
+    assert.equal(first.result.addCar.name, listing.name);
+    assert.equal(first.result.addCar.buy, 220000);
+    assert.equal(first.result.addCar.sourceListingId, listing.listingId);
+    assert.equal(first.result.addCar.acquisitionConditionFinalized, true);
+
+    response = await confirmEconomy({ request: f.request("https://autoflip-game.ru/api/economy/confirm", request), env: { DB: f.db } });
+    const repeated = await response.json();
+    assert.deepEqual(repeated.result, first.result);
+
+    response = await confirmEconomy({ request: f.request("https://autoflip-game.ru/api/economy/confirm", { ...request, amount: 245000 }), env: { DB: f.db } });
+    assert.equal(response.status, 409);
   } finally {
     await f.close();
   }
