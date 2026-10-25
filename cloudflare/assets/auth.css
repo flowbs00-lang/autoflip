@@ -74,9 +74,9 @@ h1 {
 .features li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; color: #dce7f8; font-size: 14px; line-height: 1.45; }
 .features li::before { content: "✓"; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #082318; background: var(--success); font-size: 13px; font-weight: 900; }
 
-.closed-note { display: grid; gap: 5px; margin: 0 0 20px; padding: 14px 15px; border: 1px solid #3d5275; border-radius: 15px; background: #142039; }
-.closed-note b { color: #dce9ff; font-size: 13px; }
-.closed-note span { color: #9fb0c9; font-size: 12px; line-height: 1.45; }
+.beta-note { display: grid; gap: 5px; margin: 0 0 20px; padding: 14px 15px; border: 1px solid #2e6b60; border-radius: 15px; background: #102c2a; }
+.beta-note b { color: #caffef; font-size: 13px; }
+.beta-note span { color: #a9c9c1; font-size: 12px; line-height: 1.45; }
 .consents { display: grid; gap: 11px; margin: 0 0 20px; padding: 0; border: 0; }
 .consents legend { margin-bottom: 11px; color: #dce7f8; font-size: 13px; font-weight: 800; }
 .consents label { display: grid; grid-template-columns: 22px 1fr; gap: 9px; align-items: start; color: #c7d3e5; font-size: 12px; line-height: 1.5; cursor: pointer; }
