@@ -1,4 +1,5 @@
 import { RequestError } from "./http.js";
+import { plateIntegritySignature } from "./plate-cases.js";
 
 export const SAVE_INTEGRITY_VERSION = 1;
 
@@ -43,6 +44,10 @@ function uniqueMap(items, keyFor, code) {
 
 function appliedIds(state) {
   return new Set(list(state?.economy?.appliedIds).filter((id) => typeof id === "string" && id.length > 0 && id.length <= 160));
+}
+
+function plateOpeningIds(state) {
+  return new Set(list(state?.plates?.appliedOpeningIds).filter((id) => typeof id === "string" && id.length > 0 && id.length <= 120));
 }
 
 function immutablePlateSignature(plate) {
@@ -120,6 +125,22 @@ async function preparedTransactions(db, userId, ids, clientId) {
   });
 }
 
+async function preparedPlateOpenings(db, userId, ids, clientId) {
+  if (!ids.length) return [];
+  const placeholders = ids.map(() => "?").join(", ");
+  const rows = await db.prepare(`SELECT opening_id, case_id, price, plate_json, client_id, status
+    FROM plate_case_openings
+    WHERE user_id = ? AND opening_id IN (${placeholders})`).bind(userId, ...ids).all();
+  const byId = new Map((rows.results || []).map((row) => [row.opening_id, row]));
+  return ids.map((id) => {
+    const row = byId.get(id);
+    if (!row || row.status !== "prepared" || row.client_id !== clientId) {
+      throw new RequestError("unconfirmed_plate_opening", 409);
+    }
+    return { ...row, price: Number(row.price), plate: JSON.parse(row.plate_json) };
+  });
+}
+
 function validateTransactionEffects(current, next, transactions, addedCars, removedCars, removedPlates) {
   const addedNames = new Set(addedCars.map((car) => String(car?.name || "")));
   const removedNames = new Set(removedCars.map((car) => String(car?.name || "")));
@@ -174,6 +195,9 @@ export async function validateSaveIntegrity(db, userId, current, next) {
   const currentApplied = appliedIds(current);
   const newTransactionIds = [...appliedIds(next)].filter((id) => !currentApplied.has(id));
   const transactions = await preparedTransactions(db, userId, newTransactionIds, clientId);
+  const currentPlateOpenings = plateOpeningIds(current);
+  const newPlateOpeningIds = [...plateOpeningIds(next)].filter((id) => !currentPlateOpenings.has(id));
+  const plateOpenings = await preparedPlateOpenings(db, userId, newPlateOpeningIds, clientId);
 
   const currentCars = uniqueMap(list(current.cars), carKey, "duplicate_car_id");
   const nextCars = uniqueMap(list(next.cars), carKey, "duplicate_car_id");
@@ -198,7 +222,15 @@ export async function validateSaveIntegrity(db, userId, current, next) {
 
   const currentPlates = uniqueMap(list(current.plates?.items), plateKey, "duplicate_plate_id");
   const nextPlates = uniqueMap(list(next.plates?.items), plateKey, "duplicate_plate_id");
+  const addedPlates = [...nextPlates].filter(([key]) => !currentPlates.has(key)).map(([, plate]) => plate);
   const removedPlates = [...currentPlates].filter(([key]) => !nextPlates.has(key)).map(([, plate]) => plate);
+  if (addedPlates.length !== plateOpenings.length) throw new RequestError("unconfirmed_plate_addition", 409);
+  for (const opening of plateOpenings) {
+    const added = addedPlates.find((plate) => plate?.openingId === opening.opening_id);
+    if (!added || plateIntegritySignature(added) !== plateIntegritySignature(opening.plate)) {
+      throw new RequestError("plate_opening_result_modified", 409);
+    }
+  }
   for (const [id, plate] of nextPlates) {
     const existing = currentPlates.get(id);
     if (existing) {
@@ -214,9 +246,10 @@ export async function validateSaveIntegrity(db, userId, current, next) {
   const positiveAllowance = transactions
     .filter((item) => POSITIVE_TYPES.has(item.type))
     .reduce((sum, item) => sum + Math.max(0, item.amount), 0);
+  const caseCost = plateOpenings.reduce((sum, item) => sum + Math.max(0, item.price), 0);
   const moneyIncrease = Number(next.money) - Number(current.money);
-  if (moneyIncrease > positiveAllowance) throw new RequestError("unconfirmed_money_increase", 409);
+  if (moneyIncrease > positiveAllowance - caseCost) throw new RequestError("unconfirmed_money_increase", 409);
 
   validateTransactionEffects(current, next, transactions, addedCars, removedCars, removedPlates);
-  return { sealed: true, transactions: transactions.length };
+  return { sealed: true, transactions: transactions.length, plateOpenings: plateOpenings.length };
 }
