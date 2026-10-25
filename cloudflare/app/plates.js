@@ -29,6 +29,10 @@
     if(typeof state==='undefined'||!state)throw new Error('Игровое состояние ещё не загружено');
     if(!state.plates||typeof state.plates!=='object')state.plates={items:[],nextId:1};
     if(!Array.isArray(state.plates.items))state.plates.items=[];
+    if(!Array.isArray(state.plates.appliedOpeningIds))state.plates.appliedOpeningIds=[];
+    if(!Array.isArray(state.plates.pendingOpeningIds))state.plates.pendingOpeningIds=[];
+    state.plates.appliedOpeningIds=state.plates.appliedOpeningIds.slice(-300);
+    state.plates.pendingOpeningIds=state.plates.pendingOpeningIds.slice(-10);
     const allowed=new Set(REGIONS.map(function(r){return r[0];}));
     state.plates.items.forEach(function(p,index){if(!p)return;if(p.number)p.number=String(p.number).toUpperCase();if(!p.region||!allowed.has(String(p.region.code))){let r=REGIONS[index%REGIONS.length];p.region={code:r[0],city:r[1],country:r[2]};}});
     if(!Number.isFinite(Number(state.plates.nextId)))state.plates.nextId=1;
@@ -73,6 +77,20 @@
   }
   function escape(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   let activeTab='cases',filter='all',sort='new',opening=null,lastCase='standard',notice='';
+  let openingBusy=false,reconcilingOpenings=false;
+  async function openingRequest(body){
+    const response=await fetch('/api/plates/open',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(body)}),payload=await response.json().catch(function(){return {};});
+    if(!response.ok||!payload.ok)throw new Error(payload.error||'Сервер не подтвердил открытие кейса');return payload;
+  }
+  async function reconcilePlateOpenings(){
+    if(reconcilingOpenings)return false;const collection=ensure(),ids=collection.pendingOpeningIds.slice();if(!ids.length)return true;reconcilingOpenings=true;
+    try{
+      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){const saved=await window.AUTOFLIP_CLOUD_FLUSH();if(saved===false)return false;}
+      for(const id of ids){await openingRequest({openingId:id,phase:'commit',clientId:window.AUTOFLIP_CLOUD_CLIENT_ID||'device-legacy-client'});collection.pendingOpeningIds=collection.pendingOpeningIds.filter(function(value){return value!==id;});}
+      persistPlates();return true;
+    }catch(_){return false;}finally{reconcilingOpenings=false;}
+  }
+  window.AUTOFLIP_RECONCILE_PLATE_OPENINGS=reconcilePlateOpenings;
   function plateFace(p,large){
     const countries={Россия:['RUS','🇷🇺'],Беларусь:['BY','🇧🇾'],Казахстан:['KZ','🇰🇿'],Узбекистан:['UZ','🇺🇿'],Кыргызстан:['KG','🇰🇬'],Таджикистан:['TJ','🇹🇯'],Армения:['AM','🇦🇲'],Азербайджан:['AZ','🇦🇿'],Молдова:['MD','🇲🇩']},country=countries[p.region.country]||['',''];
     const normalized=String(p.number).toUpperCase(),match=normalized.match(/^([^\d])(\d{3})([^\d]{2})$/),number=match?'<em>'+escape(match[1])+'</em><strong>'+match[2]+'</strong><em>'+escape(match[3])+'</em>':'<strong>'+escape(normalized)+'</strong>';
@@ -117,16 +135,25 @@
   window.favoritePlate=function(id){const p=ensure().items.find(x=>x.id===id);if(!p)return;p.favorite=!p.favorite;persistPlates();renderPlates();};
   window.confirmPlateSale=function(id){const p=ensure().items.find(x=>x.id===id);if(!p||p.tradable===false)return;opening={type:'sale',id:id};renderPlates();};
   window.cancelPlateSale=function(){opening=null;renderPlates();};
-  window.openPlateCase=function(id){
+  window.openPlateCase=async function(id){
     const c=CASES.filter(function(x){return x.id===id;})[0];if(!c)return;
+    if(openingBusy)return;
     if(currentGarageLevel()<c.level){alert('Этот кейс откроется на '+c.level+' уровне. Выполняй задания в разделе «Гараж → Развитие».');return;}
     if(Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}
-    clearOpeningTimers();
-    const rarity=rollPlateRarity(c.weights),p=makePlate(rarity),collection=ensure();lastCase=c.id;
-    state.money=Number(state.money||0)-c.price;collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;persistPlates();
-    if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','✦','Открыт '+c.name+': '+RARITIES[rarity].title+' номер.','plates','plate-'+p.id);
-    opening={type:'case',caseId:c.id,plateId:p.id};openingScreen(c,p,'opening');
-    if(typeof setTimeout==='function')opening.timer=setTimeout(function(){startPlateRoll();},1200);else revealPlateOpening();
+    openingBusy=true;let applied=false;
+    try{
+      persistPlates();if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){const synced=await window.AUTOFLIP_CLOUD_FLUSH();if(synced===false)throw new Error('сохранение ещё не синхронизировано');}
+      const openingId='case:'+c.id+':'+Date.now().toString(36)+':'+Math.random().toString(36).slice(2,10),clientId=window.AUTOFLIP_CLOUD_CLIENT_ID||'device-legacy-client';
+      const result=await openingRequest({openingId:openingId,caseId:c.id,phase:'prepare',clientId:clientId});
+      if(result.committed){location.reload();return;}
+      const p=result.plate,collection=ensure();clearOpeningTimers();lastCase=c.id;
+      state.money=Number(state.money||0)-Number(result.price);collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;collection.appliedOpeningIds.push(openingId);collection.pendingOpeningIds.push(openingId);applied=true;persistPlates();
+      if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','✦','Открыт '+c.name+': '+RARITIES[p.rarity].title+' номер.','plates','plate-'+p.id);
+      opening={type:'case',caseId:c.id,plateId:p.id};openingScreen(c,p,'opening');
+      if(typeof setTimeout==='function')opening.timer=setTimeout(function(){startPlateRoll();},1200);else revealPlateOpening();
+      await reconcilePlateOpenings();
+    }catch(error){if(!applied)alert('Кейс не открыт: '+error.message+'. Деньги не списаны.');}
+    finally{openingBusy=false;}
   };
   window.startPlateRoll=function(){if(!opening||opening.type!=='case')return;const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'rolling');if(typeof setTimeout==='function')opening.revealTimer=setTimeout(function(){revealPlateOpening();},3600);else revealPlateOpening();};
   window.revealPlateOpening=function(){if(!opening||opening.type!=='case')return;clearOpeningTimers();const c=CASES.find(x=>x.id===opening.caseId),p=ensure().items.find(x=>x.id===opening.plateId);if(!c||!p)return plates();openingScreen(c,p,'reveal');};
@@ -138,4 +165,5 @@
     activeTab='collection';renderPlates();
   };
   window.plateSystem={rarities:RARITIES,cases:CASES,regions:REGIONS,makePlate:makePlate,rollPlateRarity:rollPlateRarity,currentGarageLevel:currentGarageLevel};
+  if(typeof setTimeout==='function'&&ensure().pendingOpeningIds.length)setTimeout(function(){reconcilePlateOpenings();},4000);
 })();
