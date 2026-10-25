@@ -33,9 +33,11 @@ test('financial settlements require an authenticated idempotent server confirmat
   assert.match(economy,/AUTOFLIP_CLOUD_FLUSH/);
   assert.match(statsApi,/status = 'committed'/);
   assert.match(economy,/busy\.has\(id\)/);
-  for(const type of ['reward','loan_issue','loan_repay','plate_sale'])assert.match(confirmApi,new RegExp('"'+type+'"'));
+  for(const type of ['reward','loan_issue','loan_repay','plate_sale','transport','diagnostic','repair','car_cost'])assert.match(confirmApi,new RegExp('"'+type+'"'));
   assert.match(confirmApi,/validateReward/);assert.match(confirmApi,/validateLoanIssue/);assert.match(confirmApi,/validateLoanRepayment/);assert.match(confirmApi,/validatePlateSale/);
   assert.match(economy,/protectedAction\(id,'loan_issue'/);assert.match(economy,/protectedAction\(id,'loan_repay'/);assert.match(economy,/protectedAction\(id,'plate_sale'/);assert.match(economy,/protectedAction\(id,'reward'/);
+  assert.match(economy,/protectedAction\(id,'transport'/);assert.match(economy,/protectedAction\(tx,'diagnostic'/);assert.match(economy,/protectedAction\(id,'repair'/);assert.match(economy,/protectedAction\(id,'car_cost'/);
+  assert.match(confirmApi,/meetingResult/);assert.match(confirmApi,/auxiliaryResult/);assert.match(confirmApi,/result_json/);
   assert.match(economy,/reward:achievement:/);assert.match(confirmApi,/first_deal/);
 });
 
