@@ -21,6 +21,12 @@ test('cloud save API is authenticated, same-origin and size bounded', () => {
   assert.match(source, /looksLikeFreshSave/);
   assert.match(source, /hasMeaningfulProgress/);
   assert.match(source, /save_regression_rejected/);
+  assert.match(source, /validateSaveIntegrity/);
+  assert.match(read('functions\/_lib\/save-integrity.js'), /unconfirmed_money_increase/);
+  assert.match(read('functions\/_lib\/save-integrity.js'), /unconfirmed_car_addition/);
+  assert.match(read('functions\/_lib\/save-integrity.js'), /plate_value_modified/);
+  assert.match(read('functions\/_lib\/save-integrity.js'), /unconfirmed_reputation_increase/);
+  assert.match(read('functions\/_lib\/save-integrity.js'), /car_value_modified/);
 });
 
 test('large saves are compressed in the browser before upload', () => {
@@ -45,6 +51,7 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /AUTOFLIP_CHECKPOINT/);
   assert.match(client, /AUTOFLIP_RECORD_OPERATION/);
   assert.match(client, /SAVE_VERSION = 2/);
+  assert.match(client, /\.\.\.currentMeta/);
   assert.match(client, /addEventListener\('online'/);
   assert.match(client, /visibilitychange/);
   assert.match(client, /pagehide/);
