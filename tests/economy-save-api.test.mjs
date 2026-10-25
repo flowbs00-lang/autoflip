@@ -116,6 +116,50 @@ test("economy confirmation rejects a client-modified amount and source", async (
   }
 });
 
+test("rewards, loans and plate sales are checked against the cloud save", async () => {
+  const f = await fixture();
+  try {
+    async function storeSave(state, revision) {
+      await f.db.prepare(`INSERT INTO game_saves (user_id, revision, data_json, updated_at) VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET revision = excluded.revision, data_json = excluded.data_json, updated_at = excluded.updated_at`)
+        .bind("user-api", revision, JSON.stringify(state), Date.now()).run();
+    }
+    async function prepare(body) {
+      return confirmEconomy({ request: f.request("https://autoflip-game.ru/api/economy/confirm", {
+        clientId: "device-protected-1", gameDay: 2, phase: "prepare", city: "Киров", car: "", ...body
+      }), env: { DB: f.db } });
+    }
+
+    await storeSave({ economy: { goals: { daily: { day: 2, claimed: false, targets: [{ need: 1, value: 1 }] } } } }, 1);
+    let response = await prepare({ transactionId: "reward:daily:2", type: "reward", amount: 125000, sourceId: "goal:daily:2" });
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).error, "invalid_transaction_amount");
+    response = await prepare({ transactionId: "reward:daily:2", type: "reward", amount: 25000, sourceId: "goal:daily:2" });
+    assert.equal(response.status, 200);
+
+    await storeSave({ money: 100000, loan: 0, gameClock: { total: 500 }, bankCustomer: { rating: 50, onTimePayments: 0, totalIssued: 0, nextLoanAt: 0 } }, 2);
+    response = await prepare({ transactionId: "loan:issue:25000:1", type: "loan_issue", amount: 500000, sourceId: "offer:500000:1" });
+    assert.equal(response.status, 409);
+    response = await prepare({ transactionId: "loan:issue:25000:1", type: "loan_issue", amount: 25000, sourceId: "offer:25000:1" });
+    assert.equal(response.status, 200);
+
+    await storeSave({ money: 60000, loan: 55000, bankCredit: { active: true, startedAt: 450 } }, 3);
+    response = await prepare({ transactionId: "loan:repay:450", type: "loan_repay", amount: 55000, sourceId: "credit:450" });
+    assert.equal(response.status, 200);
+
+    await storeSave({ plates: { items: [{ id: "plate-one", number: "А111МР", value: 500000, region: { city: "Киров" } }] } }, 4);
+    response = await prepare({ transactionId: "plate:sale:plate-one", type: "plate_sale", amount: 500000, sourceId: "plate-one", car: "А111МР" });
+    assert.equal(response.status, 200);
+
+    await storeSave({ plates: { items: [{ id: "premium-one", number: "А777АА", value: 500000, premium: true, tradable: false }] } }, 5);
+    response = await prepare({ transactionId: "plate:sale:premium-one", type: "plate_sale", amount: 500000, sourceId: "premium-one", car: "А777АА" });
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).error, "plate_not_tradable");
+  } finally {
+    await f.close();
+  }
+});
+
 test("server backup restore advances revision and preserves the replaced save", async () => {
   const f = await fixture();
   try {
