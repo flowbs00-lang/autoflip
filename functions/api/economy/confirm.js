@@ -32,6 +32,71 @@ function cleanText(value, max = 100) {
   return String(value || "").trim().slice(0, max);
 }
 
+function base64ToBytes(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+async function parseStoredSave(row) {
+  if (!row?.data_json) return null;
+  try {
+    if (!row.data_json.startsWith("gz:")) return JSON.parse(row.data_json);
+    const decompressed = new Blob([base64ToBytes(row.data_json.slice(3))])
+      .stream()
+      .pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(decompressed).text());
+  } catch {
+    throw new RequestError("save_corrupted", 500);
+  }
+}
+
+function meetingType(kind) {
+  if (kind === "seller_purchase") return "purchase";
+  if (kind === "seller_trade" || kind === "buyer_trade") return "exchange";
+  if (kind === "buyer_sale") return "sale";
+  return "";
+}
+
+async function validatePreparedTransaction(db, userId, transaction) {
+  const row = await db.prepare("SELECT data_json FROM game_saves WHERE user_id = ? LIMIT 1")
+    .bind(userId).first();
+  const state = await parseStoredSave(row);
+  if (!state) throw new RequestError("save_required_for_transaction", 409);
+
+  if (transaction.transactionId.startsWith("meeting:")) {
+    const meetingId = transaction.transactionId.slice("meeting:".length);
+    const meeting = Array.isArray(state.meetings)
+      ? state.meetings.find((item) => item?.id === meetingId)
+      : null;
+    if (!meeting || meeting.status !== "scheduled") throw new RequestError("invalid_transaction_source", 409);
+    if (meetingType(meeting.kind) !== transaction.type) throw new RequestError("invalid_transaction_type", 409);
+    if (Math.round(Number(meeting.price || 0)) !== transaction.amount) throw new RequestError("invalid_transaction_amount", 409);
+    if (cleanText(meeting.sourceId, 120) !== transaction.payload.sourceId) throw new RequestError("invalid_transaction_source", 409);
+    if (cleanText(meeting.carName, 100) !== transaction.payload.car) throw new RequestError("invalid_transaction_car", 409);
+    if (cleanText(meeting.city, 80) !== transaction.payload.city) throw new RequestError("invalid_transaction_city", 409);
+    return;
+  }
+
+  if (transaction.transactionId.startsWith("service:")) {
+    const jobId = transaction.transactionId.slice("service:".length);
+    const job = state.garageProgress?.activeServiceJob;
+    if (!job || job.id !== jobId || job.claimed) throw new RequestError("invalid_transaction_source", 409);
+    const maximumPayout = Math.round(Number(job.payout || 0));
+    const minimumPayout = Math.max(0, Math.round(Number(job.parts || 0)));
+    if (transaction.amount < minimumPayout || transaction.amount > maximumPayout) {
+      throw new RequestError("invalid_transaction_amount", 409);
+    }
+    if (cleanText(job.car, 100) !== transaction.payload.car || transaction.payload.sourceId !== jobId) {
+      throw new RequestError("invalid_transaction_source", 409);
+    }
+    return;
+  }
+
+  throw new RequestError("invalid_transaction_source", 409);
+}
+
 export async function onRequestPost(context) {
   try {
     if (!assertSameOrigin(context.request)) throw new RequestError("origin_rejected", 403);
@@ -61,17 +126,22 @@ export async function onRequestPost(context) {
     };
     const payloadJson = JSON.stringify(payload);
     const now = Date.now();
-    if (phase === "prepare") {
-      await context.env.DB.prepare(`INSERT OR IGNORE INTO economy_transactions
-        (user_id, transaction_id, type, amount, payload_json, created_at, status, client_id, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, 'prepared', ?, ?)`)
-        .bind(session.id, transactionId, type, amount, payloadJson, now, clientId, now).run();
-    }
-
     let existing = await context.env.DB.prepare(`SELECT transaction_id, type, amount, payload_json, created_at,
         status, client_id, updated_at
       FROM economy_transactions WHERE user_id = ? AND transaction_id = ? LIMIT 1`)
       .bind(session.id, transactionId).first();
+
+    if (!existing && phase === "prepare") {
+      await validatePreparedTransaction(context.env.DB, session.id, { transactionId, type, amount, payload });
+      await context.env.DB.prepare(`INSERT OR IGNORE INTO economy_transactions
+        (user_id, transaction_id, type, amount, payload_json, created_at, status, client_id, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'prepared', ?, ?)`)
+        .bind(session.id, transactionId, type, amount, payloadJson, now, clientId, now).run();
+      existing = await context.env.DB.prepare(`SELECT transaction_id, type, amount, payload_json, created_at,
+          status, client_id, updated_at
+        FROM economy_transactions WHERE user_id = ? AND transaction_id = ? LIMIT 1`)
+        .bind(session.id, transactionId).first();
+    }
     if (!existing) throw new RequestError("transaction_not_recorded", 503);
     if (existing.type !== type || Number(existing.amount) !== amount || existing.payload_json !== payloadJson) {
       throw new RequestError("transaction_conflict", 409);
