@@ -215,7 +215,7 @@
     var localUpdatedAt = Number(localStorage.getItem(DIRTY_AT_KEY) || Date.now());
     var currentMeta = stateValue._saveMeta && typeof stateValue._saveMeta === 'object' ? stateValue._saveMeta : {};
     saveSequence = Math.max(saveSequence, Number(currentMeta.sequence || 0)) + 1;
-    stateValue._saveMeta = { version: SAVE_VERSION, clientId: clientId, sequence: saveSequence, updatedAt: localUpdatedAt };
+    stateValue._saveMeta = { ...currentMeta, version: SAVE_VERSION, clientId: clientId, sequence: saveSequence, updatedAt: localUpdatedAt };
     if (!Array.isArray(stateValue.operationLog)) stateValue.operationLog = [];
     stateValue.operationLog = stateValue.operationLog.slice(0, 60);
     var uploadedRaw = JSON.stringify(stateValue);
