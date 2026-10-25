@@ -66,6 +66,22 @@
     }catch(error){return false;}finally{reconcilingCommits=false;}
   }
   window.AUTOFLIP_RECONCILE_ECONOMY=reconcileCommits;
+  async function protectedAction(id,type,amount,payload,apply,done){
+    var e=ensure();if(e.appliedIds.indexOf(id)>=0){await reconcileCommits();if(done)done();return true;}if(busy.has(id))return false;busy.add(id);
+    try{
+      persistEconomy();
+      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){var synced=await window.AUTOFLIP_CLOUD_FLUSH();if(synced===false)throw new Error('сохранение ещё не синхронизировано');}
+      var prepared=await window.AUTOFLIP_CONFIRM_ECONOMY(id,type,amount,payload,'prepare');if(prepared.committed){location.reload();return false;}
+      apply();e=ensure();if(e.appliedIds.indexOf(id)<0)e.appliedIds.push(id);queueCommit(id,type,amount,payload);persistEconomy();await reconcileCommits();if(done)done();return true;
+    }catch(error){alert('Операция не проведена: '+error.message+'. Деньги и предметы не изменились.');return false;}finally{busy.delete(id);}
+  }
+  var rawBankIssue=window.bankIssueLoan;
+  if(typeof rawBankIssue==='function')window.bankIssueLoan=async function(amount){var c=state.bankCustomer||{},value=Math.round(Number(amount||0)),source='offer:'+value+':'+(Number(c.totalIssued||0)+1),id='loan:issue:'+value+':'+(Number(c.totalIssued||0)+1);return protectedAction(id,'loan_issue',value,{sourceId:source,city:state.city},function(){rawBankIssue(value);});};
+  var rawBankPay=window.bankPayLoan;
+  if(typeof rawBankPay==='function')window.bankPayLoan=async function(){var credit=state.bankCredit||{},amount=Math.round(Number(state.loan||0)),source='credit:'+Math.floor(Number(credit.startedAt||0)),id='loan:repay:'+Math.floor(Number(credit.startedAt||0));return protectedAction(id,'loan_repay',amount,{sourceId:source,city:state.city},function(){rawBankPay();});};
+  if(window.payLoan===rawBankPay)window.payLoan=window.bankPayLoan;
+  var rawSellPlate=window.sellPlate;
+  if(typeof rawSellPlate==='function')window.sellPlate=async function(plateId){var items=state.plates&&state.plates.items||[],plate=items.find(function(x){return x&&x.id===plateId;});if(!plate||plate.tradable===false||plate.premium===true)return rawSellPlate(plateId);var amount=Math.round(Number(plate.value||0)),id='plate:sale:'+plateId,payload={sourceId:plateId,car:plate.number,city:plate.region&&plate.region.city||state.city};return protectedAction(id,'plate_sale',amount,payload,function(){rawSellPlate(plateId);});};
   function meetingAmount(m){return Math.max(0,Math.round(Number(m&&m.price||0)));}
   function acquired(before){return (state.cars||[]).find(function(c){return before.indexOf(c)<0;});}
   function afterDeal(m,before,beforeMoney,id,type,amount,payload){
@@ -111,6 +127,8 @@
   window.economyClaimGoal=function(kind){var e=ensure(),g=kind==='weekly'?e.goals.weekly:e.goals.daily;if(g.claimed||!g.targets.every(function(t){return t.value>=t.need;}))return;var reward=kind==='weekly'?125000:25000;g.claimed=true;state.money=Number(state.money||0)+reward;state.rep=Number(state.rep||0)+(kind==='weekly'?5:1);record('reward',reward,{text:kind==='weekly'?'Недельный контракт':'Ежедневные задания'});persistEconomy();economyHub();};
   function clanMembership(){return window.AUTOFLIP_COMMUNITY_ME&&window.AUTOFLIP_COMMUNITY_ME.clan||state.communityMembership||null;}
   window.economyClaimClanGoal=function(){var e=ensure(),g=e.goals.clan;if(!clanMembership()||g.claimed||g.value<g.need)return;g.claimed=true;state.money=Number(state.money||0)+50000;state.rep=Number(state.rep||0)+2;record('reward',50000,{text:'Задание клана'});persistEconomy();openClanTask();};
+  var rawClaimGoal=window.economyClaimGoal;window.economyClaimGoal=async function(kind){var e=ensure(),g=kind==='weekly'?e.goals.weekly:e.goals.daily,period=kind==='weekly'?g.week:g.day,amount=kind==='weekly'?125000:25000,id='reward:'+kind+':'+period;return protectedAction(id,'reward',amount,{sourceId:'goal:'+kind+':'+period,city:state.city},function(){rawClaimGoal(kind);});};
+  var rawClaimClan=window.economyClaimClanGoal;window.economyClaimClanGoal=async function(){var g=ensure().goals.clan,period=g.week,id='reward:clan:'+period;return protectedAction(id,'reward',50000,{sourceId:'goal:clan:'+period,city:state.city},function(){rawClaimClan();});};
   function achievementData(){var e=ensure(),serviceJobs=Number(state.garageProgress&&state.garageProgress.stats&&state.garageProgress.stats.serviceJobs||0);return [{id:'first_deal',name:'Первая сделка',done:Number(state.deals||0)>=1},{id:'dealer_10',name:'Перекупщик',done:Number(state.deals||0)>=10},{id:'collector_10',name:'Коллекционер',done:e.collection.length>=10},{id:'service_10',name:'Мастер сервиса',done:serviceJobs>=10},{id:'rep_100',name:'Надёжное имя',done:Number(state.rep||0)>=100}];}
   function updateAchievements(){var e=ensure();achievementData().forEach(function(a){if(a.done&&e.achievements.indexOf(a.id)<0){e.achievements.push(a.id);state.money=Number(state.money||0)+15000;notify('Достижения','🏆','Открыто: '+a.name+'. Награда 15 000 ₽.','economy','achievement-'+a.id);}});}
   function goalBlock(title,g,kind,reward){var ready=g.targets.every(function(t){return t.value>=t.need;});return '<section class="economy-goals"><div><small>'+title+'</small><b>'+money(reward)+' + репутация</b></div>'+g.targets.map(function(t){var p=Math.min(100,Number(t.value||0)/t.need*100);return '<article><span>✓</span><div><b>'+esc(t.label)+'</b><i><em style="width:'+p+'%"></em></i><small>'+Math.min(t.value,t.need).toLocaleString('ru-RU')+' / '+t.need.toLocaleString('ru-RU')+'</small></div></article>';}).join('')+'<button '+(!ready||g.claimed?'disabled':'')+' onclick="economyClaimGoal(\''+kind+'\')">'+(g.claimed?'Награда получена':ready?'Забрать награду':'Выполняется')+'</button></section>';}
