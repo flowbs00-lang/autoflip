@@ -11,6 +11,7 @@ import { onRequest as accountDelete } from "../functions/api/account/delete.js";
 import { onRequest as accountExport } from "../functions/api/account/export.js";
 import { onRequest as economyConfirm } from "../functions/api/economy/confirm.js";
 import { onRequest as economyStats } from "../functions/api/economy/stats.js";
+import { onRequest as platesOpen } from "../functions/api/plates/open.js";
 import { onRequest as storeCatalog } from "../functions/api/store/catalog.js";
 import { onRequest as storeCreatePayment } from "../functions/api/store/create-payment.js";
 import { onRequest as storeOrders } from "../functions/api/store/orders.js";
@@ -32,6 +33,7 @@ export const apiRoutes = new Map([
   ["/api/account/export", accountExport],
   ["/api/economy/confirm", economyConfirm],
   ["/api/economy/stats", economyStats],
+  ["/api/plates/open", platesOpen],
   ["/api/store/catalog", storeCatalog],
   ["/api/store/create-payment", storeCreatePayment],
   ["/api/store/orders", storeOrders],
