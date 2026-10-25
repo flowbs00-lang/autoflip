@@ -77,6 +77,32 @@ function immutableCarSignature(car) {
   });
 }
 
+function authoritativeCarSignature(car) {
+  return JSON.stringify({
+    name: car?.name, year: Number(car?.year || 0), km: Number(car?.km || 0), body: car?.body || "", city: car?.city || "",
+    buy: Number(car?.buy || 0), price: Number(car?.price || 0), basePrice: Number(car?.basePrice || 0), market: Number(car?.market || 0),
+    sale: Number(car?.sale || 0), listingId: String(car?.listingId || ""), sourceListingId: String(car?.sourceListingId || ""),
+    healthyMarket: Number(car?.healthyMarket || 0), flipCondition: car?.flipCondition || null, flipConditionVersion: Number(car?.flipConditionVersion || 0),
+    repaired: car?.repaired === true, repairSpent: Number(car?.repairSpent || 0), acquisitionConditionFinalized: car?.acquisitionConditionFinalized === true,
+    unplannedCost: Number(car?.unplannedCost || 0), needsTow: car?.needsTow === true
+  });
+}
+
+function protectedCarStateSignature(car) {
+  return JSON.stringify({
+    market: Number(car?.market || 0), sale: Number(car?.sale || 0), healthyMarket: Number(car?.healthyMarket || 0),
+    repaired: car?.repaired === true, repairSpent: Number(car?.repairSpent || 0),
+    condition: car?.flipCondition ? { healthy: car.flipCondition.healthy === true, name: car.flipCondition.name, loss: Number(car.flipCondition.loss || 0), cost: Number(car.flipCondition.cost || 0), repaired: car.flipCondition.repaired === true } : null,
+    unplannedCost: Number(car?.unplannedCost || 0), needsTow: car?.needsTow === true
+  });
+}
+
+function mechanicalCarStateSignature(car) {
+  const parsed = JSON.parse(protectedCarStateSignature(car));
+  delete parsed.unplannedCost; delete parsed.needsTow;
+  return JSON.stringify(parsed);
+}
+
 function reputationAllowance(transactions) {
   return transactions.reduce((sum, item) => {
     if (item.type === "sale" || item.type === "exchange") return sum + 25;
@@ -112,7 +138,7 @@ function validateShape(state, strict) {
 async function preparedTransactions(db, userId, ids, clientId) {
   if (!ids.length) return [];
   const placeholders = ids.map(() => "?").join(", ");
-  const rows = await db.prepare(`SELECT transaction_id, type, amount, payload_json, client_id, status
+  const rows = await db.prepare(`SELECT transaction_id, type, amount, payload_json, result_json, client_id, status
     FROM economy_transactions
     WHERE user_id = ? AND transaction_id IN (${placeholders})`).bind(userId, ...ids).all();
   const byId = new Map((rows.results || []).map((row) => [row.transaction_id, row]));
@@ -121,7 +147,7 @@ async function preparedTransactions(db, userId, ids, clientId) {
     if (!row || row.status !== "prepared" || row.client_id !== clientId) {
       throw new RequestError("unconfirmed_save_operation", 409);
     }
-    return { ...row, amount: Math.round(Number(row.amount || 0)), payload: JSON.parse(row.payload_json || "{}") };
+    return { ...row, amount: Math.round(Number(row.amount || 0)), payload: JSON.parse(row.payload_json || "{}"), result: JSON.parse(row.result_json || "{}") };
   });
 }
 
@@ -180,6 +206,14 @@ function validateTransactionEffects(current, next, transactions, addedCars, remo
     if (transaction.type === "plate_sale" && !removedPlates.some((plate) => plate.id === sourceId)) {
       throw new RequestError("plate_sale_not_applied", 409);
     }
+    if (transaction.type === "diagnostic") {
+      const meetingId = String(transaction.result?.meetingId || ""), before = currentMeetings.get(meetingId), after = nextMeetings.get(meetingId), expected = transaction.result?.diagnostic || {}, actual = after?.diagnostic || {};
+      const fields = ["mode", "cost", "found", "healthyConfirmed", "faultName", "faultCost", "loss"];
+      if (!before || !after || fields.some((field) => JSON.stringify(actual[field] ?? null) !== JSON.stringify(expected[field] ?? null))
+        || Number(actual.totalSpent || 0) !== Number(before.diagnostic?.totalSpent || 0) + Number(transaction.amount || 0)) {
+        throw new RequestError("diagnostic_result_modified", 409);
+      }
+    }
   }
 }
 
@@ -207,10 +241,34 @@ export async function validateSaveIntegrity(db, userId, current, next) {
   const allowedRemovals = transactions.filter((item) => CAR_REMOVE_TYPES.has(item.type)).length;
   if (addedCars.length > allowedAdds) throw new RequestError("unconfirmed_car_addition", 409);
   if (removedCars.length > allowedRemovals) throw new RequestError("unconfirmed_car_removal", 409);
+  const expectedAdded = transactions.filter((item) => item.result?.addCar).map((item) => item.result.addCar);
+  const expectedRemoved = new Set(transactions.map((item) => String(item.result?.removeCarKey || "")).filter(Boolean));
+  const authoritativeCarTransactions = transactions.filter((item) => CAR_ADD_TYPES.has(item.type) || CAR_REMOVE_TYPES.has(item.type));
+  const allAuthoritative = authoritativeCarTransactions.every((item) => item.result?.addCar || item.result?.removeCarKey);
+  if (allAuthoritative && (addedCars.length !== expectedAdded.length || removedCars.some((car) => !expectedRemoved.has(carKey(car))))) {
+    throw new RequestError("car_transaction_result_modified", 409);
+  }
+  for (const expected of allAuthoritative ? expectedAdded : []) {
+    const added = addedCars.find((car) => String(car?.sourceListingId || car?.listingId || "") === String(expected.sourceListingId || expected.listingId || ""));
+    if (!added || authoritativeCarSignature(added) !== authoritativeCarSignature(expected)) {
+      throw new RequestError("car_transaction_result_modified", 409);
+    }
+  }
+  const repairs = new Map(transactions.filter((item) => item.type === "repair").map((item) => [String(item.result?.carKey || ""), item.result]));
+  const clearedCosts = new Set(transactions.filter((item) => item.type === "car_cost").map((item) => String(item.result?.carKey || "")));
   for (const [key, car] of nextCars) {
     const existing = currentCars.get(key);
-    if (existing && immutableCarSignature(existing) !== immutableCarSignature(car)) {
-      throw new RequestError("car_value_modified", 409);
+    if (existing && (immutableCarSignature(existing) !== immutableCarSignature(car) || protectedCarStateSignature(existing) !== protectedCarStateSignature(car))) {
+      const repair = repairs.get(key);
+      const costCleared = clearedCosts.has(key) && Number(car.unplannedCost || 0) === 0 && !car.needsTow
+        && immutableCarSignature(existing) === immutableCarSignature(car) && mechanicalCarStateSignature(existing) === mechanicalCarStateSignature(car);
+      const repaired = repair && car.repaired === true && car.flipCondition?.repaired === true && Number(car.repairSpent || 0) === Number(existing.repairSpent || 0) + Number(repair.cost || 0)
+        && Number(car.market || 0) === Number(repair.healthyMarket || 0) && Number(car.sale || 0) === Number(repair.healthyMarket || 0)
+        && car.flipCondition?.name === existing.flipCondition?.name && Number(car.flipCondition?.loss || 0) === Number(existing.flipCondition?.loss || 0)
+        && Number(car.flipCondition?.cost || 0) === Number(existing.flipCondition?.cost || 0);
+      if (!repaired && !costCleared) {
+        throw new RequestError("car_value_modified", 409);
+      }
     }
   }
 
@@ -243,12 +301,24 @@ export async function validateSaveIntegrity(db, userId, current, next) {
     }
   }
 
-  const positiveAllowance = transactions
-    .filter((item) => POSITIVE_TYPES.has(item.type))
-    .reduce((sum, item) => sum + Math.max(0, item.amount), 0);
+  const signedAllowance = transactions.reduce((sum, item) => {
+    if (Number.isFinite(Number(item.result?.moneyDelta))) return sum + Number(item.result.moneyDelta);
+    if (item.type === "loan_repay") return sum - Math.max(0, item.amount);
+    if (POSITIVE_TYPES.has(item.type)) return sum + Math.max(0, item.amount);
+    return sum;
+  }, 0);
   const caseCost = plateOpenings.reduce((sum, item) => sum + Math.max(0, item.price), 0);
   const moneyIncrease = Number(next.money) - Number(current.money);
-  if (moneyIncrease > positiveAllowance - caseCost) throw new RequestError("unconfirmed_money_increase", 409);
+  if (moneyIncrease > signedAllowance - caseCost) throw new RequestError("unconfirmed_money_increase", 409);
+
+  if (String(next.city || "") !== String(current.city || "")) {
+    const trip = transactions.find((item) => item.type === "transport" && item.result?.from === current.city && item.result?.to === next.city);
+    if (!trip) throw new RequestError("unconfirmed_city_change", 409);
+  }
+  for (const transaction of transactions.filter((item) => item.type === "car_cost")) {
+    const car = nextCars.get(String(transaction.result?.carKey || ""));
+    if (!car || Number(car.unplannedCost || 0) !== 0 || car.needsTow) throw new RequestError("car_cost_not_applied", 409);
+  }
 
   validateTransactionEffects(current, next, transactions, addedCars, removedCars, removedPlates);
   return { sealed: true, transactions: transactions.length, plateOpenings: plateOpenings.length };
