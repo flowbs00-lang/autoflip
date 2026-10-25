@@ -9,6 +9,7 @@ import {
 import { getSession } from "../_lib/session.js";
 import { syncCommunityProfile } from "../_lib/community.js";
 import { applyPaidOrdersToState } from "../_lib/store.js";
+import { validateSaveIntegrity } from "../_lib/save-integrity.js";
 
 const MAX_SAVE_BYTES = 6_000_000;
 const MAX_STORED_BYTES = 1_900_000;
@@ -234,8 +235,14 @@ export async function onRequestPut(context) {
       }, 409);
     }
 
-    const purchasesApplied = await applyPaidOrdersToState(context.env.DB, session.id, state);
-    let storedSave = purchasesApplied ? null : uploaded?.stored;
+    // Normalize both sides with grants that are authoritative on the server. This
+    // keeps a legitimate paid order from looking like a client-created balance.
+    if (currentState) await applyPaidOrdersToState(context.env.DB, session.id, currentState);
+    await applyPaidOrdersToState(context.env.DB, session.id, state);
+    await validateSaveIntegrity(context.env.DB, session.id, currentState, state);
+    // Integrity metadata is added server-side, so always encode the validated
+    // object instead of reusing the byte-for-byte uploaded compressed payload.
+    let storedSave = null;
     if (!storedSave) {
       const dataJson = JSON.stringify(state);
       if (new TextEncoder().encode(dataJson).byteLength > MAX_SAVE_BYTES - 1024) {
