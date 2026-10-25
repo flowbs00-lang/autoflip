@@ -1,8 +1,10 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../../_lib/http.js";
 import { getSession } from "../../_lib/session.js";
+import { auxiliaryResult, meetingResult } from "../../_lib/economy-rules.js";
 
 const TYPES = new Set([
-  "purchase", "sale", "exchange", "service", "reward", "loan_issue", "loan_repay", "plate_sale"
+  "purchase", "sale", "exchange", "service", "reward", "loan_issue", "loan_repay", "plate_sale",
+  "transport", "diagnostic", "repair", "car_cost"
 ]);
 const PHASES = new Set(["prepare", "commit"]);
 const LEASE_MS = 5 * 60_000;
@@ -20,6 +22,7 @@ async function ensureSchema(db) {
       created_at INTEGER NOT NULL,
       status TEXT NOT NULL DEFAULT 'prepared',
       client_id TEXT NOT NULL DEFAULT '',
+      result_json TEXT NOT NULL DEFAULT '{}',
       updated_at INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (user_id, transaction_id),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -27,6 +30,7 @@ async function ensureSchema(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS economy_transactions_user_created_idx ON economy_transactions(user_id, created_at DESC)"),
     db.prepare("CREATE INDEX IF NOT EXISTS economy_transactions_user_type_idx ON economy_transactions(user_id, type, created_at DESC)")
   ]);
+  try { await db.prepare("ALTER TABLE economy_transactions ADD COLUMN result_json TEXT NOT NULL DEFAULT '{}'").run(); } catch {}
   schemaReady = true;
 }
 
@@ -139,10 +143,13 @@ async function validatePreparedTransaction(db, userId, transaction) {
   const state = await parseStoredSave(row);
   if (!state) throw new RequestError("save_required_for_transaction", 409);
 
-  if (transaction.type === "reward") return validateReward(state, transaction);
-  if (transaction.type === "loan_issue") return validateLoanIssue(state, transaction);
-  if (transaction.type === "loan_repay") return validateLoanRepayment(state, transaction);
-  if (transaction.type === "plate_sale") return validatePlateSale(state, transaction);
+  if (transaction.type === "reward") { validateReward(state, transaction); return {}; }
+  if (transaction.type === "loan_issue") { validateLoanIssue(state, transaction); return {}; }
+  if (transaction.type === "loan_repay") { validateLoanRepayment(state, transaction); return {}; }
+  if (transaction.type === "plate_sale") { validatePlateSale(state, transaction); return {}; }
+  if (["transport", "diagnostic", "repair", "car_cost"].includes(transaction.type)) {
+    return auxiliaryResult(state, transaction);
+  }
 
   if (transaction.transactionId.startsWith("meeting:")) {
     const meetingId = transaction.transactionId.slice("meeting:".length);
@@ -155,7 +162,7 @@ async function validatePreparedTransaction(db, userId, transaction) {
     if (cleanText(meeting.sourceId, 120) !== transaction.payload.sourceId) throw new RequestError("invalid_transaction_source", 409);
     if (cleanText(meeting.carName, 100) !== transaction.payload.car) throw new RequestError("invalid_transaction_car", 409);
     if (cleanText(meeting.city, 80) !== transaction.payload.city) throw new RequestError("invalid_transaction_city", 409);
-    return;
+    return meetingResult(state, meeting, transaction);
   }
 
   if (transaction.transactionId.startsWith("service:")) {
@@ -170,7 +177,7 @@ async function validatePreparedTransaction(db, userId, transaction) {
     if (cleanText(job.car, 100) !== transaction.payload.car || transaction.payload.sourceId !== jobId) {
       throw new RequestError("invalid_transaction_source", 409);
     }
-    return;
+    return {};
   }
 
   throw new RequestError("invalid_transaction_source", 409);
@@ -206,18 +213,18 @@ export async function onRequestPost(context) {
     const payloadJson = JSON.stringify(payload);
     const now = Date.now();
     let existing = await context.env.DB.prepare(`SELECT transaction_id, type, amount, payload_json, created_at,
-        status, client_id, updated_at
+        status, client_id, result_json, updated_at
       FROM economy_transactions WHERE user_id = ? AND transaction_id = ? LIMIT 1`)
       .bind(session.id, transactionId).first();
 
     if (!existing && phase === "prepare") {
-      await validatePreparedTransaction(context.env.DB, session.id, { transactionId, type, amount, payload });
+      const result = await validatePreparedTransaction(context.env.DB, session.id, { transactionId, type, amount, payload });
       await context.env.DB.prepare(`INSERT OR IGNORE INTO economy_transactions
-        (user_id, transaction_id, type, amount, payload_json, created_at, status, client_id, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, 'prepared', ?, ?)`)
-        .bind(session.id, transactionId, type, amount, payloadJson, now, clientId, now).run();
+        (user_id, transaction_id, type, amount, payload_json, created_at, status, client_id, result_json, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'prepared', ?, ?, ?)`)
+        .bind(session.id, transactionId, type, amount, payloadJson, now, clientId, JSON.stringify(result || {}), now).run();
       existing = await context.env.DB.prepare(`SELECT transaction_id, type, amount, payload_json, created_at,
-          status, client_id, updated_at
+          status, client_id, result_json, updated_at
         FROM economy_transactions WHERE user_id = ? AND transaction_id = ? LIMIT 1`)
         .bind(session.id, transactionId).first();
     }
@@ -233,7 +240,8 @@ export async function onRequestPost(context) {
         committed: true,
         duplicate: true,
         transactionId,
-        serverTime: Number(existing.updated_at || existing.created_at || now)
+        serverTime: Number(existing.updated_at || existing.created_at || now),
+        result: JSON.parse(existing.result_json || "{}")
       });
     }
 
@@ -255,7 +263,8 @@ export async function onRequestPost(context) {
         committed: false,
         duplicate: Number(existing.created_at || 0) !== now,
         transactionId,
-        serverTime: Number(existing.updated_at || existing.created_at || now)
+        serverTime: Number(existing.updated_at || existing.created_at || now),
+        result: JSON.parse(existing.result_json || "{}")
       });
     }
 
@@ -272,7 +281,8 @@ export async function onRequestPost(context) {
       committed: true,
       duplicate: false,
       transactionId,
-      serverTime: now
+      serverTime: now,
+      result: JSON.parse(existing.result_json || "{}")
     });
   } catch (error) {
     return handleError(error);
