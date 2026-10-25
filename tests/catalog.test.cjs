@@ -102,9 +102,10 @@ test('exchange generator works with the actual loaded catalogue and purchase rem
  const g=game();const trade=g.c.makeExchangeCar({name:'Example',market:1200000});assert.ok(trade&&trade.photoUrl);assert.ok(g.c.marketTemplates.some(c=>c.name===trade.name));
  const id=g.run('makes[0].listingId');g.c.removePurchasedListing(id);const before=g.run('makes.length');g.c.removePurchasedListing(id);assert.equal(g.run('makes.length'),before);assert.equal(g.run('makes.some(c=>c.listingId==='+JSON.stringify(id)+')'),false);
 });
-test('each added model keeps a forced fault through acquisition and paid repair',()=>{
- const g=game();g.run('state.money=1000000000');
- for(const t of g.c.carCatalogExtra){const car=g.c.createMarketListing(t);g.c.Math.random=()=>.9;g.c.ensureMarketFlipCondition(car);g.c.Math.random=()=>.2;const issue=g.c.applyMarketConditionToOwned(car);assert.equal(issue.healthy,false,t.name);g.run('state.cars=[]');g.c.testCar=car;g.run('state.car=testCar;state.cars=[testCar]');const balance=g.run('state.money');g.c.repairDetectedIssue();assert.equal(g.run('state.money'),balance-issue.cost);assert.equal(car.market,car.healthyMarket);g.c.garage();assert.equal(car.flipCondition.repaired,true);}
+test('each added model keeps a forced fault through acquisition and paid repair',async()=>{
+ const g=game();g.run('state.money=1000000000');g.c.AUTOFLIP_CLOUD_FLUSH=async()=>true;g.c.AUTOFLIP_CLOUD_CLIENT_ID='catalog-repair-test';
+ g.c.fetch=async(_url,options)=>{const body=JSON.parse(options.body);return{ok:true,json:async()=>({ok:true,committed:body.phase==='commit',result:{moneyDelta:-body.amount,carKey:body.sourceId,cost:body.amount,healthyMarket:Number(g.c.testCar&&g.c.testCar.healthyMarket||0)}})};};
+ for(const t of g.c.carCatalogExtra){const car=g.c.createMarketListing(t);g.c.Math.random=()=>.9;g.c.ensureMarketFlipCondition(car);g.c.Math.random=()=>.2;const issue=g.c.applyMarketConditionToOwned(car);assert.equal(issue.healthy,false,t.name);g.run('state.cars=[]');g.c.testCar=car;g.run('state.car=testCar;state.cars=[testCar]');const balance=g.run('state.money');await g.c.repairDetectedIssue();assert.equal(g.run('state.money'),balance-issue.cost);assert.equal(car.market,car.healthyMarket);g.c.garage();assert.equal(car.flipCondition.repaired,true);}
 });
 
 
