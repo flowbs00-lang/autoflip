@@ -6,10 +6,11 @@ const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'../plates.js'),'utf8');
 const worldSource=fs.readFileSync(path.join(__dirname,'../world-data.js'),'utf8');
 function game(saved,animate=false){
-  let html='',savedState,scheduled,delays=[];
-  const c={state:saved||{money:1000000,garageLevel:1},window:null,Math:Object.create(Math),Date,render:v=>html=v,head:t=>'<h1>'+t+'</h1>',money:n=>Number(n).toLocaleString('ru-RU')+' ₽',persist:()=>{savedState=JSON.parse(JSON.stringify(c.state));},alert:()=>{},pushPhoneNotification:()=>{}};
+  let html='',savedState,scheduled,delays=[];const openings=new Map();
+  const c={state:saved||{money:1000000,garageLevel:1},window:null,Math:Object.create(Math),Date,render:v=>html=v,head:t=>'<h1>'+t+'</h1>',money:n=>Number(n).toLocaleString('ru-RU')+' ₽',persist:()=>{savedState=JSON.parse(JSON.stringify(c.state));},alert:()=>{},pushPhoneNotification:()=>{},AUTOFLIP_CLOUD_CLIENT_ID:'device-plates-test',AUTOFLIP_CLOUD_FLUSH:async()=>true,location:{reload:()=>{}}};
   if(animate){c.setTimeout=(fn,ms)=>{scheduled=fn;delays.push(ms);return 1;};c.clearTimeout=()=>{scheduled=null;};}
   c.Math.random=Math.random;c.window=c;vm.createContext(c);vm.runInContext(worldSource,c);vm.runInContext(source,c);
+  c.fetch=async function(url,options){const body=JSON.parse(options.body);if(body.phase==='commit'){const saved=openings.get(body.openingId);return{ok:true,json:async()=>({...saved,ok:true,committed:true})};}const box=c.plateSystem.cases.find(x=>x.id===body.caseId),rarity=c.plateSystem.rollPlateRarity(box.weights,.01),plate=c.plateSystem.makePlate(rarity);plate.id='plate-'+body.openingId;plate.openingId=body.openingId;plate.premium=false;plate.tradable=true;const result={openingId:body.openingId,caseId:body.caseId,price:box.price,plate:plate,committed:false};openings.set(body.openingId,result);return{ok:true,json:async()=>({ok:true,...result})};};
   return {c,html:()=>html,saved:()=>savedState,delays:()=>delays.slice(),runTimer:()=>scheduled&&scheduled()};
 }
 test('all case probability tables total 100%',()=>{
@@ -34,9 +35,9 @@ test('every generated plate has uppercase letters, a CIS city and the correct sa
 test('priceless series is strictly one of the five 777 plates',()=>{
   const g=game(),allowed=new Set(g.c.plateSystem.regions.map(x=>x[0]));for(let i=0;i<30;i++){const p=g.c.plateSystem.makePlate('priceless');assert.match(p.number,/^(А777МР|Е777КХ|А777АА|В777ОР|О777ОО)$/);assert.ok(allowed.has(p.region.code));}
 });
-test('locked cases cannot take money and the starter case stores a plate',()=>{
+test('locked cases cannot take money and the starter case stores a plate',async()=>{
   const g=game();g.c.plates();assert.match(g.html(),/Гараж → Развитие/);assert.doesNotMatch(g.html(),/следующем обновлении/);const before=g.c.state.money;g.c.openPlateCase('rare');assert.equal(g.c.state.money,before);assert.equal(g.c.state.plates.items.length,0);
-  g.c.openPlateCase('standard');assert.equal(g.c.state.money,before-3000);assert.equal(g.c.state.plates.items.length,1);assert.match(g.html(),/НОВЫЙ НОМЕР/);
+  await g.c.openPlateCase('standard');assert.equal(g.c.state.money,before-3000);assert.equal(g.c.state.plates.items.length,1);assert.match(g.html(),/НОВЫЙ НОМЕР/);
 });
 test('selling returns exactly the configured rarity value',()=>{
   const g=game({money:0,garageLevel:1,plates:{items:[{id:'one',number:'А111МР',region:{code:'77',city:'Москва',country:'Россия'},rarity:'secret',value:500000}],nextId:2}});g.c.sellPlate('one');assert.equal(g.c.state.money,500000);assert.equal(g.c.state.plates.items.length,0);
@@ -47,8 +48,8 @@ test('premium store plate is visible but cannot be sold',()=>{
   g.c.confirmPlateSale('premium');assert.doesNotMatch(g.html(),/ПРОДАЖА НОМЕРА/);
   g.c.sellPlate('premium');assert.equal(g.c.state.money,0);assert.equal(g.c.state.plates.items.length,1);
 });
-test('case opening renders animation before revealing the won plate',()=>{
-  const g=game(undefined,true);g.c.plates();g.c.openPlateCase('standard');assert.match(g.html(),/ОТКРЫВАЕМ/);assert.match(g.html(),/Пропустить анимацию/);
+test('case opening renders animation before revealing the won plate',async()=>{
+  const g=game(undefined,true);g.c.plates();await g.c.openPlateCase('standard');assert.match(g.html(),/ОТКРЫВАЕМ/);assert.match(g.html(),/Пропустить анимацию/);
   const won=g.c.state.plates.items[0],full=won.number+' '+won.region.code;
   g.runTimer();assert.match(g.html(),/Лента замедляется/);assert.match(g.html(),/number-reel/);assert.ok(g.html().includes(full));assert.deepEqual(g.delays(),[1200,3600]);
   g.runTimer();assert.match(g.html(),/НОВЫЙ НОМЕР/);assert.match(g.html(),/plate-main/);assert.match(g.html(),/plate-region/);g.c.finishPlateOpening();assert.match(g.html(),/Коллекция/);
