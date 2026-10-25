@@ -104,6 +104,8 @@ test('operator and support pages contain verified public contact details without
   assert.doesNotMatch(operator, /flowbs00@gmail\.com/);
   assert.doesNotMatch(support, /flowbs00@gmail\.com/);
   assert.doesNotMatch(operator, /\[Не заполнено\]|\[Рабочая электронная почта\]/);
-  assert.match(operator, /Уведомление Роскомнадзора направлено/);
+  assert.match(operator, /Оператор внесён в реестр Роскомнадзора/);
+  assert.match(operator, /43-26-021058/);
+  assert.match(operator, /приказ № 147 от 23\.10\.2026/);
   assert.match(operator, /Публичная регистрация и магазин остаются закрытыми/);
 });
