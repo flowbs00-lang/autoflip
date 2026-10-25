@@ -46,6 +46,15 @@ async function fixture() {
 test("economy confirmation is prepared, committed and never committed twice", async () => {
   const f = await fixture();
   try {
+    const save = {
+      money: 100000,
+      meetings: [{
+        id: "test-123", status: "scheduled", kind: "buyer_sale", price: 125000,
+        sourceId: "buyer-1", carName: "ВАЗ 2106", city: "Киров"
+      }]
+    };
+    await f.db.prepare("INSERT INTO game_saves (user_id, revision, data_json, updated_at) VALUES (?, 1, ?, ?)")
+      .bind("user-api", JSON.stringify(save), Date.now()).run();
     const transaction = {
       transactionId: "meeting:test-123",
       type: "sale",
@@ -72,6 +81,36 @@ test("economy confirmation is prepared, committed and never committed twice", as
     assert.equal(payload.duplicate, true);
     const rows = await f.db.prepare("SELECT COUNT(*) AS count FROM economy_transactions WHERE user_id = ?").bind("user-api").first();
     assert.equal(rows.count, 1);
+  } finally {
+    await f.close();
+  }
+});
+
+test("economy confirmation rejects a client-modified amount and source", async () => {
+  const f = await fixture();
+  try {
+    const save = {
+      meetings: [{
+        id: "secure-456", status: "scheduled", kind: "seller_purchase", price: 240000,
+        sourceId: "listing-9", carName: "Toyota Corolla", city: "Пермь"
+      }]
+    };
+    await f.db.prepare("INSERT INTO game_saves (user_id, revision, data_json, updated_at) VALUES (?, 1, ?, ?)")
+      .bind("user-api", JSON.stringify(save), Date.now()).run();
+    const base = {
+      transactionId: "meeting:secure-456", type: "purchase", amount: 9_999_999,
+      clientId: "device-test-456", car: "Toyota Corolla", city: "Пермь",
+      sourceId: "listing-9", gameDay: 1, phase: "prepare"
+    };
+    let response = await confirmEconomy({ request: f.request("https://autoflip-game.ru/api/economy/confirm", base), env: { DB: f.db } });
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).error, "invalid_transaction_amount");
+
+    response = await confirmEconomy({ request: f.request("https://autoflip-game.ru/api/economy/confirm", { ...base, amount: 240000, sourceId: "listing-fake" }), env: { DB: f.db } });
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).error, "invalid_transaction_source");
+    const rows = await f.db.prepare("SELECT COUNT(*) AS count FROM economy_transactions WHERE user_id = ?").bind("user-api").first();
+    assert.equal(rows.count, 0);
   } finally {
     await f.close();
   }
