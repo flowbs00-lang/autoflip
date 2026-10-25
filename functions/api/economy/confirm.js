@@ -1,7 +1,9 @@
 import { assertSameOrigin, handleError, json, methodNotAllowed, readJson, RequestError } from "../../_lib/http.js";
 import { getSession } from "../../_lib/session.js";
 
-const TYPES = new Set(["purchase", "sale", "exchange", "service"]);
+const TYPES = new Set([
+  "purchase", "sale", "exchange", "service", "reward", "loan_issue", "loan_repay", "plate_sale"
+]);
 const PHASES = new Set(["prepare", "commit"]);
 const LEASE_MS = 5 * 60_000;
 let schemaReady = false;
@@ -59,11 +61,71 @@ function meetingType(kind) {
   return "";
 }
 
+const BANK_OFFERS = [
+  { amount: 25_000, rating: 0, paid: 0 },
+  { amount: 50_000, rating: 58, paid: 1 },
+  { amount: 100_000, rating: 67, paid: 2 },
+  { amount: 250_000, rating: 80, paid: 4 },
+  { amount: 500_000, rating: 92, paid: 6 }
+];
+
+function validateReward(state, transaction) {
+  const source = transaction.payload.sourceId.split(":");
+  const goals = state.economy?.goals;
+  const kind = source[1];
+  const period = Number(source[2]);
+  const group = kind === "daily" ? goals?.daily : kind === "weekly" ? goals?.weekly : kind === "clan" ? goals?.clan : null;
+  const expectedPeriod = kind === "daily" ? Number(group?.day) : Number(group?.week);
+  const expectedAmount = kind === "daily" ? 25_000 : kind === "weekly" ? 125_000 : kind === "clan" ? 50_000 : 0;
+  const ready = kind === "clan"
+    ? Number(group?.value || 0) >= Number(group?.need || 0) && Number(group?.need || 0) > 0
+    : Array.isArray(group?.targets) && group.targets.length > 0
+      && group.targets.every((target) => Number(target?.value || 0) >= Number(target?.need || 0));
+  if (!group || group.claimed || period !== expectedPeriod || !ready) throw new RequestError("reward_not_available", 409);
+  if (transaction.amount !== expectedAmount) throw new RequestError("invalid_transaction_amount", 409);
+}
+
+function validateLoanIssue(state, transaction) {
+  const customer = state.bankCustomer || {};
+  const offer = BANK_OFFERS.find((item) => item.amount === transaction.amount);
+  const gameTime = Number(state.gameClock?.total || 0);
+  if (!offer || Number(state.loan || 0) > 0 || state.bankCredit?.active) throw new RequestError("loan_not_available", 409);
+  if (Number(customer.nextLoanAt || 0) > gameTime) throw new RequestError("loan_cooldown_active", 409);
+  if (Number(customer.rating || 50) < offer.rating || Number(customer.onTimePayments || 0) < offer.paid) {
+    throw new RequestError("loan_not_available", 409);
+  }
+  if (transaction.payload.sourceId !== `offer:${offer.amount}:${Number(customer.totalIssued || 0) + 1}`) {
+    throw new RequestError("invalid_transaction_source", 409);
+  }
+}
+
+function validateLoanRepayment(state, transaction) {
+  const debt = Math.round(Number(state.loan || 0));
+  const startedAt = Math.floor(Number(state.bankCredit?.startedAt || 0));
+  if (!state.bankCredit?.active || debt <= 0 || Number(state.money || 0) < debt) throw new RequestError("loan_repayment_not_available", 409);
+  if (transaction.amount !== debt) throw new RequestError("invalid_transaction_amount", 409);
+  if (transaction.payload.sourceId !== `credit:${startedAt}`) throw new RequestError("invalid_transaction_source", 409);
+}
+
+function validatePlateSale(state, transaction) {
+  const plate = Array.isArray(state.plates?.items)
+    ? state.plates.items.find((item) => item?.id === transaction.payload.sourceId)
+    : null;
+  if (!plate || plate.tradable === false || plate.premium === true) throw new RequestError("plate_not_tradable", 409);
+  if (Math.round(Number(plate.value || 0)) !== transaction.amount) throw new RequestError("invalid_transaction_amount", 409);
+  if (cleanText(plate.number, 100) !== transaction.payload.car) throw new RequestError("invalid_transaction_source", 409);
+}
+
 async function validatePreparedTransaction(db, userId, transaction) {
   const row = await db.prepare("SELECT data_json FROM game_saves WHERE user_id = ? LIMIT 1")
     .bind(userId).first();
   const state = await parseStoredSave(row);
   if (!state) throw new RequestError("save_required_for_transaction", 409);
+
+  if (transaction.type === "reward") return validateReward(state, transaction);
+  if (transaction.type === "loan_issue") return validateLoanIssue(state, transaction);
+  if (transaction.type === "loan_repay") return validateLoanRepayment(state, transaction);
+  if (transaction.type === "plate_sale") return validatePlateSale(state, transaction);
 
   if (transaction.transactionId.startsWith("meeting:")) {
     const meetingId = transaction.transactionId.slice("meeting:".length);
