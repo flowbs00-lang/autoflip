@@ -83,9 +83,9 @@ test('payment creation keeps YooKassa secrets server-side and webhooks recheck p
   assert.doesNotMatch(read('store.js'),/YOOKASSA_SECRET_KEY|YOOKASSA_SHOP_ID/);
 });
 
-test('shop is visible on the phone and fast buyers halve the generated delay',()=>{
+test('shop stays hidden during the free beta and fast buyers logic remains available for a later launch',()=>{
   const ui=read('ui.js'),html=read('index.html');
-  assert.match(ui,/openStore','Магазин','shop'/);
+  assert.doesNotMatch(ui,/openStore','Магазин','shop'/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
   assert.match(html,/store\.js\?v=20261011-3/);assert.match(html,/store\.css\?v=20261010-1/);
 });
