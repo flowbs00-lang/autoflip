@@ -36,7 +36,7 @@ test('cookie notice is shown on login and in the game and links to the disclosur
   assert.match(privacy, /id="cookies"/);
 });
 
-test('new account registration is closed at the server unless explicitly enabled or allowlisted', () => {
+test('new account registration has an explicit server-side public beta switch and allowlist fallback', () => {
   const auth = read('functions/api/auth/vk.js');
   const legal = read('functions/_lib/legal.js');
   assert.match(auth, /closed_beta_only/);
@@ -69,10 +69,12 @@ test('expanded player inventory is private without separate consent', () => {
   assert.match(account, /Публичный профиль: /);
 });
 
-test('all legal pages exist and drafts cannot be mistaken for a ready public launch', () => {
+test('active beta documents are marked as effective while payment documents remain drafts', () => {
   const pages = ['privacy', 'personal-data-consent', 'terms', 'profile-consent', 'community-rules', 'offer', 'refunds', 'operator'];
   for (const page of pages) assert.ok(fs.existsSync(path.join(root, 'cloudflare/legal', page, 'index.html')), page);
-  assert.match(read('cloudflare/legal/operator/index.html'), /публичная регистрация и магазин (?:должны оставаться|остаются) закрытыми/i);
+  assert.match(read('cloudflare/legal/privacy/index.html'), /<span class="badge">Действует<\/span>/);
+  assert.match(read('cloudflare/legal/terms/index.html'), /<span class="badge">Действует<\/span>/);
+  assert.match(read('cloudflare/legal/operator/index.html'), /Публичная регистрация открыта/i);
   assert.match(read('cloudflare/legal/offer/index.html'), /Магазин и платежи отключены/);
 });
 
@@ -107,5 +109,6 @@ test('operator and support pages contain verified public contact details without
   assert.match(operator, /Оператор внесён в реестр Роскомнадзора/);
   assert.match(operator, /43-26-021058/);
   assert.match(operator, /приказ № 147 от 23\.10\.2026/);
-  assert.match(operator, /Публичная регистрация и магазин остаются закрытыми/);
+  assert.match(operator, /Публичная регистрация открыта/);
+  assert.match(operator, /магазин и платежи остаются отключёнными/);
 });
