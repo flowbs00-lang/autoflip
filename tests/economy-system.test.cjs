@@ -36,6 +36,7 @@ test('financial settlements require an authenticated idempotent server confirmat
   for(const type of ['reward','loan_issue','loan_repay','plate_sale'])assert.match(confirmApi,new RegExp('"'+type+'"'));
   assert.match(confirmApi,/validateReward/);assert.match(confirmApi,/validateLoanIssue/);assert.match(confirmApi,/validateLoanRepayment/);assert.match(confirmApi,/validatePlateSale/);
   assert.match(economy,/protectedAction\(id,'loan_issue'/);assert.match(economy,/protectedAction\(id,'loan_repay'/);assert.match(economy,/protectedAction\(id,'plate_sale'/);assert.match(economy,/protectedAction\(id,'reward'/);
+  assert.match(economy,/reward:achievement:/);assert.match(confirmApi,/first_deal/);
 });
 
 test('economy uses one car condition and includes demand, markdown, history and tow costs',()=>{
