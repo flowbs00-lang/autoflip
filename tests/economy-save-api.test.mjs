@@ -137,21 +137,25 @@ test("rewards, loans and plate sales are checked against the cloud save", async 
     response = await prepare({ transactionId: "reward:daily:2", type: "reward", amount: 25000, sourceId: "goal:daily:2" });
     assert.equal(response.status, 200);
 
-    await storeSave({ money: 100000, loan: 0, gameClock: { total: 500 }, bankCustomer: { rating: 50, onTimePayments: 0, totalIssued: 0, nextLoanAt: 0 } }, 2);
+    await storeSave({ deals: 1, economy: { achievements: [] } }, 2);
+    response = await prepare({ transactionId: "reward:achievement:first_deal", type: "reward", amount: 15000, sourceId: "goal:achievement:first_deal" });
+    assert.equal(response.status, 200);
+
+    await storeSave({ money: 100000, loan: 0, gameClock: { total: 500 }, bankCustomer: { rating: 50, onTimePayments: 0, totalIssued: 0, nextLoanAt: 0 } }, 3);
     response = await prepare({ transactionId: "loan:issue:25000:1", type: "loan_issue", amount: 500000, sourceId: "offer:500000:1" });
     assert.equal(response.status, 409);
     response = await prepare({ transactionId: "loan:issue:25000:1", type: "loan_issue", amount: 25000, sourceId: "offer:25000:1" });
     assert.equal(response.status, 200);
 
-    await storeSave({ money: 60000, loan: 55000, bankCredit: { active: true, startedAt: 450 } }, 3);
+    await storeSave({ money: 60000, loan: 55000, bankCredit: { active: true, startedAt: 450 } }, 4);
     response = await prepare({ transactionId: "loan:repay:450", type: "loan_repay", amount: 55000, sourceId: "credit:450" });
     assert.equal(response.status, 200);
 
-    await storeSave({ plates: { items: [{ id: "plate-one", number: "А111МР", value: 500000, region: { city: "Киров" } }] } }, 4);
+    await storeSave({ plates: { items: [{ id: "plate-one", number: "А111МР", value: 500000, region: { city: "Киров" } }] } }, 5);
     response = await prepare({ transactionId: "plate:sale:plate-one", type: "plate_sale", amount: 500000, sourceId: "plate-one", car: "А111МР" });
     assert.equal(response.status, 200);
 
-    await storeSave({ plates: { items: [{ id: "premium-one", number: "А777АА", value: 500000, premium: true, tradable: false }] } }, 5);
+    await storeSave({ plates: { items: [{ id: "premium-one", number: "А777АА", value: 500000, premium: true, tradable: false }] } }, 6);
     response = await prepare({ transactionId: "plate:sale:premium-one", type: "plate_sale", amount: 500000, sourceId: "premium-one", car: "А777АА" });
     assert.equal(response.status, 409);
     assert.equal((await response.json()).error, "plate_not_tradable");
