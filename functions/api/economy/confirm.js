@@ -71,6 +71,23 @@ const BANK_OFFERS = [
 
 function validateReward(state, transaction) {
   const source = transaction.payload.sourceId.split(":");
+  if (source[1] === "achievement") {
+    const id = source[2];
+    const economy = state.economy || {};
+    const serviceJobs = Number(state.garageProgress?.stats?.serviceJobs || 0);
+    const completed = {
+      first_deal: Number(state.deals || 0) >= 1,
+      dealer_10: Number(state.deals || 0) >= 10,
+      collector_10: Array.isArray(economy.collection) && economy.collection.length >= 10,
+      service_10: serviceJobs >= 10,
+      rep_100: Number(state.rep || 0) >= 100
+    };
+    if (!completed[id] || (Array.isArray(economy.achievements) && economy.achievements.includes(id))) {
+      throw new RequestError("reward_not_available", 409);
+    }
+    if (transaction.amount !== 15_000) throw new RequestError("invalid_transaction_amount", 409);
+    return;
+  }
   const goals = state.economy?.goals;
   const kind = source[1];
   const period = Number(source[2]);
