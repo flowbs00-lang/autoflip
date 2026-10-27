@@ -78,9 +78,9 @@ async function staticResponse(request) {
     });
   }
 
-  if (pathname === "/" || pathname === "/index.html") {
-    return Response.redirect(`${url.origin}/login/`, 302);
-  }
+  // Serve the public, indexable landing page at the canonical root URL.
+  // Authentication, account setup and the game itself remain separate routes.
+  if (pathname === "/") pathname = "/index.html";
 
   let relative = pathname.replace(/^\/+/, "");
   if (!relative || pathname.endsWith("/")) relative = path.join(relative, "index.html");
