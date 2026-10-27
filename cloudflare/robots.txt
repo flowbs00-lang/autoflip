@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app/
+Disallow: /auth/
+Disallow: /login/
+Disallow: /setup-profile/
+
+Host: autoflip-game.ru
+Sitemap: https://autoflip-game.ru/sitemap.xml
