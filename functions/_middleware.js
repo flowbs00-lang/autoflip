@@ -7,9 +7,10 @@ const SECURITY_HEADERS = Object.freeze({
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
-  "X-Robots-Tag": "noindex, nofollow, noarchive",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()"
 });
+
+const ROBOTS_BLOCK = "noindex, nofollow, noarchive";
 
 const STRICT_CSP = "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'";
 const AUTH_CSP = "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.vk.ru; connect-src 'self' https://*.vk.ru; frame-src https://*.vk.ru; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'";
@@ -23,10 +24,19 @@ function contentSecurityPolicy(pathname) {
   return STRICT_CSP;
 }
 
+function isIndexablePath(pathname) {
+  return pathname === "/" || pathname === "/index.html";
+}
+
 function securedResponse(response, pathname) {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
   headers.set("Content-Security-Policy", contentSecurityPolicy(pathname));
+  if (isIndexablePath(pathname)) {
+    headers.delete("X-Robots-Tag");
+  } else {
+    headers.set("X-Robots-Tag", ROBOTS_BLOCK);
+  }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
