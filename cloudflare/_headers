@@ -7,13 +7,27 @@
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
+
+/api/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/setup-profile/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/legal/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/support/*
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /login/*
   Content-Security-Policy: default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.vk.ru; connect-src 'self' https://*.vk.ru; frame-src https://*.vk.ru; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
+  X-Robots-Tag: noindex, nofollow, noarchive
 
 /auth/vk/*
   Content-Security-Policy: default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.vk.ru; connect-src 'self' https://*.vk.ru; frame-src https://*.vk.ru; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
+  X-Robots-Tag: noindex, nofollow, noarchive
 
 /app/*
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.wikimedia.org https://images.unsplash.com; connect-src 'self' https://*.vk.ru; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'
+  X-Robots-Tag: noindex, nofollow, noarchive
