@@ -161,13 +161,15 @@ async function snapshot(db, env, session, channelValue) {
       ORDER BY m.created_at DESC LIMIT 60
     `).bind(channel, session.id).all(),
     db.prepare(`
-      SELECT u.id, u.nickname, p.reputation, p.city, COALESCE(c.tag, '') AS clanTag
-      FROM community_profiles p JOIN users u ON u.id = p.user_id
+      SELECT u.id, u.nickname, COALESCE(p.reputation, 0) AS reputation,
+             COALESCE(p.city, 'Москва') AS city, COALESCE(c.tag, '') AS clanTag
+      FROM users u
       JOIN user_consents uc ON uc.user_id = u.id
         AND uc.consent_type = 'public_profile' AND uc.document_version = ? AND uc.revoked_at IS NULL
+      LEFT JOIN community_profiles p ON p.user_id = u.id
       LEFT JOIN clan_members cm ON cm.user_id = u.id
       LEFT JOIN clans c ON c.id = cm.clan_id
-      ORDER BY p.reputation DESC, u.nickname COLLATE NOCASE ASC LIMIT 100
+      ORDER BY COALESCE(p.reputation, 0) DESC, u.nickname COLLATE NOCASE ASC LIMIT 100
     `).bind(LEGAL_VERSIONS.publicProfile).all(),
     db.prepare(`
       SELECT c.id, c.name, c.tag, c.owner_user_id AS ownerUserId,
