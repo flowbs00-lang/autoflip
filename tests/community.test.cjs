@@ -20,7 +20,9 @@ test('community supports global, regional and clan chat plus both rankings', () 
   assert.match(api, /channel === "global"/);
   assert.match(api, /channel\.startsWith\("region:"\)/);
   assert.match(api, /channel === "clan"/);
-  assert.match(api, /ORDER BY p\.reputation DESC/);
+  assert.match(api, /LEFT JOIN community_profiles p ON p\.user_id = u\.id/);
+  assert.match(api, /ORDER BY COALESCE\(p\.reputation, 0\) DESC/);
+  assert.match(api, /u\.nickname COLLATE NOCASE ASC LIMIT 100/);
   assert.match(api, /SUM\(p\.reputation\)/);
   assert.match(client, /Лучшие перекупы/);
   assert.match(client, /РЕЙТИНГ КЛАНОВ/);
