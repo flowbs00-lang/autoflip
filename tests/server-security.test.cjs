@@ -77,7 +77,11 @@ test('CSP isolates unsafe-inline to the legacy game and VK inline styles', () =>
   assert.match(appSection, /script-src 'self' 'unsafe-inline'/);
   assert.match(appSection, /style-src 'self' 'unsafe-inline'/);
   assert.match(middleware, /Keep that exception isolated to \/app\/ only/);
-  assert.doesNotMatch(read('cloudflare/index.html'), /<style|<script(?![^>]*src)/);
+  const landing = read('cloudflare/index.html').replace(
+    /<script type="application\/ld\+json">[\s\S]*?<\/script>/g,
+    ''
+  );
+  assert.doesNotMatch(landing, /<style|<script(?![^>]*src)/);
   assert.doesNotMatch(read('cloudflare/support/index.html'), /<style|<script(?![^>]*src)/);
 });
 
