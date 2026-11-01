@@ -112,3 +112,19 @@ test('operator and support pages contain verified public contact details without
   assert.match(operator, /Публичная регистрация открыта/);
   assert.match(operator, /магазин и платежи остаются отключёнными/);
 });
+
+test('public landing page is indexable while private routes stay blocked from search', () => {
+  const landing = read('cloudflare/index.html');
+  const headers = read('cloudflare/_headers');
+  const middleware = read('functions/_middleware.js');
+  const globalHeaders = headers.split('\n/api/*')[0];
+
+  assert.match(landing, /name="robots" content="index, follow, max-image-preview:large"/);
+  assert.doesNotMatch(globalHeaders, /X-Robots-Tag/);
+  for (const route of ['/api/*', '/setup-profile/*', '/legal/*', '/support/*', '/login/*', '/auth/vk/*', '/app/*']) {
+    assert.match(headers, new RegExp(route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+  assert.match(middleware, /pathname === "\/" \|\| pathname === "\/index\.html"/);
+  assert.match(middleware, /headers\.delete\("X-Robots-Tag"\)/);
+  assert.match(middleware, /headers\.set\("X-Robots-Tag", ROBOTS_BLOCK\)/);
+});
