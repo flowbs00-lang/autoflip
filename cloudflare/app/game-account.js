@@ -28,6 +28,7 @@
     if (cloud.status === 'syncing') return 'Сохраняется в облако';
     if (cloud.status === 'offline') return 'Локальная копия · ожидается интернет';
     if (cloud.status === 'pending') return 'Ожидает отправки в облако';
+    if (cloud.status === 'blocked') return 'Сохранение требует внимания';
     return 'Автосохранение включено';
   }
 
@@ -105,7 +106,7 @@
       setSync('На устройстве · ждём интернет', 'offline');
       if (sync) sync.title = detail.detail || 'Не удалось сохранить прогресс в облаке';
     }
-    else if (detail.status === 'blocked') setSync('Нужно обновить игру', 'blocked');
+    else if (detail.status === 'blocked') setSync(detail.detail || 'Сохранение требует внимания', 'blocked');
     else setSync(detail.detail || 'Сохранено', detail.status);
     if (sync && detail.detail) sync.title = detail.detail;
   }

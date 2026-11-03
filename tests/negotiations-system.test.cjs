@@ -29,6 +29,13 @@ test('accepted market price creates an appointment instead of an instant purchas
   assert.equal(g.purchases,1);assert.equal(g.state.meetings[0].status,'completed');assert.equal(g.state.cars[0].city,'Москва');assert.equal(g.state.rep,11);
   assert.equal(g.finalized,1);assert.equal(g.state.cars[0].flipCondition.healthy,false);
 });
+test('waiting reaches a local meeting and never skips an earlier appointment',()=>{
+  const g=game();g.c.advanceGameMinutes=minutes=>g.setNow(g.c.getGameTotal()+minutes);
+  g.state.meetings=[{id:'later',status:'scheduled',kind:'seller_purchase',city:'Москва',at:600,carName:'Lada',payload:{car:g.makes[0]}},{id:'earlier',status:'scheduled',kind:'seller_purchase',city:'Москва',at:500,carName:'Ford',payload:{car:g.makes[0]}}];
+  g.c.waitForMeeting('later');assert.equal(g.c.getGameTotal(),450);
+  g.c.waitForMeeting('earlier');assert.equal(g.c.getGameTotal(),500);assert.match(g.html,/Встреча началась/);
+  g.state.city='Киров';g.c.waitForMeeting('later');assert.equal(g.c.getGameTotal(),500);
+});
 
 test('a buyer deal only completes in the car city at the booked time',()=>{
   const car={id:3,name:'Ford',city:'Киров',buy:60000,_garageId:'owned'};

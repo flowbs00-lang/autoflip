@@ -24,6 +24,7 @@ html.autoflip-booting .phone::after{content:"AUTOFLIP OS";position:absolute;inse
 <link rel="stylesheet" href="economy-system.css?v=20261010-3">
 <link rel="stylesheet" href="theme-polish.css?v=20261011-1">
 <link rel="stylesheet" href="mobile-redesign.css?v=20261018-1">
+<link rel="stylesheet" href="gameplay-flow.css?v=20261102-1">
 </head>
 <body>
 <div class="age-mark" aria-label="Возрастное ограничение 18 плюс">18+</div>
@@ -58,10 +59,10 @@ html.autoflip-booting .phone::after{content:"AUTOFLIP OS";position:absolute;inse
   <a href="photo-credits.html" target="_blank" rel="noopener">Авторы, лицензии и изменения фотографий</a>
 </aside>
 <footer>AutoFlip · Твой следующий ход · 2026 · <a href="photo-credits.html" target="_blank" rel="noopener">Авторы фотографий</a> · <a href="restoration-photo-credits.html" target="_blank" rel="noopener">Фото проектов</a></footer>
-<script src="cloud-save.js?v=20261025-1"></script>
+<script src="cloud-save.js?v=20261102-1"></script>
 <script src="world-data.js?v=20261006-1"></script>
 <script src="legacy-photo-map.js?v=20261023-1"></script>
-<script src="script_base.js?v=20261024-1"></script>
+<script src="script_base.js?v=20261102-1"></script>
 <script src="car-catalog.js?v=20261006-4"></script>
 <script src="v79_market.js"></script>
 <script src="script.js?v=20261024-1"></script>
@@ -960,6 +961,9 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
 
   window.applyMarketConditionToOwned=function(car){
     if(!car)return null;
+    // A completed acquisition has its own final condition. An old listing
+    // preview must never overwrite a server-confirmed car when viewing it.
+    if(car.acquisitionConditionFinalized&&Number(car.flipConditionVersion||0)>=CONDITION_VERSION&&car.flipCondition)return car.flipCondition;
     var preview=car.marketFlipCondition||null,preDiag=car.prePurchaseDiagnostic||null;
     // Recover diagnostic evidence from saves that lost the market preview.
     if(!preview&&preDiag&&preDiag.found){
@@ -1106,7 +1110,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
     if(issue.healthy){
       return '<div class="condition-card healthy"><small>ТЕХНИЧЕСКОЕ СОСТОЯНИЕ</small><h3>✅ Автомобиль исправен</h3><p>После покупки технических поломок не обнаружено. Ремонт не требуется.</p></div>';
     }
-    return '<div class="condition-card broken"><small>ОБНАРУЖЕНА ПОЛОМКА</small><h3>⚠️ '+issue.name+'</h3><p>После покупки обнаружена неисправность. Из-за неё рыночная стоимость автомобиля ниже на '+Math.round(issue.loss*100)+'%.</p><div class="hero-line"><span>Цена ремонта</span><strong>'+money(issue.cost)+'</strong></div><div class="hero-line"><span>Текущий рынок</span><strong>'+money(c.market)+'</strong></div><div class="hero-line"><span>После ремонта</span><strong>'+money(c.healthyMarket)+'</strong></div><button class="action green" onclick="repairDetectedIssue()">🔧 '+issue.name+' · '+money(issue.cost)+'</button></div>';
+    return '<div class="condition-card broken"><small>ОБНАРУЖЕНА ПОЛОМКА</small><h3>⚠️ '+issue.name+'</h3><p>После покупки обнаружена неисправность. Из-за неё рыночная стоимость автомобиля ниже на '+Math.round(issue.loss*100)+'%.</p><div class="hero-line"><span>Цена ремонта</span><strong>'+money(issue.cost)+'</strong></div><div class="hero-line"><span>Текущий рынок</span><strong>'+money(c.market)+'</strong></div><div class="hero-line"><span>После ремонта</span><strong>'+money(c.healthyMarket)+'</strong></div><button class="action green" data-repair-action onclick="repairDetectedIssue()">🔧 Починить за '+money(issue.cost)+'</button></div>';
   }
 
   window.garageCarDetails=function(index){
@@ -1122,8 +1126,9 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
       '<div class="pic car-detail-photo" style="background-image:linear-gradient(180deg,#0000 45%,#0009),url(\''+photo(c)+'\')"><span class="market-city-badge">📍 '+c.city+'</span><span class="car-year-badge">'+c.year+'</span></div>'+
       '<div class="note"><div class="hero-line"><span>Пробег</span><strong>'+Number(c.km||0).toLocaleString('ru-RU')+' км</strong></div><div class="hero-line"><span>Цена покупки</span><strong>'+money(c.buy)+'</strong></div><div class="hero-line"><span>Рыночная цена сейчас</span><strong>'+money(c.market)+'</strong></div>'+(preDiagSpent?'<div class="hero-line"><span>Диагностика до покупки</span><strong>'+money(preDiagSpent)+'</strong></div>':'')+'<div class="hero-line"><span>Потрачено на ремонт</span><strong>'+money(c.repairSpent||0)+'</strong></div></div>'+
       (listed?'<div class="note"><b>🟢 Объявление активно</b><p class="muted">Цена: '+money(listing.ask)+'. Покупатели могут написать в «Сообщения».</p></div>':'')+
+      (typeof AUTOFLIP_CAR_FINANCES==='function'?AUTOFLIP_CAR_FINANCES(c):'')+
       ownedConditionHtml(c,issue)+
-      '<button class="action green" onclick="sellCar()">'+(listed?'💬 Моё объявление':'🏷️ Выставить на продажу')+'</button>'+
+      '<button class="action '+(!issue.healthy&&!issue.repaired?'':'green')+'" onclick="sellCar()">'+(listed?'💬 Моё объявление':!issue.healthy&&!issue.repaired?'Продать как есть':'🏷️ Выставить на продажу')+'</button>'+
       '<button class="action" onclick="garage()">‹ Назад к моим машинам</button></div>');
     if(typeof persist==='function')persist();
   };
@@ -1819,13 +1824,14 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261024-1"></script>
+<script src="ui.js?v=20261102-1"></script>
 <script src="plates.js?v=20261025-1"></script>
 <script src="garage-system.js?v=20261010-4"></script>
 <script src="world-system.js?v=20261007-6"></script>
-<script src="negotiations-system.js?v=20261010-2"></script>
-<script src="economy-system.js?v=20261025-3"></script>
-<script src="game-account.js?v=20261011-1"></script>
+<script src="negotiations-system.js?v=20261102-1"></script>
+<script src="economy-system.js?v=20261102-1"></script>
+<script src="gameplay-flow.js?v=20261102-1"></script>
+<script src="game-account.js?v=20261102-1"></script>
 <script src="community.js?v=20261019-1"></script>
 <script src="store.js?v=20261011-3"></script>
 </body>

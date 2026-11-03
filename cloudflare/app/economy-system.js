@@ -68,12 +68,19 @@
   window.AUTOFLIP_RECONCILE_ECONOMY=reconcileCommits;
   async function protectedAction(id,type,amount,payload,apply,done){
     var e=ensure();if(e.appliedIds.indexOf(id)>=0){await reconcileCommits();if(done)done();return true;}if(busy.has(id))return false;busy.add(id);
+    var applied=false;
     try{
+      if(window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS('saving','Сохраняем прогресс…');
       persistEconomy();
       if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){var synced=await window.AUTOFLIP_CLOUD_FLUSH();if(synced===false)throw new Error('сохранение ещё не синхронизировано');}
       var prepared=await window.AUTOFLIP_CONFIRM_ECONOMY(id,type,amount,payload,'prepare');if(prepared.committed){location.reload();return false;}
-      apply(prepared.result||{},prepared);e=ensure();if(e.appliedIds.indexOf(id)<0)e.appliedIds.push(id);queueCommit(id,type,amount,payload);persistEconomy();await reconcileCommits();if(done)done();return true;
-    }catch(error){alert('Операция не проведена: '+error.message+'. Деньги и предметы не изменились.');return false;}finally{busy.delete(id);}
+      apply(prepared.result||{},prepared);applied=true;e=ensure();if(e.appliedIds.indexOf(id)<0)e.appliedIds.push(id);queueCommit(id,type,amount,payload);persistEconomy();var committed=await reconcileCommits();if(done)done();
+      if(window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS(committed?'saved':'pending',committed?'Готово · сохранено в облаке':'Операция выполнена на устройстве. Ожидаем сохранения в облаке.');return true;
+    }catch(error){
+      var message=applied?'Операция выполнена на устройстве. Нужно повторить сохранение.':'Операция не проведена. Деньги за неё не списаны. Повтори синхронизацию.';
+      if(window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS('error',message);else alert(message+' '+error.message);
+      return false;
+    }finally{busy.delete(id);}
   }
   var rawBankIssue=window.bankIssueLoan;
   if(typeof rawBankIssue==='function')window.bankIssueLoan=async function(amount){var c=state.bankCustomer||{},value=Math.round(Number(amount||0)),source='offer:'+value+':'+(Number(c.totalIssued||0)+1),id='loan:issue:'+value+':'+(Number(c.totalIssued||0)+1);return protectedAction(id,'loan_issue',value,{sourceId:source,city:state.city},function(){rawBankIssue(value);});};
@@ -88,9 +95,33 @@
     if(!car||!result)return car;Object.keys(result).forEach(function(k){if(k!=='_garageId')car[k]=result[k];});
     car.flipCondition=result.flipCondition?Object.assign({},result.flipCondition):car.flipCondition;return car;
   }
+  // Recover only authoritative car fields, never the balance or the whole save.
+  // Pending purchases are reconstructed from the same idempotent server result.
+  window.AUTOFLIP_RECOVER_CAR_SAVE=async function(){
+    var response=await fetch('/api/save',{credentials:'same-origin',cache:'no-store'});
+    if(!response.ok)return false;
+    var remote=await response.json();if(!remote.save)return false;
+    var pending=ensure().pendingCommits.filter(function(x){return ensure().appliedIds.indexOf(x.id)>=0;}),updates=[];
+    for(var i=0;i<(state.cars||[]).length;i++){
+      var car=state.cars[i],carId=key(car);
+      // A locally applied repair/cost payment must be saved, not rolled back.
+      if(pending.some(function(x){return (x.type==='repair'||x.type==='car_cost')&&x.payload&&x.payload.sourceId===carId;}))continue;
+      var canonical=(remote.save.cars||[]).find(function(x){return key(x)===carId;});
+      if(!canonical){
+        var purchase=pending.find(function(x){return (x.type==='purchase'||x.type==='exchange')&&x.payload&&String(x.payload.sourceId)===String(car.sourceListingId||car.listingId);});
+        if(purchase){var prepared=await window.AUTOFLIP_CONFIRM_ECONOMY(purchase.id,purchase.type,purchase.amount,purchase.payload,'prepare');canonical=prepared.result&&prepared.result.addCar;}
+      }
+      if(canonical&&canonical.flipCondition&&canonical.acquisitionConditionFinalized)updates.push({car:car,result:canonical});
+    }
+    if(!updates.length)return false;
+    if(typeof window.AUTOFLIP_CHECKPOINT==='function')window.AUTOFLIP_CHECKPOINT('Перед восстановлением состояния автомобилей');
+    var fields=['name','year','km','body','city','buy','price','basePrice','market','sale','listingId','sourceListingId','healthyMarket','flipCondition','flipConditionVersion','repaired','repairSpent','acquisitionConditionFinalized','unplannedCost','needsTow'];
+    updates.forEach(function(update){var authoritative={};fields.forEach(function(field){if(field in update.result)authoritative[field]=update.result[field];});applyServerCarResult(update.car,authoritative);});
+    persistEconomy();return true;
+  };
   function afterDeal(m,before,beforeMoney,id,type,amount,payload,serverResult){
     var e=ensure(),car=acquired(before),delta=Number(state.money||0)-beforeMoney,h=car&&profile(car);e.appliedIds.push(id);addGoal('deal',1);if(delta>0)addGoal('profit',delta);
-    if(car){if(e.collection.indexOf(car.name)<0)e.collection.push(car.name);h.events.unshift('Куплен игроком в '+m.city+' · день '+day());
+    if(car){car.diagnosticSpent=Number(m.diagnostic&&m.diagnostic.totalSpent||car.diagnosticSpent||0);if(e.collection.indexOf(car.name)<0)e.collection.push(car.name);h.events.unshift('Куплен игроком в '+m.city+' · день '+day());
       var bad=car.flipCondition&&!car.flipCondition.healthy&&!car.flipCondition.repaired,fully=m.diagnostic&&m.diagnostic.mode==='full';if(bad&&!fully){var extra=serverResult&&serverResult.addCar?Number(serverResult.addCar.unplannedCost||0):Math.max(3000,Math.round((Number(car.flipCondition.cost||car.repair||10000))*(.08+Math.random()*.12)/1000)*1000);car.unplannedCost=extra;car.needsTow=serverResult&&serverResult.addCar?serverResult.addCar.needsTow===true:true;if(extra){h.events.unshift('После покупки потребовались эвакуатор и внеплановые работы: '+money(extra));notify('Гараж','⚠️',car.name+': после покупки обнаружены дополнительные расходы '+money(extra)+'.','economy','extra-'+id);}}}
     if(m.side==='buyer'){var sold=before.find(function(c){return !(state.cars||[]).some(function(x){return key(x)===key(c);});});if(sold){profile(sold).events.unshift('Продан игроком · день '+day());e.soldModels.push({model:sold.name,day:day(),price:m.price});if(Math.random()<.28)e.repeatClients.push({name:m.person,model:sold.name,day:day()});}}
     queueCommit(id,type,amount,payload);record(m.kind.indexOf('purchase')>=0?'purchase':m.kind.indexOf('trade')>=0?'exchange':'sale',Math.abs(delta),{car:m.carName,city:m.city,text:'Встреча '+m.carName},id);persistEconomy();
@@ -99,19 +130,46 @@
   if(typeof rawMeeting==='function')window.completeMeeting=async function(id){
     var m=(state.meetings||[]).find(function(x){return x.id===id;});if(!m||m.status!=='scheduled'||busy.has(id))return typeof openMeeting==='function'?openMeeting(id):null;
     var tx='meeting:'+id,e=ensure();if(e.appliedIds.indexOf(tx)>=0)return typeof openMeeting==='function'?openMeeting(id):null;busy.add(id);
-    try{var type=m.kind.indexOf('purchase')>=0?'purchase':m.kind.indexOf('trade')>=0?'exchange':'sale',amount=meetingAmount(m),payload={car:m.carName,city:m.city,sourceId:m.sourceId},prepared=await window.AUTOFLIP_CONFIRM_ECONOMY(tx,type,amount,payload,'prepare');if(prepared.committed){location.reload();return;}var before=(state.cars||[]).slice(),cash=Number(state.money||0);rawMeeting(id);if(m.status==='completed'){var result=prepared.result||{},car=acquired(before);if(result.addCar&&car)applyServerCarResult(car,result.addCar);if(result.conditionLuck)state.conditionLuck=Object.assign({},result.conditionLuck);if(Number.isFinite(Number(result.moneyDelta)))state.money=cash+Number(result.moneyDelta);afterDeal(m,before,cash,tx,type,amount,payload,result);await reconcileCommits();}}
+    try{
+      persistEconomy();
+      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'&&await window.AUTOFLIP_CLOUD_FLUSH()===false)throw new Error('сохранение ещё не синхронизировано');
+      var type=m.kind.indexOf('purchase')>=0?'purchase':m.kind.indexOf('trade')>=0?'exchange':'sale',amount=meetingAmount(m),payload={car:m.carName,city:m.city,sourceId:m.sourceId},prepared=await window.AUTOFLIP_CONFIRM_ECONOMY(tx,type,amount,payload,'prepare');if(prepared.committed){location.reload();return;}var before=(state.cars||[]).slice(),cash=Number(state.money||0);rawMeeting(id);if(m.status==='completed'){var result=prepared.result||{},car=acquired(before);if(result.addCar&&car)applyServerCarResult(car,result.addCar);if(result.conditionLuck)state.conditionLuck=Object.assign({},result.conditionLuck);if(Number.isFinite(Number(result.moneyDelta)))state.money=cash+Number(result.moneyDelta);afterDeal(m,before,cash,tx,type,amount,payload,result);var synced=await reconcileCommits();if(window.AUTOFLIP_SHOW_DEAL_RESULT)window.AUTOFLIP_SHOW_DEAL_RESULT(m,before,result);if(!synced&&window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS('pending','Сделка выполнена на устройстве. Ожидаем сохранения в облаке.');}}
     catch(error){alert('Сделка не проведена: '+error.message+'. Прогресс и деньги не изменились. Проверь интернет и повтори.');}
     finally{busy.delete(id);}
   };
-  window.economyCheckDocuments=function(id){var m=(state.meetings||[]).find(function(x){return x.id===id;}),car=m&&(m.payload&&m.payload.car);if(!m||!car)return;var h=profile(car),cost=3500;if(h.documentsChecked)return openMeeting(id);if(Number(state.money||0)<cost)return alert('Для проверки документов нужно '+money(cost)+'.');state.money-=cost;h.documentsChecked=true;addGoal('inspect',1);record('cost',cost,{car:car.name,text:'Проверка документов'});persistEconomy();openMeeting(id);};
+  window.economyCheckDocuments=function(id){var m=(state.meetings||[]).find(function(x){return x.id===id;}),car=m&&(m.payload&&m.payload.car);if(!m||!car)return;var h=profile(car),cost=3500;if(h.documentsChecked)return openMeeting(id);if(Number(state.money||0)<cost)return alert('Для проверки документов нужно '+money(cost)+'.');state.money-=cost;h.documentsChecked=true;car.documentSpent=Number(car.documentSpent||0)+cost;addGoal('inspect',1);record('cost',cost,{car:car.name,text:'Проверка документов'});persistEconomy();openMeeting(id);};
   var rawOpenMeeting=window.openMeeting;
   if(typeof rawOpenMeeting==='function')window.openMeeting=function(id){var result=rawOpenMeeting.apply(this,arguments),m=(state.meetings||[]).find(function(x){return x.id===id;}),car=m&&m.payload&&m.payload.car;if(car&&m.status==='scheduled'&&typeof document!=='undefined'){var h=profile(car),button=document.querySelector('.meeting-buy-confirm');if(button){var clues=h.sellerHonesty<60?'Продавец торопит и уклоняется от вопросов. Стоит всё проверить.':'Продавец отвечает спокойно, но документы всё равно лучше проверить.';button.insertAdjacentHTML('beforebegin','<section class="economy-check"><small>ИСТОРИЯ И ДОКУМЕНТЫ</small><b>'+esc(h.sellerPersonality)+'</b><p>'+esc(clues)+'</p>'+(h.documentsChecked?'<strong class="'+(h.documents==='Чистые'?'ok':'bad')+'">'+esc(h.documents)+'</strong>':'<button onclick="economyCheckDocuments(\''+esc(id)+'\')">Проверить документы · 3 500 ₽</button>')+'</section>');if(h.documentsChecked&&h.documents!=='Чистые'){button.disabled=true;button.textContent='Покупка заблокирована: '+h.documents;}}}return result;};
   var rawDiag=window.runMeetingDiagnostic;if(typeof rawDiag==='function')window.runMeetingDiagnostic=async function(id,mode){var m=(state.meetings||[]).find(function(x){return x.id===id;});if(!m)return rawDiag.apply(this,arguments);var car=m.payload&&m.payload.car||{},market=Math.max(10000,Number(car.market||car.price||0)),full=mode==='full',cost=full?Math.floor(market/3):Math.floor(market*.10),tx='diagnostic:'+id+':'+(full?'full':'standard'),payload={sourceId:tx,car:m.carName,city:m.city};return protectedAction(tx,'diagnostic',cost,payload,function(server){rawDiag(id,mode);var previous=m.diagnostic,totalSpent=Number(previous&&previous.totalSpent||0),d=server.diagnostic||{};m.diagnostic=Object.assign({},d,{totalSpent:totalSpent||cost,risk:d.found?d.faultName:(d.healthyConfirmed?'автомобиль исправен':'поломок не обнаружено'),negotiationBonus:d.found?(full?.05:.03):0});if(m.payload&&m.payload.car)m.payload.car.prePurchaseDiagnostic=Object.assign({},m.diagnostic);addGoal('inspect',1);});};
-  var rawRepair=window.repairDetectedIssue;if(typeof rawRepair==='function')window.repairDetectedIssue=async function(){var car=state.car,issue=car&&car.flipCondition,carId=key(car);if(!car||!issue||issue.healthy||issue.repaired)return rawRepair.apply(this,arguments);var amount=Math.round(Number(issue.cost||0)),id='repair:'+carId;return protectedAction(id,'repair',amount,{sourceId:carId,car:car.name,city:car.city||state.city},function(server){rawRepair();if(server.healthyMarket){car.market=Number(server.healthyMarket);car.sale=Number(server.healthyMarket);}});};
+  var rawRepair=window.repairDetectedIssue,repairSyncing=false;
+  if(typeof rawRepair==='function')window.repairDetectedIssue=async function(){
+    if(repairSyncing)return false;repairSyncing=true;
+    var car=state.car;
+    try{
+      if(window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS('saving','Сохраняем покупку…');
+      persistEconomy();
+      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'&&await window.AUTOFLIP_CLOUD_FLUSH()===false){
+        if(window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS('error','Ремонт пока не начат. Повтори синхронизацию — деньги не списаны.');
+        else alert('Ремонт пока не начат: сохранение ещё не синхронизировано.');
+        return false;
+      }
+      var issue=car&&car.flipCondition,carId=key(car);
+      if(!car||!(state.cars||[]).includes(car))return false;
+      if(!issue||issue.healthy||issue.repaired){if(state.car===car)garageDetails();return true;}
+      var amount=Math.round(Number(issue.cost||0)),id='repair:'+carId;
+      if(Number(state.money||0)<amount){if(window.AUTOFLIP_OPERATION_STATUS)window.AUTOFLIP_OPERATION_STATUS('error','На ремонт не хватает '+money(amount-Number(state.money||0))+'.');else alert('Не хватает денег на ремонт.');return false;}
+      return await protectedAction(id,'repair',amount,{sourceId:carId,car:car.name,city:car.city||state.city},function(server){
+        if(typeof window.AUTOFLIP_CHECKPOINT==='function')window.AUTOFLIP_CHECKPOINT('Перед ремонтом автомобиля',{car:car.name,amount:amount});
+        state.money-=amount;car.repairSpent=Number(car.repairSpent||0)+amount;car.flipCondition.repaired=true;car.repaired=true;
+        car.market=Number(server.healthyMarket||car.healthyMarket||car.market);car.sale=car.market;
+        if(typeof window.AUTOFLIP_RECORD_OPERATION==='function')window.AUTOFLIP_RECORD_OPERATION('repair',{car:car.name,amount:amount,text:issue.name},true);
+      },function(){if(state.car===car)garageDetails();});
+    }finally{repairSyncing=false;}
+  };
   var rawSaleValue=window.saleValue;if(typeof rawSaleValue==='function')window.saleValue=function(car){return window.AUTOFLIP_CAR_VALUE(car,rawSaleValue(car));};
   var rawSell=window.sellCar;if(typeof rawSell==='function')window.sellCar=function(){var car=state.car;if(car&&(car.needsTow||Number(car.unplannedCost||0)>0))return economyCarCosts(key(car));return rawSell.apply(this,arguments);};
   window.economyCarCosts=function(carKey){var car=(state.cars||[]).find(function(c){return key(c)===carKey;});if(!car)return garage();var due=Number(car.unplannedCost||0)+(car.needsTow?Math.max(5000,Math.round(Number(car.market||car.buy||0)*.012/1000)*1000):0);render('<div class="app economy-app">'+head('Подготовка автомобиля')+'<section class="economy-alert"><span>⚠️</span><h2>'+esc(car.name)+'</h2><p>После рискованной покупки машина не готова к продаже.</p></section><div class="economy-cost"><span>Эвакуатор и дополнительные работы</span><b>'+money(due)+'</b></div><button class="action green" onclick="economyPayCarCosts(\''+esc(carKey)+'\')">Оплатить и доставить</button><button class="action" onclick="garage()">Назад</button></div>');};
-  window.economyPayCarCosts=async function(carKey){var car=(state.cars||[]).find(function(c){return key(c)===carKey;});if(!car)return garage();var due=Number(car.unplannedCost||0)+(car.needsTow?Math.max(5000,Math.round(Number(car.market||car.buy||0)*.012/1000)*1000):0);if(Number(state.money||0)<due)return alert('Не хватает '+money(due-Number(state.money||0))+'.');var id='car-cost:'+carKey;return protectedAction(id,'car_cost',due,{sourceId:carKey,car:car.name,city:car.city||state.city},function(){state.money-=due;car.unplannedCost=0;car.needsTow=false;profile(car).events.unshift('Оплачены эвакуатор и внеплановые работы: '+money(due));record('cost',due,{car:car.name,text:'Эвакуатор и внеплановый ремонт'});},garage);};
+  window.economyPayCarCosts=async function(carKey){var car=(state.cars||[]).find(function(c){return key(c)===carKey;});if(!car)return garage();var due=Number(car.unplannedCost||0)+(car.needsTow?Math.max(5000,Math.round(Number(car.market||car.buy||0)*.012/1000)*1000):0);if(Number(state.money||0)<due)return alert('Не хватает '+money(due-Number(state.money||0))+'.');var id='car-cost:'+carKey;return protectedAction(id,'car_cost',due,{sourceId:carKey,car:car.name,city:car.city||state.city},function(){state.money-=due;car.otherSpent=Number(car.otherSpent||0)+due;car.unplannedCost=0;car.needsTow=false;profile(car).events.unshift('Оплачены эвакуатор и внеплановые работы: '+money(due));record('cost',due,{car:car.name,text:'Эвакуатор и внеплановый ремонт'});},garage);};
   var rawDetails=window.garageCarDetails;if(typeof rawDetails==='function')window.garageCarDetails=function(index){var r=rawDetails.apply(this,arguments),car=(state.cars||[])[index];if(car&&typeof document!=='undefined'){var h=profile(car),app=document.querySelector('.garage-app');if(app)app.insertAdjacentHTML('beforeend','<section class="economy-history"><small>ИСТОРИЯ АВТОМОБИЛЯ</small><div><span>VIN</span><b>'+esc(h.vin)+'</b></div><div><span>Владельцев</span><b>'+h.owners+'</b></div><div><span>ДТП</span><b>'+h.accidents+'</b></div><div><span>Пробег</span><b>'+(h.odometerRollback?'Есть признаки скрутки':'Без замечаний')+'</b></div><div><span>Документы</span><b>'+esc(h.documentsChecked?h.documents:'Не проверены')+'</b></div>'+(h.events.length?'<p>'+h.events.slice(0,4).map(esc).join('<br>')+'</p>':'')+'</section>');}return r;};
   function service(){return ensure().service;}
   var rawGarageService=window.garageService;

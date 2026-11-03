@@ -36,6 +36,7 @@
   var clientId = localStorage.getItem(CLIENT_KEY) || ('device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
   var cloudBackups = null;
   var loadingCloudBackups = false;
+  var lastSaveError = null;
   originalSetItem.call(localStorage, CLIENT_KEY, clientId);
   window.AUTOFLIP_CLOUD_CLIENT_ID = clientId;
 
@@ -52,7 +53,7 @@
   function isOffline() { return typeof navigator !== 'undefined' && navigator.onLine === false; }
 
   function emit(status, detail, savedAt) {
-    window.AUTOFLIP_CLOUD = { status: status, detail: detail || '', at: Date.now(), savedAt: Number(savedAt || 0), revision: revision };
+    window.AUTOFLIP_CLOUD = { status: status, detail: detail || '', error: lastSaveError, at: Date.now(), savedAt: Number(savedAt || 0), revision: revision };
     if (typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('autoflip:cloud', { detail: window.AUTOFLIP_CLOUD }));
     if (window.parent && window.parent !== window && typeof window.parent.postMessage === 'function') window.parent.postMessage({ type: 'autoflip-cloud', payload: window.AUTOFLIP_CLOUD }, location.origin);
   }
@@ -135,7 +136,8 @@
     originalSetItem.call(localStorage, DIRTY_KEY, '1');
     originalSetItem.call(localStorage, DIRTY_AT_KEY, String(changedAt));
     originalSetItem.call(localStorage, VERSION_KEY, String(SAVE_VERSION));
-    emit(isOffline() ? 'offline' : 'pending', isOffline() ? 'Сохранено на устройстве · ждём интернет' : 'Сохранено на устройстве · отправляем в облако');
+    if(lastSaveError && lastSaveError.status >= 400 && lastSaveError.status < 500) emit('blocked', 'Сервер не принял сохранение · локальная копия сохранена');
+    else emit(isOffline() ? 'offline' : 'pending', isOffline() ? 'Сохранено на устройстве · ждём интернет' : 'Сохранено на устройстве · отправляем в облако');
     scheduleUpload(false);
   }
   if (storageMethodsOnPrototype) storagePrototype.setItem = interceptedSetItem;
@@ -209,7 +211,7 @@
     return { retry: false };
   }
 
-  async function uploadSnapshot(raw, conflictRetry) {
+  async function uploadSnapshot(raw, conflictRetry, carRecoveryAttempted) {
     if (!raw || applyingRemote || raw === lastUploadedRaw) return true;
     var stateValue = safeJson(raw); if (!stateValue) return false;
     var localUpdatedAt = Number(localStorage.getItem(DIRTY_AT_KEY) || Date.now());
@@ -228,9 +230,19 @@
       if (response.status === 409 && payload.error === 'revision_conflict' && !conflictRetry) {
         var resolution = await resolveConflict(raw);
         if (resolution.retry) return uploadSnapshot(raw, true);
-        return true;
+        // The in-memory game still belongs to the old revision until reload.
+        // Do not let a waiting economic operation continue against that state.
+        return false;
       }
-      if (!response.ok) throw new Error(payload.error || ('HTTP ' + response.status));
+      if (!response.ok) {
+        if (!carRecoveryAttempted && ['car_value_modified', 'car_transaction_result_modified'].includes(payload.error) && typeof window.AUTOFLIP_RECOVER_CAR_SAVE === 'function') {
+          if (await window.AUTOFLIP_RECOVER_CAR_SAVE()) return await uploadSnapshot(localStorage.getItem(SAVE_KEY), conflictRetry, true);
+        }
+        var rejection = new Error(payload.error || ('HTTP ' + response.status));
+        rejection.status = response.status;
+        throw rejection;
+      }
+      lastSaveError = null;
       revision = Number(payload.revision || baseRevision + 1);
       originalSetItem.call(localStorage, REVISION_KEY, String(revision));
       originalSetItem.call(localStorage, STAMP_KEY, String(payload.updatedAt || Date.now()));
@@ -244,7 +256,11 @@
       } else pendingUpload = true;
       return true;
     } catch (error) {
-      emit('offline', 'Сохранено на устройстве · облако недоступно'); scheduleRetry(); return false;
+      lastSaveError = { code: error.message || 'network_error', status: Number(error.status || 0) };
+      var authError = error.status === 401 || error.message === 'authentication_required';
+      var rejected = Number(error.status || 0) >= 400 && Number(error.status || 0) < 500;
+      emit(authError ? 'local' : rejected ? 'blocked' : 'offline', authError ? 'Вход истёк · прогресс сохранён на устройстве' : rejected ? 'Сервер не принял сохранение · локальная копия сохранена' : 'Сохранено на устройстве · облако недоступно');
+      scheduleRetry(); return false;
     } finally { uploadInFlight = false; }
   }
 

@@ -9,7 +9,7 @@ const mobileCss=fs.readFileSync(path.join(__dirname,'../mobile-redesign.css'),'u
 
 test('theme and mobile redesign layers load after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(links.at(-1),'mobile-redesign.css?v=20261018-1');
+  assert.equal(links.at(-1),'gameplay-flow.css?v=20261102-1');
   assert.ok(links.indexOf('theme-polish.css?v=20261011-1')>links.indexOf('community.css?v=20261011-1'));
   assert.ok(links.indexOf('mobile-redesign.css?v=20261018-1')>links.indexOf('theme-polish.css?v=20261011-1'));
 });

@@ -1,0 +1,31 @@
+/* Deal essentials stay readable in both themes. */
+#screen .os-head button:first-child .af-icon{transform:none}
+#screen .af-finances{padding:16px;margin:14px 0;border:1px solid var(--os-line);border-radius:18px;background:var(--os-surface);color:var(--os-text)}
+#screen .af-finances>small{font-size:11px;letter-spacing:.08em;color:var(--os-muted)}
+#screen .af-cost-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--os-line);font-size:14px;line-height:1.4}
+#screen .af-cost-row b{flex-shrink:0}
+#screen .af-finances p{margin:12px 0 0;font-size:12px;line-height:1.5;color:var(--os-muted)}
+#screen .af-profit{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0 0;font-size:14px}
+#screen .af-profit strong{font-size:21px;white-space:nowrap}
+#screen .af-profit.negative strong{color:#e47b87}
+#screen .af-profit.positive strong{color:var(--os-accent)}
+:root[data-theme="light"] #screen .af-profit.negative strong{color:#ae2439}
+:root[data-theme="light"] #screen .af-profit.positive strong{color:#176746}
+#screen .af-operation-status{display:grid;gap:10px;margin:12px 0;padding:14px;border:1px solid var(--os-line);border-radius:14px;background:var(--os-raised);color:var(--os-text);font-size:14px;line-height:1.5}
+#screen .af-operation-status.error,#screen .af-operation-status.pending{border-color:#c99044}
+#screen .af-operation-status button{min-height:44px;padding:10px 12px;border:1px solid var(--os-line);border-radius:10px;background:var(--os-accent);color:#142e26;font-weight:700}
+#screen .os-plan{border-color:color-mix(in srgb,var(--os-accent) 55%,var(--os-line))!important}
+#screen .os-plan b{font-size:clamp(11px,3.1vw,14px);line-height:1.25;white-space:normal}
+#screen .os-plan span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+@media(max-width:600px){
+  #screen .auto-market-title{align-items:flex-start;gap:8px}
+  #screen .auto-market-title b{font-size:16px;line-height:1.3}
+  #screen .auto-market-title strong{font-size:17px;white-space:nowrap}
+  #screen .auto-market-specs{font-size:12px;line-height:1.5;gap:6px 10px}
+  #screen .auto-card-city{font-size:13px;padding:7px 10px}
+  #screen .auto-market-bottom{font-size:12px;flex-wrap:wrap;gap:6px}
+  #screen .auto-restoration-warning{font-size:13px;line-height:1.45}
+  #screen .meeting-time small,#screen .meeting-ticket small{font-size:12px}
+  #screen .condition-card p{font-size:14px}
+  #screen button:disabled{opacity:.6;cursor:wait}
+}

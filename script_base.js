@@ -254,11 +254,11 @@ function marketCardHtml(c,index){
    <div class="pic auto-market-photo" style="--car-position:${c.photoPosition||'50% 50%'}"><img src="${src}" alt="${String(c.name||'Автомобиль').replace(/"/g,'&quot;')}" loading="${index<2?'eager':'lazy'}" decoding="async" ${index<2?'fetchpriority="high"':'fetchpriority="low"'}><span class="auto-market-shade"></span><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${saved?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${saved?'Убрать из избранного':'Добавить в избранное'}">${saved?'♥':'♡'}</button></div>
    <div class="auto-market-info">
      <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
-     <div class="auto-market-specs"><span>🆔 ${c.listingId?c.listingId.slice(-5):('M'+c.id)}</span><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.starterOffer?'<span>🛠️ Под восстановление</span>':''}</div>
+     <div class="auto-market-specs"><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.restorationProject?'<span>🛠️ Под восстановление</span>':'<span>Состояние — на встрече</span>'}</div>
      ${c.damageSummary?`<div class="auto-restoration-warning">⚠️ ${c.damageSummary}</div>`:''}
      <div class="auto-market-bottom">
        <span>Рынок <b>${money(c.market)}</b></span>
-       <span class="${potential>=0?'auto-profit':'auto-loss'}">Разница ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
+       <span class="${potential>=0?'auto-profit':'auto-loss'}">До расходов ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
      </div>
    </div>
  </div>`;
@@ -407,6 +407,7 @@ function carView(id){
      <span>ЦЕНА<b>${money(c.price)}</b></span>
      <span>РАЗНИЦА<b class="${spread>=0?'profit':'market-bad'}">${spread>=0?'+':''}${money(spread)}</b></span>
    </div>
+   ${typeof AUTOFLIP_DEAL_ESTIMATE==='function'?AUTOFLIP_DEAL_ESTIMATE(c,c.price,null):''}
    <div class="warning"><b>🔍 Диагностика проводится только при встрече</b><br>Сначала договорись с продавцом о цене, месте и времени. На встрече можно проверить автомобиль или купить его без проверки.</div>
    <div class="car-buy-status">
      <span><small>На руках</small><b>${money(state.money)}</b></span>
