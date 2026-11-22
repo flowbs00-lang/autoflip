@@ -30,20 +30,23 @@
   function reward(level,premium){
     if(!premium){
       if(level===60)return{type:'cosmetic',value:'season-one-badge',icon:'🏆',title:'Знак сезона',detail:'Ночной перекуп'};
+      if(level===59)return{type:'case',value:{id:'collector',key:'autopass:night-dealer-1:free:59'},icon:'▱',title:'Коллекционный кейс',detail:'Бесплатное открытие'};
       if(level===50)return{type:'money',value:75000,icon:'₽',title:'75 000 ₽',detail:'Финальный капитал'};
       if(level===40)return{type:'boost',value:12,icon:'⚡',title:'12 ч. ускорения',detail:'Покупатели пишут быстрее'};
-      if(level===30)return{type:'money',value:50000,icon:'₽',title:'50 000 ₽',detail:'Большая награда'};
+      if(level===30)return{type:'case',value:{id:'secret',key:'autopass:night-dealer-1:free:30'},icon:'▱',title:'Тайный кейс',detail:'Бесплатное открытие'};
       if(level===20)return{type:'rep',value:4,icon:'★',title:'+4 репутации',detail:'Рубеж сезона'};
-      if(level===10)return{type:'money',value:30000,icon:'₽',title:'30 000 ₽',detail:'Первая большая награда'};
+      if(level===10)return{type:'case',value:{id:'rare',key:'autopass:night-dealer-1:free:10'},icon:'▱',title:'Редкий кейс',detail:'Бесплатное открытие'};
       if(level%5===0)return{type:'rep',value:2,icon:'★',title:'+2 репутации',detail:'Опыт перекупа'};
       if(level%3===0)return{type:'boost',value:2,icon:'⚡',title:'2 ч. ускорения',detail:'Покупатели пишут быстрее'};
       var small=5000+(level%4)*2500;return{type:'money',value:small,icon:'₽',title:cash(small),detail:'Игровой капитал'};
     }
-    if(level===60)return{type:'plate',value:{id:'autopass-s1-60',number:'А777МР',region:'77',rarity:'secret'},icon:'▰',title:'А777МР 77',detail:'Главный номер сезона'};
+    if(level===60)return{type:'case',value:{id:'legend',key:'autopass:night-dealer-1:ultimate:60'},icon:'▱',title:'Легендарный кейс',detail:'Главная награда сезона'};
     if(level===50)return{type:'money',value:200000,icon:'₽',title:'200 000 ₽',detail:'Финальный капитал Ultimate'};
+    if(level===45)return{type:'case',value:{id:'collector',key:'autopass:night-dealer-1:ultimate:45'},icon:'▱',title:'Коллекционный кейс',detail:'Ultimate-награда'};
     if(level===40)return{type:'cosmetic',value:'gold-listing-frame',icon:'✦',title:'Золотая рамка',detail:'Оформление объявлений'};
-    if(level===30)return{type:'plate',value:{id:'autopass-s1-30',number:'Н030МР',region:'43',rarity:'ultra'},icon:'▰',title:'Н030МР 43',detail:'Сезонный номер'};
+    if(level===30)return{type:'case',value:{id:'secret',key:'autopass:night-dealer-1:ultimate:30'},icon:'▱',title:'Тайный кейс',detail:'Ultimate-награда'};
     if(level===20)return{type:'money',value:100000,icon:'₽',title:'100 000 ₽',detail:'Большая награда Ultimate'};
+    if(level===15)return{type:'case',value:{id:'secret',key:'autopass:night-dealer-1:ultimate:15'},icon:'▱',title:'Тайный кейс',detail:'Ultimate-награда'};
     if(level===10)return{type:'cosmetic',value:'night-dealer-frame',icon:'♛',title:'Рамка профиля',detail:'Ночной перекуп'};
     if(level%5===0)return{type:'boost',value:6,icon:'⚡',title:'6 ч. ускорения',detail:'Покупатели пишут быстрее'};
     if(level%3===0)return{type:'rep',value:2,icon:'★',title:'+2 репутации',detail:'Ultimate-репутация'};
@@ -68,6 +71,11 @@
       state.store.fastBuyersUntil=Math.max(Date.now(),Number(state.store.fastBuyersUntil||0))+Number(item.value||0)*3600000;
     }
     if(item.type==='cosmetic'&&p.cosmetics.indexOf(item.value)<0)p.cosmetics.push(item.value);
+    if(item.type==='case'){
+      if(!state.plates||typeof state.plates!=='object')state.plates={items:[],nextId:1};
+      if(!Array.isArray(state.plates.caseRewards))state.plates.caseRewards=[];
+      if(!state.plates.caseRewards.some(function(x){return x&&x.key===item.value.key;}))state.plates.caseRewards.push({key:item.value.key,caseId:item.value.id,source:'AutoPass'});
+    }
     if(item.type==='plate'){
       if(!state.plates||typeof state.plates!=='object')state.plates={items:[],nextId:1};
       if(!Array.isArray(state.plates.items))state.plates.items=[];
@@ -100,7 +108,7 @@
   function passRows(){var s=summary(),html='';for(var level=1;level<=MAX_LEVEL;level++)html+='<article class="pass-level '+(level===s.level?'current ':'')+(level%10===0?'milestone ':'')+'" data-pass-level="'+level+'">'+rewardCard(level,false)+'<span class="pass-level-number">'+level+'</span>'+rewardCard(level,true)+'</article>';return html;}
   window.gamePass=function(){
     var p=ensure(),s=summary(),available=s.level-p.freeClaimed+(p.ultimate?s.level-p.ultimateClaimed:0),percent=Math.min(100,s.progress/s.needed*100);
-    var offer='<section class="ultimate-offer '+(p.ultimate?'owned':'')+'"><div><small>ULTIMATE</small><b>'+(p.ultimate?'Уже активирован':'Ещё 60 премиальных наград')+'</b><p>'+(p.ultimate?'Все достигнутые уровни доступны для получения.':'Сезонные номера, оформление, ускорители и капитал.')+'</p></div>'+(p.ultimate?'<span>✓</span>':'<button onclick="openStoreProduct(\'autopass_ultimate\')">Купить · 499 ₽</button>')+'</section>';
+    var offer='<section class="ultimate-offer '+(p.ultimate?'owned':'')+'"><div><small>ULTIMATE</small><b>'+(p.ultimate?'Уже активирован':'Ещё 60 премиальных наград')+'</b><p>'+(p.ultimate?'Все достигнутые уровни доступны для получения.':'Редкие кейсы, оформление, ускорители и капитал.')+'</p></div>'+(p.ultimate?'<span>✓</span>':'<button onclick="openStoreProduct(\'autopass_ultimate\')">Купить · 499 ₽</button>')+'</section>';
     render('<div class="app game-pass-v3">'+head('AutoPass')+'<section class="autopass-hero"><div><small>СЕЗОН 1 · НОЧНОЙ ПЕРЕКУП</small><h2>AUTO<span>PASS</span></h2><p>Проходи задания и развивай автобизнес. Всего 60 уровней.</p></div><strong>'+s.level+'</strong><footer><b>'+s.progress+' / '+s.needed+' очков</b><i><em style="width:'+percent+'%"></em></i></footer></section><div class="autopass-actions"><button onclick="gameTasks()">Задания</button><button class="'+(available?'ready':'')+'" onclick="claimAllAutoPassRewards()" '+(available?'':'disabled')+'>'+(available?'Забрать · '+available:'Всё получено')+'</button></div>'+offer+'<div class="pass-columns"><b>БЕСПЛАТНО</b><span>УРОВЕНЬ</span><b>ULTIMATE</b></div><main class="pass-road-v3">'+passRows()+'</main></div>');
     setTimeout(function(){var current=document.querySelector('.pass-level.current');if(current&&s.level>3)current.scrollIntoView({block:'center'});},80);
   };

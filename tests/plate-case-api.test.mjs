@@ -82,6 +82,28 @@ test("server rejects locked or unaffordable cases", async () => {
   } finally { await f.close(); }
 });
 
+test("claimed AutoPass case opens for free once and bypasses garage level", async () => {
+  const rewardKey = "autopass:night-dealer-1:free:30";
+  const f = await fixture({
+    money: 0,
+    garageLevel: 1,
+    autopass: { season: "night-dealer-1", freeClaimed: [30], ultimateClaimed: [] },
+    plates: { items: [], appliedOpeningIds: [], caseRewards: [{ key: rewardKey, caseId: "secret", source: "AutoPass" }] }
+  });
+  try {
+    const body = { openingId: "case:secret:autopass-test", caseId: "secret", rewardKey, phase: "prepare", clientId: "device-plate-server" };
+    let response = await openPlateCase({ request: f.request(body), env: { DB: f.db } });
+    let payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.price, 0);
+    assert.equal(payload.rewardKey, rewardKey);
+    response = await openPlateCase({ request: f.request({ ...body, openingId: "case:secret:autopass-test-2" }), env: { DB: f.db } });
+    payload = await response.json();
+    assert.equal(response.status, 409);
+    assert.equal(payload.error, "case_reward_used");
+  } finally { await f.close(); }
+});
+
 test("cloud save accepts only the exact prepared plate and exact case charge", async () => {
   const f = await fixture();
   try {

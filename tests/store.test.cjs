@@ -9,14 +9,14 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 let storeModule;
 async function store(){return storeModule||=(await import(pathToFileURL(path.join(root,'functions/_lib/store.js')).href));}
 
-test('store catalog excludes game currency and random paid rewards',async()=>{
+test('store catalog exposes every fixed offer and excludes random paid rewards',async()=>{
   const {STORE_PRODUCTS,publicCatalog}=await store();
   assert.deepEqual(Object.keys(STORE_PRODUCTS),['cash_200k','cash_1m','cash_2m','plate_cool','plate_custom','buyers_1d','buyers_7d','buyers_30d','autopass_ultimate','garage_5','garage_10']);
   const catalog=publicCatalog();
-  assert.equal(catalog.length,7);
+  assert.equal(catalog.length,10);
   assert.ok(catalog.every(product=>product.price>0&&!('grant' in product)));
   assert.deepEqual(Object.fromEntries(catalog.map(product=>[product.code,product.price])),{
-    autopass_ultimate:499,plate_custom:999,buyers_1d:99,buyers_7d:399,buyers_30d:1199,garage_5:499,garage_10:1499
+    cash_200k:99,cash_1m:399,cash_2m:699,autopass_ultimate:499,plate_custom:999,buyers_1d:99,buyers_7d:399,buyers_30d:1199,garage_5:499,garage_10:1499
   });
 });
 
@@ -94,9 +94,11 @@ test('payment creation keeps YooKassa secrets server-side and webhooks recheck p
   assert.doesNotMatch(read('store.js'),/YOOKASSA_SECRET_KEY|YOOKASSA_SHOP_ID/);
 });
 
-test('shop stays hidden during the free beta and fast buyers logic remains available for a later launch',()=>{
+test('main shop contains every offer and the old secondary catalog is unreachable',()=>{
   const ui=read('ui.js'),html=read('index.html');
-  assert.doesNotMatch(ui,/openStore','Магазин','shop'/);
+  for(const code of ['cash_200k','cash_1m','cash_2m','autopass_ultimate','garage_5','garage_10','plate_custom','buyers_1d','buyers_7d','buyers_30d'])assert.match(ui,new RegExp(code));
+  assert.doesNotMatch(ui,/Посмотреть AutoPass/);
+  assert.match(read('store.js'),/openStoreProduct=function\(code\)\{return gameShop\(code\);\}/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
-  assert.match(html,/store\.js\?v=20261122-4/);assert.match(html,/store\.css\?v=20261010-1/);
+  assert.match(html,/store\.js\?v=20261122-5/);assert.match(html,/store\.css\?v=20261010-1/);
 });

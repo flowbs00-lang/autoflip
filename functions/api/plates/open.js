@@ -3,28 +3,43 @@ import { generatePlate, plateCaseById } from "../../_lib/plate-cases.js";
 import { getSession } from "../../_lib/session.js";
 
 const PHASES = new Set(["prepare", "commit"]);
-let schemaReady = false;
+const AUTOPASS_CASE_REWARDS = Object.freeze({
+  "autopass:night-dealer-1:free:10": Object.freeze({ caseId: "rare", track: "free", level: 10 }),
+  "autopass:night-dealer-1:free:30": Object.freeze({ caseId: "secret", track: "free", level: 30 }),
+  "autopass:night-dealer-1:free:59": Object.freeze({ caseId: "collector", track: "free", level: 59 }),
+  "autopass:night-dealer-1:ultimate:15": Object.freeze({ caseId: "secret", track: "ultimate", level: 15 }),
+  "autopass:night-dealer-1:ultimate:30": Object.freeze({ caseId: "secret", track: "ultimate", level: 30 }),
+  "autopass:night-dealer-1:ultimate:45": Object.freeze({ caseId: "collector", track: "ultimate", level: 45 }),
+  "autopass:night-dealer-1:ultimate:60": Object.freeze({ caseId: "legend", track: "ultimate", level: 60 })
+});
+const schemaReady = new WeakSet();
 
 async function ensureSchema(db) {
-  if (schemaReady) return;
-  await db.batch([
-    db.prepare(`CREATE TABLE IF NOT EXISTS plate_case_openings (
+  if (schemaReady.has(db)) return;
+  await db.prepare(`CREATE TABLE IF NOT EXISTS plate_case_openings (
       user_id TEXT NOT NULL,
       opening_id TEXT NOT NULL,
       case_id TEXT NOT NULL,
       price INTEGER NOT NULL,
       plate_json TEXT NOT NULL,
+      reward_key TEXT,
       status TEXT NOT NULL DEFAULT 'prepared',
       client_id TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       PRIMARY KEY (user_id, opening_id),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )`),
+    )`).run();
+  const columns = await db.prepare("PRAGMA table_info(plate_case_openings)").all();
+  if (!(columns.results || []).some((column) => column.name === "reward_key")) {
+    await db.prepare("ALTER TABLE plate_case_openings ADD COLUMN reward_key TEXT").run();
+  }
+  await db.batch([
     db.prepare("CREATE INDEX IF NOT EXISTS plate_case_openings_user_status_idx ON plate_case_openings(user_id, status, updated_at DESC)"),
-    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS plate_case_openings_one_prepared_idx ON plate_case_openings(user_id) WHERE status = 'prepared'")
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS plate_case_openings_one_prepared_idx ON plate_case_openings(user_id) WHERE status = 'prepared'"),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS plate_case_openings_reward_idx ON plate_case_openings(user_id, reward_key) WHERE reward_key IS NOT NULL")
   ]);
-  schemaReady = true;
+  schemaReady.add(db);
 }
 
 function base64ToBytes(value) {
@@ -52,9 +67,22 @@ function publicOpening(row) {
     openingId: row.opening_id,
     caseId: row.case_id,
     price: Number(row.price),
+    rewardKey: row.reward_key || null,
     plate: JSON.parse(row.plate_json),
     committed: row.status === "committed"
   };
+}
+
+function validateRewardCase(state, rewardKey, caseId) {
+  if (!rewardKey) return null;
+  const rule = AUTOPASS_CASE_REWARDS[rewardKey];
+  const pass = state?.autopass;
+  const claimed = rule?.track === "ultimate" ? pass?.ultimateClaimed : pass?.freeClaimed;
+  const token = Array.isArray(state?.plates?.caseRewards) && state.plates.caseRewards.some((item) => item?.key === rewardKey && item?.caseId === caseId);
+  if (!rule || rule.caseId !== caseId || pass?.season !== "night-dealer-1" || !Array.isArray(claimed) || !claimed.includes(rule.level) || (rule.track === "ultimate" && !pass?.ultimate) || !token) {
+    throw new RequestError("invalid_case_reward", 409);
+  }
+  return rule;
 }
 
 export async function onRequestPost(context) {
@@ -72,22 +100,28 @@ export async function onRequestPost(context) {
     const body = await readJson(context.request, 8_000);
     const openingId = String(body?.openingId || "").trim().slice(0, 120);
     const caseId = String(body?.caseId || "").trim().slice(0, 24);
+    const rewardKey = String(body?.rewardKey || "").trim().slice(0, 120) || null;
     const clientId = String(body?.clientId || "").trim().slice(0, 120);
     const phase = String(body?.phase || "prepare").trim();
     if (!/^[a-z0-9:_-]{12,120}$/i.test(openingId)) throw new RequestError("invalid_opening_id", 400);
     if (!/^[a-z0-9:_-]{8,120}$/i.test(clientId)) throw new RequestError("invalid_client_id", 400);
     if (!PHASES.has(phase)) throw new RequestError("invalid_opening_phase", 400);
 
-    let row = await context.env.DB.prepare(`SELECT opening_id, case_id, price, plate_json, status, client_id, created_at, updated_at
+    let row = await context.env.DB.prepare(`SELECT opening_id, case_id, price, plate_json, reward_key, status, client_id, created_at, updated_at
       FROM plate_case_openings WHERE user_id = ? AND opening_id = ? LIMIT 1`).bind(session.id, openingId).first();
 
     if (!row && phase === "prepare") {
       const box = plateCaseById(caseId);
       if (!box) throw new RequestError("invalid_case", 400);
       const state = await currentState(context.env.DB, session.id);
+      const reward = validateRewardCase(state, rewardKey, box.id);
       const level = Math.max(1, Number(state.garageLevel || state.garageProgress?.level || 1));
-      if (level < box.level) throw new RequestError("case_level_locked", 409);
-      if (Number(state.money || 0) < box.price) throw new RequestError("insufficient_game_money", 409);
+      if (!reward && level < box.level) throw new RequestError("case_level_locked", 409);
+      if (!reward && Number(state.money || 0) < box.price) throw new RequestError("insufficient_game_money", 409);
+      if (reward) {
+        const used = await context.env.DB.prepare("SELECT opening_id FROM plate_case_openings WHERE user_id = ? AND reward_key = ? LIMIT 1").bind(session.id, rewardKey).first();
+        if (used) throw new RequestError("case_reward_used", 409);
+      }
       const pending = await context.env.DB.prepare(`SELECT opening_id, updated_at FROM plate_case_openings
         WHERE user_id = ? AND status = 'prepared' LIMIT 1`).bind(session.id).first();
       if (pending) {
@@ -105,10 +139,10 @@ export async function onRequestPost(context) {
       const now = Date.now();
       const plate = generatePlate(box, openingId, now);
       await context.env.DB.prepare(`INSERT OR IGNORE INTO plate_case_openings
-        (user_id, opening_id, case_id, price, plate_json, status, client_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, 'prepared', ?, ?, ?)`)
-        .bind(session.id, openingId, box.id, box.price, JSON.stringify(plate), clientId, now, now).run();
-      row = await context.env.DB.prepare(`SELECT opening_id, case_id, price, plate_json, status, client_id, created_at, updated_at
+        (user_id, opening_id, case_id, price, plate_json, reward_key, status, client_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'prepared', ?, ?, ?)`)
+        .bind(session.id, openingId, box.id, reward ? 0 : box.price, JSON.stringify(plate), rewardKey, clientId, now, now).run();
+      row = await context.env.DB.prepare(`SELECT opening_id, case_id, price, plate_json, reward_key, status, client_id, created_at, updated_at
         FROM plate_case_openings WHERE user_id = ? AND opening_id = ? LIMIT 1`).bind(session.id, openingId).first();
       if (!row) throw new RequestError("case_opening_in_progress", 409);
     }

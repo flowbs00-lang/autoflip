@@ -14,3 +14,12 @@
 
 /* Capital letters remain visibly full-sized, including numbers migrated from old saves. */
 .plate-main>em{font-size:27px}.plate-face.large .plate-main>em{font-size:38px}
+
+/* Russian registration plates stay readable inside the global game theme. */
+#screen .plates-app .plate-face{background:linear-gradient(180deg,#fff,#f0f1ed)!important;color:#090b0d!important;border-color:#111!important;box-shadow:inset 0 0 0 1px #b7babd,0 9px 22px #0004!important}
+#screen .plates-app .plate-main,#screen .plates-app .plate-main>strong,#screen .plates-app .plate-main>em,#screen .plates-app .plate-region,#screen .plates-app .plate-region>i,#screen .plates-app .plate-region>small,#screen .plates-app .plate-region>small>em{color:#090b0d!important;opacity:1!important;text-shadow:none!important}
+#screen .plates-app .plate-region{border-left-color:#111!important;background:#f8f8f4!important}
+#screen .plates-app .plate-face.plate-ultra{border-color:#a87312!important;box-shadow:inset 0 0 0 1px #c49e4b,0 9px 26px #e5bd6655!important}
+#screen .plates-app .plate-face.plate-secret{border-color:#744cc5!important;box-shadow:inset 0 0 0 1px #a98ae1,0 9px 26px #9d79df66!important}
+#screen .plates-app .plate-face.plate-priceless{border-color:#8c5a05!important;box-shadow:inset 0 0 0 1px #d4ad4c,0 9px 30px #d49b3470!important}
+.case-card.reward-case{border-color:#70e0b4;background:linear-gradient(135deg,#1d5d5066,var(--os-raised));box-shadow:inset 0 1px #a8f4d8,0 10px 30px #37d49b26}.case-card.reward-case .plate-open{background:linear-gradient(180deg,#7ce9c0,#33b985);color:#092d24}

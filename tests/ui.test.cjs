@@ -63,7 +63,7 @@ test('legacy launcher stays hidden until the modern interface is ready',()=>{
   assert.match(html,/<html lang="ru" class="autoflip-booting">/);
   assert.match(html,/autoflip-booting #screen\{visibility:hidden!important\}/);
   assert.match(html,/id="screen" aria-busy="true"/);
-  assert.match(html,/ui\.js\?v=20261122-10/);
+  assert.match(html,/ui\.js\?v=20261122-11/);
   assert.match(ui,/classList\.remove\('autoflip-booting'\)/);
 });
 test('bottom navigation identifies plates before garage copy and keeps utility screens on home',()=>{

@@ -32,10 +32,21 @@ test('AutoPass contains 60 safe rewards on each track',()=>{
   const cash=items=>items.filter(x=>x.type==='money').reduce((sum,x)=>sum+x.value,0);
   assert.ok(cash(free)<=800000,'free capital remains bounded');
   assert.ok(cash(ultimate)<=1500000,'Ultimate capital remains bounded');
-  assert.equal(ultimate.filter(x=>x.type==='plate').length,2);
+  assert.deepEqual(free.filter(x=>x.type==='case').map(x=>[x.value.id,x.value.key]),[
+    ['rare','autopass:night-dealer-1:free:10'],
+    ['secret','autopass:night-dealer-1:free:30'],
+    ['collector','autopass:night-dealer-1:free:59']
+  ]);
+  assert.deepEqual(ultimate.filter(x=>x.type==='case').map(x=>[x.value.id,x.value.key]),[
+    ['secret','autopass:night-dealer-1:ultimate:15'],
+    ['secret','autopass:night-dealer-1:ultimate:30'],
+    ['collector','autopass:night-dealer-1:ultimate:45'],
+    ['legend','autopass:night-dealer-1:ultimate:60']
+  ]);
+  assert.equal(ultimate.filter(x=>x.type==='plate').length,0);
 });
 
-test('rewards are idempotent and seasonal plates cannot inflate economy',()=>{
+test('rewards are idempotent and AutoPass cases are issued only once',()=>{
   const {context:c}=game({autopass:{season:'night-dealer-1',points:6000,ultimate:true,freeClaimed:[],ultimateClaimed:[],cosmetics:[],daily:{day:1,earned:0},history:[]}});
   c.claimAllAutoPassRewards();
   const after=c.state.money;
@@ -43,8 +54,9 @@ test('rewards are idempotent and seasonal plates cannot inflate economy',()=>{
   assert.equal(c.state.money,after);
   assert.equal(c.state.autopass.freeClaimed.length,60);
   assert.equal(c.state.autopass.ultimateClaimed.length,60);
-  assert.equal(c.state.plates.items.length,2);
-  assert.ok(c.state.plates.items.every(x=>x.premium&&x.tradable===false&&x.value===0));
+  assert.equal(c.state.plates.items.length,0);
+  assert.equal(c.state.plates.caseRewards.length,7);
+  assert.equal(new Set(c.state.plates.caseRewards.map(x=>x.key)).size,7);
 });
 
 test('regular gameplay points have a 300 point daily cap',()=>{

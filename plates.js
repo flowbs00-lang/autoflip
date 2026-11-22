@@ -31,6 +31,7 @@
     if(!Array.isArray(state.plates.items))state.plates.items=[];
     if(!Array.isArray(state.plates.appliedOpeningIds))state.plates.appliedOpeningIds=[];
     if(!Array.isArray(state.plates.pendingOpeningIds))state.plates.pendingOpeningIds=[];
+    if(!Array.isArray(state.plates.caseRewards))state.plates.caseRewards=[];
     state.plates.appliedOpeningIds=state.plates.appliedOpeningIds.slice(-300);
     state.plates.pendingOpeningIds=state.plates.pendingOpeningIds.slice(-10);
     const allowed=new Set(REGIONS.map(function(r){return r[0];}));
@@ -98,10 +99,11 @@
   }
   function fullPlateText(p){return String(p.number).toUpperCase()+' '+String(p.region.code).toUpperCase();}
   function chanceText(c){return c.weights.map(function(w){return RARITIES[w[0]].title+' '+String(w[1]).replace('.',',')+'%';}).join(' · ');}
+  function caseRewards(caseId){return ensure().caseRewards.filter(function(item){return item&&item.caseId===caseId&&item.key;});}
   function caseCard(c){
-    const locked=currentGarageLevel()<c.level,canPay=Number(state.money||0)>=c.price;
+    const rewards=caseRewards(c.id),free=rewards.length>0,locked=!free&&currentGarageLevel()<c.level,canPay=Number(state.money||0)>=c.price;
     const tier=c.weights[c.weights.length-1][0];
-    return '<article class="case-card '+tier+'"><div class="case-top"><span class="case-orb" aria-hidden="true">▱<i>✦</i></span><div><small>'+(locked?'🔒 ГАРАЖ · УРОВЕНЬ '+c.level:'ДОСТУПЕН СЕЙЧАС')+'</small><h3>'+c.name+'</h3><span class="rarity '+tier+'">До «'+RARITIES[tier].title+'»</span></div></div><details class="case-odds"><summary>Шансы выпадения <span>⌄</span></summary>'+c.weights.map(w=>'<div><span class="rarity '+w[0]+'">'+RARITIES[w[0]].title+'</span><b>'+String(w[1]).replace('.',',')+'%</b><meter min="0" max="100" value="'+w[1]+'">'+w[1]+'%</meter></div>').join('')+'</details><div class="case-bottom"><div><small>Стоимость кейса</small><b>'+formatMoney(c.price)+'</b></div><button class="plate-open" '+(locked||!canPay?'disabled':'')+' onclick="openPlateCase(\''+c.id+'\')">'+(locked?'Уровень '+c.level:canPay?'Открыть ↗':'Не хватает денег')+'</button></div>'+(locked?'<small class="case-hint">Повысь уровень в разделе «Гараж → Развитие».</small>':!canPay?'<small class="case-hint">Нужно ещё '+formatMoney(c.price-Number(state.money||0))+'</small>':'')+'</article>';
+    return '<article class="case-card '+tier+(free?' reward-case':'')+'"><div class="case-top"><span class="case-orb" aria-hidden="true">▱<i>✦</i></span><div><small>'+(free?'🎁 НАГРАДА AUTOPASS · '+rewards.length:locked?'🔒 ГАРАЖ · УРОВЕНЬ '+c.level:'ДОСТУПЕН СЕЙЧАС')+'</small><h3>'+c.name+'</h3><span class="rarity '+tier+'">До «'+RARITIES[tier].title+'»</span></div></div><details class="case-odds"><summary>Шансы выпадения <span>⌄</span></summary>'+c.weights.map(w=>'<div><span class="rarity '+w[0]+'">'+RARITIES[w[0]].title+'</span><b>'+String(w[1]).replace('.',',')+'%</b><meter min="0" max="100" value="'+w[1]+'">'+w[1]+'%</meter></div>').join('')+'</details><div class="case-bottom"><div><small>'+(free?'Награда AutoPass':'Стоимость кейса')+'</small><b>'+(free?'Бесплатно':formatMoney(c.price))+'</b></div><button class="plate-open" '+(!free&&(locked||!canPay)?'disabled':'')+' onclick="openPlateCase(\''+c.id+'\')">'+(free?'Открыть бесплатно':locked?'Уровень '+c.level:canPay?'Открыть':'Не хватает денег')+'</button></div>'+(locked?'<small class="case-hint">Повысь уровень в разделе «Гараж → Развитие».</small>':!free&&!canPay?'<small class="case-hint">Нужно ещё '+formatMoney(c.price-Number(state.money||0))+'</small>':'')+'</article>';
   }
   function inventoryCard(p){const locked=p.tradable===false;return '<article class="plate-item"><div class="plate-item-top"><span class="rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</span><button class="plate-star" aria-label="'+(p.favorite?'Убрать из избранного':'В избранное')+'" aria-pressed="'+!!p.favorite+'" onclick="favoritePlate(\''+p.id+'\')">'+(p.favorite?'★':'☆')+'</button></div>'+plateFace(p,true)+'<div class="plate-info"><b>'+escape(p.region.city)+'</b><span>'+escape(p.region.country)+'</span></div><div class="plate-value"><b>'+(locked?'Премиальный':formatMoney(p.value))+'</b>'+(locked?'<button disabled>Не продаётся</button>':'<button onclick="confirmPlateSale(\''+p.id+'\')">Продать</button>')+'</div></article>';}
   function tabs(items){return '<nav class="plate-tabs" aria-label="Разделы"><button class="'+(activeTab==='cases'?'active':'')+'" onclick="setPlateTab(\'cases\')">Кейсы</button><button class="'+(activeTab==='collection'?'active':'')+'" onclick="setPlateTab(\'collection\')">Коллекция <i>'+items.length+'</i></button></nav>';}
@@ -121,11 +123,11 @@
   }
   function openingScreen(c,p,phase){
     const reveal=phase==='reveal',rolling=phase==='rolling';
-    const canRepeat=Number(state.money||0)>=c.price;
+    const freeCount=caseRewards(c.id).length,canRepeat=freeCount>0||Number(state.money||0)>=c.price;
     const samples=['Т462ВР 77','Р684УО 78','Е213ТТ 43','А338КК 16','Н303ВВ 52','А070ВА 66','Е114КХ 97','Т333ТТ 23','В444ВВ 61','О554РО 02'];
     const reel='<div class="number-reel"><i></i><div class="reel-track">'+samples.map(x=>'<span>'+x+'</span>').join('')+'<span class="winning-number">'+escape(fullPlateText(p))+'</span></div></div>';
     const process='<small>'+(rolling?'КЕЙС ОТКРЫТ':'ОТКРЫВАЕМ КЕЙС')+'</small><div class="case-machine '+(rolling?'is-open':'')+' '+p.rarity+'"><div class="case-lid">AUTOFLIP</div><div class="case-core">✦</div><div class="case-base"></div></div>'+(rolling?reel:'<div class="opening-progress"><i></i></div>')+'<h2>'+(rolling?'Ищем твой номер':c.name)+'</h2><p>'+(rolling?'Лента замедляется…':'Снимаем защиту и открываем замки…')+'</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>';
-    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
+    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(freeCount?'Открыть ещё бесплатно':canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
   }
   function clearOpeningTimers(){if(!opening)return;if(opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);if(opening.revealTimer&&typeof clearTimeout==='function')clearTimeout(opening.revealTimer);}
   window.plates=function(){opening=null;renderPlates();};
@@ -138,16 +140,17 @@
   window.openPlateCase=async function(id){
     const c=CASES.filter(function(x){return x.id===id;})[0];if(!c)return;
     if(openingBusy)return;
-    if(currentGarageLevel()<c.level){alert('Этот кейс откроется на '+c.level+' уровне. Выполняй задания в разделе «Гараж → Развитие».');return;}
-    if(Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}
+    const reward=caseRewards(c.id)[0]||null;
+    if(!reward&&currentGarageLevel()<c.level){alert('Этот кейс откроется на '+c.level+' уровне. Выполняй задания в разделе «Гараж → Развитие».');return;}
+    if(!reward&&Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}
     openingBusy=true;let applied=false;
     try{
       persistPlates();if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){const synced=await window.AUTOFLIP_CLOUD_FLUSH();if(synced===false)throw new Error('сохранение ещё не синхронизировано');}
       const openingId='case:'+c.id+':'+Date.now().toString(36)+':'+Math.random().toString(36).slice(2,10),clientId=window.AUTOFLIP_CLOUD_CLIENT_ID||'device-legacy-client';
-      const result=await openingRequest({openingId:openingId,caseId:c.id,phase:'prepare',clientId:clientId});
+      const result=await openingRequest({openingId:openingId,caseId:c.id,phase:'prepare',clientId:clientId,rewardKey:reward&&reward.key});
       if(result.committed){location.reload();return;}
       const p=result.plate,collection=ensure();clearOpeningTimers();lastCase=c.id;
-      state.money=Number(state.money||0)-Number(result.price);collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;collection.appliedOpeningIds.push(openingId);collection.pendingOpeningIds.push(openingId);applied=true;persistPlates();
+      state.money=Number(state.money||0)-Number(result.price);collection.items.unshift(p);collection.nextId=Number(collection.nextId||1)+1;collection.appliedOpeningIds.push(openingId);collection.pendingOpeningIds.push(openingId);if(reward)collection.caseRewards=collection.caseRewards.filter(function(item){return item&&item.key!==reward.key;});applied=true;persistPlates();
       if(typeof pushPhoneNotification==='function')pushPhoneNotification('Номера','✦','Открыт '+c.name+': '+RARITIES[p.rarity].title+' номер.','plates','plate-'+p.id);
       opening={type:'case',caseId:c.id,plateId:p.id};openingScreen(c,p,'opening');
       if(typeof setTimeout==='function')opening.timer=setTimeout(function(){startPlateRoll();},1200);else revealPlateOpening();

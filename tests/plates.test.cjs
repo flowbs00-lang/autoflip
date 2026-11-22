@@ -10,7 +10,7 @@ function game(saved,animate=false){
   const c={state:saved||{money:1000000,garageLevel:1},window:null,Math:Object.create(Math),Date,render:v=>html=v,head:t=>'<h1>'+t+'</h1>',money:n=>Number(n).toLocaleString('ru-RU')+' ₽',persist:()=>{savedState=JSON.parse(JSON.stringify(c.state));},alert:()=>{},pushPhoneNotification:()=>{},AUTOFLIP_CLOUD_CLIENT_ID:'device-plates-test',AUTOFLIP_CLOUD_FLUSH:async()=>true,location:{reload:()=>{}}};
   if(animate){c.setTimeout=(fn,ms)=>{scheduled=fn;delays.push(ms);return 1;};c.clearTimeout=()=>{scheduled=null;};}
   c.Math.random=Math.random;c.window=c;vm.createContext(c);vm.runInContext(worldSource,c);vm.runInContext(source,c);
-  c.fetch=async function(url,options){const body=JSON.parse(options.body);if(body.phase==='commit'){const saved=openings.get(body.openingId);return{ok:true,json:async()=>({...saved,ok:true,committed:true})};}const box=c.plateSystem.cases.find(x=>x.id===body.caseId),rarity=c.plateSystem.rollPlateRarity(box.weights,.01),plate=c.plateSystem.makePlate(rarity);plate.id='plate-'+body.openingId;plate.openingId=body.openingId;plate.premium=false;plate.tradable=true;const result={openingId:body.openingId,caseId:body.caseId,price:box.price,plate:plate,committed:false};openings.set(body.openingId,result);return{ok:true,json:async()=>({ok:true,...result})};};
+  c.fetch=async function(url,options){const body=JSON.parse(options.body);if(body.phase==='commit'){const saved=openings.get(body.openingId);return{ok:true,json:async()=>({...saved,ok:true,committed:true})};}const box=c.plateSystem.cases.find(x=>x.id===body.caseId),rarity=c.plateSystem.rollPlateRarity(box.weights,.01),plate=c.plateSystem.makePlate(rarity);plate.id='plate-'+body.openingId;plate.openingId=body.openingId;plate.premium=false;plate.tradable=true;const result={openingId:body.openingId,caseId:body.caseId,price:body.rewardKey?0:box.price,plate:plate,committed:false};openings.set(body.openingId,result);return{ok:true,json:async()=>({ok:true,...result})};};
   return {c,html:()=>html,saved:()=>savedState,delays:()=>delays.slice(),runTimer:()=>scheduled&&scheduled()};
 }
 test('all case probability tables total 100%',()=>{
@@ -38,6 +38,11 @@ test('priceless series is strictly one of the five 777 plates',()=>{
 test('locked cases cannot take money and the starter case stores a plate',async()=>{
   const g=game();g.c.plates();assert.match(g.html(),/Гараж → Развитие/);assert.doesNotMatch(g.html(),/следующем обновлении/);const before=g.c.state.money;g.c.openPlateCase('rare');assert.equal(g.c.state.money,before);assert.equal(g.c.state.plates.items.length,0);
   await g.c.openPlateCase('standard');assert.equal(g.c.state.money,before-3000);assert.equal(g.c.state.plates.items.length,1);assert.match(g.html(),/НОВЫЙ НОМЕР/);
+});
+test('AutoPass reward case bypasses garage and money once then is consumed',async()=>{
+  const key='autopass:night-dealer-1:free:30',g=game({money:0,garageLevel:1,plates:{items:[],nextId:1,caseRewards:[{key,caseId:'secret',source:'AutoPass'}]}});
+  g.c.plates();assert.match(g.html(),/НАГРАДА AUTOPASS/);assert.match(g.html(),/Открыть бесплатно/);
+  await g.c.openPlateCase('secret');assert.equal(g.c.state.money,0);assert.equal(g.c.state.plates.items.length,1);assert.equal(g.c.state.plates.caseRewards.length,0);
 });
 test('selling returns exactly the configured rarity value',()=>{
   const g=game({money:0,garageLevel:1,plates:{items:[{id:'one',number:'А111МР',region:{code:'77',city:'Москва',country:'Россия'},rarity:'secret',value:500000}],nextId:2}});g.c.sellPlate('one');assert.equal(g.c.state.money,500000);assert.equal(g.c.state.plates.items.length,0);
@@ -67,4 +72,9 @@ test('old lowercase plate numbers migrate to uppercase',()=>{
 test('old removed regions migrate without deleting the collected plate',()=>{
   const g=game({money:0,garageLevel:1,plates:{items:[{id:'old-region',number:'А123ВС',region:{code:'54',city:'Новосибирск',country:'Россия'},rarity:'ordinary',value:1000}],nextId:2}});
   g.c.plates();const plate=g.c.state.plates.items[0],allowed=new Set(g.c.plateSystem.regions.map(x=>x[0]));assert.equal(g.c.state.plates.items.length,1);assert.ok(allowed.has(plate.region.code));
+});
+test('plate theme forces all Russian registration characters to dark ink',()=>{
+  const css=fs.readFileSync(path.join(__dirname,'../plates.css'),'utf8');
+  assert.match(css,/\.plate-main>strong[^}]*color:#090b0d!important/);
+  assert.match(css,/\.plate-region>small>em[^}]*color:#090b0d!important/);
 });

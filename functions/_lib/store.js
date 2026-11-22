@@ -1,9 +1,9 @@
 import { RequestError } from "./http.js";
 
 export const STORE_PRODUCTS = Object.freeze({
-  cash_200k: { code: "cash_200k", title: "200 000 ₽", description: "Архивный товар", category: "money", price: 99, public: false, grant: { type: "money", amount: 200_000 } },
-  cash_1m: { code: "cash_1m", title: "1 000 000 ₽", description: "Архивный товар", category: "money", price: 399, public: false, grant: { type: "money", amount: 1_000_000 } },
-  cash_2m: { code: "cash_2m", title: "2 000 000 ₽", description: "Архивный товар", category: "money", price: 699, public: false, grant: { type: "money", amount: 2_000_000 } },
+  cash_200k: { code: "cash_200k", title: "200 000 ₽", description: "Игровой капитал", category: "money", price: 99, grant: { type: "money", amount: 200_000 } },
+  cash_1m: { code: "cash_1m", title: "1 000 000 ₽", description: "Игровой капитал", category: "money", price: 399, grant: { type: "money", amount: 1_000_000 } },
+  cash_2m: { code: "cash_2m", title: "2 000 000 ₽", description: "Игровой капитал", category: "money", price: 699, grant: { type: "money", amount: 2_000_000 } },
   plate_cool: { code: "plate_cool", title: "Крутой номер", description: "Архивный случайный товар", category: "plates", price: 499, public: false, grant: { type: "plate", mode: "cool" } },
   plate_custom: { code: "plate_custom", title: "Свой номер", description: "Выбери буквы, цифры и регион", category: "plates", price: 999, grant: { type: "plate", mode: "custom" }, badge: "Конструктор" },
   buyers_1d: { code: "buyers_1d", title: "Быстрые покупатели · сутки", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 99, grant: { type: "fast_buyers", durationMs: 86_400_000 } },
