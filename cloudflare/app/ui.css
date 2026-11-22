@@ -195,3 +195,55 @@ header{height:74px;background:#0d1119db;border-color:#ffffff0b;padding:0 6vw;box
 #screen .game-bottom-nav .game-tab{color:#86a0b8}
 #screen .game-bottom-nav .game-tab.active{color:#fff;background:linear-gradient(180deg,#1c73a2,#16456c);box-shadow:inset 0 2px #6be3bb,0 -3px 0 #08111d}
 #screen .game-bottom-nav .game-tab.active span{color:#70e2bd}
+
+/* AutoFlip final game skin: every section inherits the home screen's glass lobby. */
+#screen{background:#071326}
+#screen .app.game-nav-page:not(.game-home-v2){position:relative;isolation:isolate;min-height:100%;height:100%;overflow-y:auto;overflow-x:hidden;padding:14px 13px 112px;color:#f7fbff;background:#071326;scrollbar-width:none}
+#screen .app.game-nav-page:not(.game-home-v2)::-webkit-scrollbar{display:none}
+#screen .app.game-nav-page:not(.game-home-v2)::before{content:"";position:fixed;z-index:-2;inset:0;background:url("assets/game-lobby-v2.webp") center/cover no-repeat;filter:saturate(1.05) contrast(1.04)}
+#screen .app.game-nav-page:not(.game-home-v2)::after{content:"";position:fixed;z-index:-1;inset:0;background:linear-gradient(180deg,#061225d9 0%,#071a30ed 42%,#06101feb 100%)}
+#screen .app.game-nav-page:not(.game-home-v2)>*{position:relative;z-index:1}
+#screen .app.game-nav-page .os-head{height:48px;margin:0 0 12px;padding:0 3px 10px;display:grid;grid-template-columns:38px 1fr 38px;align-items:center;border-bottom:1px solid #70b4d52b}
+#screen .app.game-nav-page .os-head b{font-size:18px;text-align:center;color:#fff;text-shadow:0 2px 8px #0008}
+#screen .app.game-nav-page .os-head button{width:34px;height:34px;padding:7px;border:1px solid #6bb8db66;border-radius:12px;background:linear-gradient(145deg,#214b71e8,#102a48e8);box-shadow:inset 0 1px #ffffff35,0 4px 0 #061426;color:#8ff0cc}
+#screen .app.game-nav-page .os-head button:last-child{justify-self:end}
+#screen .app.game-nav-page .os-head svg{width:19px;height:19px}
+
+#screen .game-panel-title,#screen .shop-v2-head,#screen .game-menu-sheet,#screen .game-task-block,#screen .game-inbox-card,#screen .pass-hero,#screen .pass-road article,#screen .app.game-nav-page :is(.note,.market,.setting,.contact,.row,.stat,.bank,.profile-card,.event,.condition-card,.community-card,.community-panel,.community-section,.plate-card,.plate-case,.garage-card,.garage-scene,.garage-info,.garage-panel){border:1px solid #6bbce055!important;border-radius:18px!important;background:linear-gradient(145deg,#173b61df,#0d2442e8)!important;box-shadow:inset 0 1px #ffffff24,0 6px 0 #061426,0 13px 25px #0004!important;color:#f7fbff!important}
+#screen .game-panel-title{margin:0 0 12px;padding:15px 16px!important}
+#screen .game-panel-title h2,#screen .shop-v2-head h2{color:#fff!important}
+#screen .game-panel-title p,#screen .app.game-nav-page :is(.muted,.note small,.row small,.community-card small,.garage-card small){color:#abc0d2!important}
+#screen .app.game-nav-page :is(.note,.market,.setting,.contact,.row,.stat,.bank,.profile-card,.event,.condition-card,.community-card,.community-panel,.community-section,.plate-card,.plate-case,.garage-card,.garage-scene,.garage-info,.garage-panel){padding:13px!important}
+
+#screen .app.game-nav-page button:not(.game-tab):not(.os-head button){border:1px solid #6bbce055;border-radius:13px;background:linear-gradient(145deg,#1e527d,#123655);box-shadow:inset 0 1px #ffffff2c,0 4px 0 #061426;color:#f7fbff;font-weight:800;transition:filter .15s,transform .15s,box-shadow .15s}
+#screen .app.game-nav-page button:not(.game-tab):not(.os-head button):hover{filter:brightness(1.14)}
+#screen .app.game-nav-page button:not(.game-tab):not(.os-head button):active{transform:translateY(2px);box-shadow:inset 0 1px #ffffff1c,0 2px 0 #061426}
+#screen .app.game-nav-page button.action.green,#screen .app.game-nav-page button.green,#screen .game-task-block>button:not(:disabled){border-color:#a8f7d6!important;background:linear-gradient(180deg,#52e5af,#1c9b72)!important;box-shadow:inset 0 2px #d2ffed,0 5px 0 #07533f!important;color:#062b21!important}
+#screen .app.game-nav-page button:disabled{opacity:.5;filter:saturate(.5)}
+#screen .app.game-nav-page input:not([type=range]),#screen .app.game-nav-page select,#screen .app.game-nav-page textarea{border:1px solid #6bbce055!important;border-radius:11px!important;background:#0b2039d9!important;color:#fff!important}
+
+#screen .game-shop-v2 .shop-v2-head{margin:0 0 12px;padding:14px 15px;background:linear-gradient(145deg,#173b61df,#0d2442e8)!important}
+#screen .game-shop-v2 .shop-v2-head button{padding:8px 11px}
+#screen .game-shop-v2 .shop-daily{padding:13px;border:1px solid #6bbce055;border-radius:18px;background:linear-gradient(145deg,#173b61df,#0d2442e8)!important;box-shadow:inset 0 1px #ffffff24,0 6px 0 #061426!important}
+#screen .game-shop-v2 .shop-daily-grid article,#screen .game-shop-v2 .shop-currency-grid button{border:1px solid #6bbce055;background:linear-gradient(145deg,#204d75,#102d4b)!important;box-shadow:inset 0 1px #ffffff28,0 4px 0 #061426!important;color:#fff!important}
+#screen .game-shop-v2 .shop-daily-grid article.featured{border-color:#6be3bb99;background:linear-gradient(145deg,#246c72,#123d4c)!important}
+#screen .game-shop-v2 .shop-daily-grid article>span,#screen .game-shop-v2 .shop-currency-grid span{border-color:#6bbce055;background:linear-gradient(145deg,#4ed9aa,#176b60)!important;color:#fff!important}
+#screen .game-shop-v2 .shop-v2-title h3{color:#fff}
+#screen .game-shop-v2 .shop-v2-title small,#screen .game-shop-v2 .shop-ribbon small{color:#72e5bb}
+#screen .game-shop-v2 .shop-wide-offer,#screen .game-shop-v2 .shop-wide-offer.gold{border-color:#6bbce055;background:linear-gradient(145deg,#1e527d,#123655)!important;box-shadow:inset 0 1px #ffffff2c,0 4px 0 #061426!important}
+
+#screen .game-menu-v2 .game-menu-sheet{margin:0;padding:14px;background:linear-gradient(145deg,#173b61df,#0d2442e8)!important;border-color:#6bbce055!important;box-shadow:inset 0 1px #ffffff24,0 6px 0 #061426!important;color:#fff!important}
+#screen .game-menu-v2 .game-menu-sheet>button{background:linear-gradient(145deg,#1e527d,#123655)!important;border-color:#6bbce055!important;box-shadow:inset 0 1px #ffffff2c,0 4px 0 #061426!important}
+#screen .game-inbox-card.alerts{background:linear-gradient(145deg,#244b78,#162d50)!important;border-color:#6bbce055!important}
+#screen .game-task-block{background:linear-gradient(145deg,#173b61df,#0d2442e8)!important}
+#screen .app.game-nav-page :is(.hero,.hero-line,.market-header,.market-toolbar,.garage-header,.garage-toolbar,.community-header,.community-toolbar,.plates-header){background:transparent!important;border-color:#6bbce055!important;color:#fff!important}
+#screen .app.game-nav-page :is(.action,.filters button,.tabs button,.chip,.pill){background:linear-gradient(145deg,#1e527d,#123655)!important;border-color:#6bbce055!important;color:#fff!important;box-shadow:inset 0 1px #ffffff2c,0 4px 0 #061426!important}
+#screen .app.game-nav-page :is(.filters .active,.tabs .active,.chip.active,.pill.active){background:linear-gradient(180deg,#52e5af,#1c9b72)!important;color:#062b21!important;border-color:#b5ffe2!important}
+
+#screen .game-bottom-nav{background:linear-gradient(180deg,#183b5cf7,#0c1e35fa)!important;border-color:#6bbce055!important;box-shadow:inset 0 2px #ffffff24,0 -8px 25px #0008!important}
+#screen .game-bottom-nav .game-tab{color:#9db5c8!important}
+#screen .game-bottom-nav .game-tab.active{background:linear-gradient(145deg,#2b7597,#174b68)!important;color:#fff!important;box-shadow:inset 0 2px #79e7c0,0 4px 0 #061426!important}
+#screen .game-bottom-nav .game-tab.active>span{background:linear-gradient(145deg,#51dfad,#16745f)!important;border-color:#b5ffe2!important;color:#062b21!important}
+#screen .game-bottom-nav .game-tab:nth-child(3){height:64px!important;transform:none}
+#screen .game-bottom-nav .game-tab:nth-child(3)>span{width:40px;height:40px!important;border:1px solid #ffffff1c!important;border-radius:12px!important;background:#07142780!important;box-shadow:none!important;color:inherit!important}
+#screen .game-bottom-nav .game-tab:nth-child(3) .af-icon{width:23px!important;height:23px!important}
