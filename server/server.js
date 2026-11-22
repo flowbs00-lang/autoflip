@@ -12,8 +12,12 @@ const projectDirectory = path.resolve(serverDirectory, "..");
 const publicDirectory = path.join(projectDirectory, "cloudflare");
 const migrationsDirectory = path.join(publicDirectory, "migrations");
 const databasePath = path.resolve(process.env.DATABASE_PATH || path.join(projectDirectory, "data", "autoflip.sqlite3"));
-const host = process.env.HOST || "127.0.0.1";
-const port = Number(process.env.PORT || 3000);
+function commandLineValue(flag) {
+  const index = process.argv.indexOf(flag);
+  return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : "";
+}
+const host = process.env.HOST || commandLineValue("--host") || "127.0.0.1";
+const port = Number(process.env.PORT || commandLineValue("--port") || 3000);
 
 const MIME_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],

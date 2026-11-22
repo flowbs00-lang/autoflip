@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node server/preview.js",
     "start": "node server/server.js",
     "check:server": "node --check server/server.js && node --check server/db.js && node --check server/routes.js",
     "photos:verify": "python3 scripts/legacy_photo_pipeline.py verify",

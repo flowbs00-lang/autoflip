@@ -4,6 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const ui=fs.readFileSync(path.join(__dirname,'../ui.js'),'utf8');
+const uiCss=fs.readFileSync(path.join(__dirname,'../ui.css'),'utf8');
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 function game(saved){
   let output='',stored;
@@ -28,12 +29,19 @@ test('balance privacy, widget toggle and quick settings work together',()=>{
   g.c.toggleQuickSetting('sound');assert.equal(g.c.state.sound,true);
   g.c.toggleQuickSetting('theme');assert.equal(g.root.dataset.theme,'light');
 });
-test('launcher renders every app in one compact grid and exposes personal wallpaper picker',()=>{
+test('game hub exposes the next action, modern tabs and the complete section menu',()=>{
   const g=game();g.c.home();
-  assert.equal((g.html().match(/class="os-app"/g)||[]).length,18);
+  assert.match(g.html(),/class="game-home/);
+  assert.match(g.html(),/class="game-mission os-plan"/);
+  assert.match(g.html(),/Важное для бизнеса/);
+  assert.match(g.html(),/game-event-row/);
+  assert.match(ui,/const gameTabs=/);
+  assert.match(ui,/game-bottom-nav/);
+  assert.match(uiCss,/assets\/game-home-garage-v1\.webp/);
+  g.c.gameMenu();
+  assert.equal((g.html().match(/class="os-app"/g)||[]).length,14);
   assert.match(g.html(),/Бизнес/);
   assert.doesNotMatch(g.html(),/Профиль рынка/);
-  assert.match(g.html(),/os-home-glance/);
   g.c.settings();assert.match(g.html(),/accept="image\/\*"/);assert.match(g.html(),/Выбрать своё фото/);
   assert.match(g.html(),/Аккаунт/);assert.match(g.html(),/openAccountProfile\(\)/);assert.match(g.html(),/Никнейм, ID и данные входа/);
 });
@@ -47,6 +55,6 @@ test('legacy launcher stays hidden until the modern interface is ready',()=>{
   assert.match(html,/<html lang="ru" class="autoflip-booting">/);
   assert.match(html,/autoflip-booting #screen\{visibility:hidden!important\}/);
   assert.match(html,/id="screen" aria-busy="true"/);
-  assert.match(html,/ui\.js\?v=20261102-1/);
+  assert.match(html,/ui\.js\?v=20261122-1/);
   assert.match(ui,/classList\.remove\('autoflip-booting'\)/);
 });

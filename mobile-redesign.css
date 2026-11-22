@@ -194,7 +194,7 @@
   #screen .os-setting-row b{font-size:14px}
   #screen .os-setting-row small{font-size:11px;line-height:1.35}
   #screen .os-version{font-size:0}
-  #screen .os-version:after{content:"AUTOFLIP OS · ИНТЕРФЕЙС 4.0";font-size:9px;letter-spacing:.14em}
+  #screen .os-version:after{content:"AUTOFLIP · ИНТЕРФЕЙС 5.0";font-size:9px;letter-spacing:.14em}
   #screen .os-account-row{min-height:72px;border-radius:18px}
   #screen .os-wall-choice>span{height:118px;border-radius:18px}
   #screen .os-quick-grid button{min-height:132px!important;padding:18px;border-radius:19px}

@@ -7,10 +7,10 @@
 <style id="autoflip-boot-style">
 html.autoflip-booting #screen{visibility:hidden!important}
 html.autoflip-booting .phone{position:relative;overflow:hidden}
-html.autoflip-booting .phone::after{content:"AUTOFLIP OS";position:absolute;inset:5px;z-index:50;display:grid;place-items:center;border-radius:39px;background:radial-gradient(circle at 50% 42%,#31596b 0,transparent 38%),linear-gradient(155deg,#13283b,#0b111d 72%);color:#eaf8f5;font:800 14px/1 system-ui,sans-serif;letter-spacing:.22em}
+html.autoflip-booting .phone::after{content:"AUTOFLIP";position:absolute;inset:5px;z-index:50;display:grid;place-items:center;border-radius:39px;background:radial-gradient(circle at 50% 42%,#31596b 0,transparent 38%),linear-gradient(155deg,#13283b,#0b111d 72%);color:#eaf8f5;font:800 14px/1 system-ui,sans-serif;letter-spacing:.22em}
 </style>
 <link rel="stylesheet" href="style.css?v=20261019-1">
-<link rel="stylesheet" href="ui.css?v=20261008-1">
+<link rel="stylesheet" href="ui.css?v=20261122-1">
 <link rel="stylesheet" href="plates.css?v=20261006-4">
 <link rel="stylesheet" href="garage-system.css?v=20261010-2">
 <link rel="stylesheet" href="world-system.css?v=20261006-1">
@@ -35,7 +35,7 @@ html.autoflip-booting .phone::after{content:"AUTOFLIP OS";position:absolute;inse
 </header>
 <main>
 <section class="hero">
-  <div><small>CAR DEALER SIMULATOR · V7</small><h1>Твой первый<br><b>автобизнес.</b></h1><p>Теперь это не просто рынок: внутри игры появился полноценный смартфон с приложениями, уведомлениями, чатами, банком, картой, СТО, гаражом и бизнес-профилем.</p><a class="start" href="#game">Открыть телефон ↓</a></div>
+  <div><small>CAR DEALER SIMULATOR · V7</small><h1>Твой первый<br><b>автобизнес.</b></h1><p>Полноценный игровой мир с живым рынком, переговорами, поездками, гаражом, коллекциями и развитием собственного бизнеса.</p><a class="start" href="#game">Начать игру ↓</a></div>
   <div class="hero-card"><small>КАПИТАЛ</small><b id="heroMoney">100 000 ₽</b><div class="hero-line"><span>Репутация</span><strong id="heroRep">0</strong></div><div class="hero-line"><span>Сделки</span><strong id="heroDeals">0</strong></div><div class="hero-line"><span>Город</span><strong id="heroCity">Москва</strong></div></div>
 </section>
 <section id="game" class="game">
@@ -45,8 +45,8 @@ html.autoflip-booting .phone::after{content:"AUTOFLIP OS";position:absolute;inse
     <aside><div class="objective"><small>ЦЕЛЬ</small><b id="objective">Найди выгодный автомобиль</b><span id="objectiveSub">Открой рынок и изучи объявления.</span></div><div id="statsbox" class="statsbox"></div><div id="journal" class="journal"></div><div class="side-buttons"><button onclick="randomEvent()">🎲 Событие</button><button onclick="resetGame()">↻ Сброс</button></div></aside>
   </div>
 </section>
-<section id="about" class="about"><small>AUTOFLIP OS</small><h2>Телефон стал частью игрового мира.</h2><div class="features">
-<article><b>01</b><h3>10+ приложений</h3><p>Рынок, сообщения, банк, карта, СТО, гараж, недвижимость, профиль и настройки.</p></article>
+<section id="about" class="about"><small>AUTOFLIP</small><h2>Автобизнес, который всегда развивается.</h2><div class="features">
+<article><b>01</b><h3>Все разделы под рукой</h3><p>Рынок, сообщения, банк, карта, СТО, гараж, недвижимость, профиль и настройки.</p></article>
 <article><b>02</b><h3>Единый мир</h3><p>Купил авто на рынке — оно появляется в гараже. Ремонт влияет на продажу, деньги идут через банк.</p></article>
 <article><b>03</b><h3>Живой интерфейс</h3><p>Статус-бар, уведомления, чаты, карточки, нижняя панель и плавные переходы создают ощущение телефона.</p></article>
 <article><b>04</b><h3>Сохранение</h3><p>Прогресс автоматически хранится в браузере. Обои и оформление тоже сохраняются автоматически.</p></article>
@@ -1824,7 +1824,7 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261102-1"></script>
+<script src="ui.js?v=20261122-1"></script>
 <script src="plates.js?v=20261025-1"></script>
 <script src="garage-system.js?v=20261010-4"></script>
 <script src="world-system.js?v=20261007-6"></script>

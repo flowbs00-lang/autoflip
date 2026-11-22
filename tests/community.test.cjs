@@ -63,7 +63,8 @@ test('community is a permanent visible home-screen application', () => {
   assert.match(home, /<small>Сообщество<\/small>/);
   assert.match(modernHome, /\['openCommunity','Сообщество','users','violet'\]/);
   assert.match(modernHome, /apps\.map\(appButton\)/);
-  assert.match(modernHome, /grid-template-rows|os-app-grid/);
+  assert.match(modernHome, /\['community','Клуб','users'\]/);
+  assert.match(modernHome, /openGameTab\('global'\)|openCommunity\('global'\)/);
 });
 
 test('open chats poll for new messages without replacing the draft', () => {
