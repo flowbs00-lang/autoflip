@@ -58,11 +58,14 @@
   function detectGameTab(markup){
     const html=String(markup||'');
     if(html.includes('game-home-v2'))return 'home';
+    // Match by screen component, not by visible copy. The plates screen mentions
+    // the garage level, which previously made the garage tab light up.
+    if(/plates-app|plate-collection|case-machine|plate-item/.test(html))return 'plates';
+    if(/community-app|community-profile-app/.test(html))return 'community';
     if(html.includes('game-shop-v2')||html.includes('store-app'))return 'shop';
-    if(/garage-app|garage-home|Гараж/.test(html))return 'garage';
-    if(/community-|Лучшие перекупы|Рейтинг игроков/.test(html))return 'community';
-    if(/plates-app|plate-collection|Коллекция номеров|Открыть кейс/.test(html))return 'plates';
-    return window.AUTOFLIP_ACTIVE_TAB||'home';
+    if(/garage-app|garage-home|garage-levelup-screen/.test(html))return 'garage';
+    // Bank, map, settings, messages, mini-games and sleep are lobby actions.
+    return 'home';
   }
   function gameNavButton(tab,active){
     const badge=tab[0]==='community'?unread():0;

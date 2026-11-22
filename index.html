@@ -25,7 +25,7 @@ html.autoflip-booting .phone::after{content:"AUTOFLIP";position:absolute;inset:5
 <link rel="stylesheet" href="theme-polish.css?v=20261011-1">
 <link rel="stylesheet" href="mobile-redesign.css?v=20261018-1">
 <link rel="stylesheet" href="gameplay-flow.css?v=20261102-1">
-<link rel="stylesheet" href="unified-game.css?v=20261122-1">
+<link rel="stylesheet" href="unified-game.css?v=20261122-2">
 </head>
 <body>
 <div class="age-mark" aria-label="Возрастное ограничение 18 плюс">18+</div>
@@ -1287,7 +1287,7 @@ garage=function(){const c=state.car;if(!c)return garageBase();const current=c.re
   window.gamesApp=function(){
     gamesBusy=false;
     var g=ensureGames(),s=g.stats,h=g.history,rate=s.played?Math.round(s.wins/s.played*100):0;
-    render('<div class="app games-app games-lobby">'+head('Games')+
+    render('<div class="app games-app games-lobby">'+head('Мини-игры')+
       '<section class="games-hero"><div class="games-hero-orb">🎮</div><div class="games-hero-copy"><small>AUTOFLIP ARCADE</small><h3>Игровая пауза</h3><p>Быстрые мини-игры между сделками.</p></div><div class="games-wallet"><span>Баланс</span><b>'+money(state.money)+'</b></div></section>'+
       '<div class="games-stats"><div><small>ИГР</small><b>'+s.played+'</b></div><div><small>ПОБЕД</small><b>'+rate+'%</b></div><div><small>ИТОГ</small><b class="'+(s.net>=0?'profit':'market-bad')+'">'+(s.net>=0?'+':'')+money(s.net)+'</b></div></div>'+
       '<div class="games-section-title"><span>Мини-игры</span><small>2 режима</small></div>'+
@@ -1825,7 +1825,7 @@ if(typeof window.autoBankHome==='function'){
 }
 </script>
 
-<script src="ui.js?v=20261122-8"></script>
+<script src="ui.js?v=20261122-9"></script>
 <script src="plates.js?v=20261025-1"></script>
 <script src="garage-system.js?v=20261010-4"></script>
 <script src="world-system.js?v=20261007-6"></script>

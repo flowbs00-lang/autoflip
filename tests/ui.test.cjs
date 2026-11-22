@@ -63,6 +63,13 @@ test('legacy launcher stays hidden until the modern interface is ready',()=>{
   assert.match(html,/<html lang="ru" class="autoflip-booting">/);
   assert.match(html,/autoflip-booting #screen\{visibility:hidden!important\}/);
   assert.match(html,/id="screen" aria-busy="true"/);
-  assert.match(html,/ui\.js\?v=20261122-8/);
+  assert.match(html,/ui\.js\?v=20261122-9/);
   assert.match(ui,/classList\.remove\('autoflip-booting'\)/);
+});
+test('bottom navigation identifies plates before garage copy and keeps utility screens on home',()=>{
+  const plateRule=ui.indexOf("if(/plates-app|plate-collection|case-machine|plate-item/.test(html))return 'plates'");
+  const garageRule=ui.indexOf("if(/garage-app|garage-home|garage-levelup-screen/.test(html))return 'garage'");
+  assert.ok(plateRule>=0&&garageRule>plateRule);
+  assert.doesNotMatch(ui,/garage-app\|garage-home\|Гараж/);
+  assert.match(ui,/Bank, map, settings, messages, mini-games and sleep are lobby actions/);
 });
