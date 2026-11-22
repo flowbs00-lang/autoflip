@@ -8,6 +8,7 @@ const files = [
   'index.html',
   'style.css',
   'ui.css',
+  'unified-game.css',
   'plates.css',
   'garage-system.css',
   'world-system.css',

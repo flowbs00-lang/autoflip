@@ -1,0 +1,474 @@
+/* AutoFlip unified lobby theme — loaded last on purpose. */
+#screen{
+  --af-bg:#061225;
+  --af-panel:rgba(10,31,56,.88);
+  --af-panel-strong:rgba(12,39,68,.96);
+  --af-panel-soft:rgba(21,61,94,.86);
+  --af-line:rgba(105,193,232,.36);
+  --af-line-soft:rgba(255,255,255,.12);
+  --af-text:#f7fbff;
+  --af-muted:#a9bfd1;
+  --af-faint:#7793aa;
+  --af-mint:#65e2b5;
+  --af-mint-dark:#107055;
+  --af-gold:#ffc84d;
+  --af-danger:#ff7c82;
+  background:var(--af-bg);
+}
+
+/* Every game section uses the exact lobby scene and the same overlay. */
+#screen .app.game-nav-page:not(.game-home-v2){
+  position:relative!important;
+  isolation:isolate;
+  width:100%;
+  min-height:100%;
+  height:100%;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  padding:10px 13px 112px!important;
+  color:var(--af-text)!important;
+  background:var(--af-bg)!important;
+  scrollbar-width:none;
+}
+#screen .app.game-nav-page:not(.game-home-v2)::-webkit-scrollbar{display:none}
+#screen .app.game-nav-page:not(.game-home-v2)::before{
+  content:"";
+  position:fixed;
+  z-index:-3;
+  inset:0;
+  background:url("assets/game-lobby-v2.webp") 50% 50%/cover no-repeat;
+  filter:saturate(1.04) contrast(1.03);
+}
+#screen .app.game-nav-page:not(.game-home-v2)::after{
+  content:"";
+  position:fixed;
+  z-index:-2;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(6,16,41,.93) 0,rgba(6,16,41,.72) 22%,rgba(5,20,40,.58) 48%,rgba(6,17,36,.91) 100%),
+    radial-gradient(circle at 50% 50%,transparent 0,rgba(3,9,22,.18) 38%,rgba(3,9,22,.72) 100%);
+  pointer-events:none;
+}
+#screen .app.game-nav-page:not(.game-home-v2)>*{position:relative;z-index:1;box-sizing:border-box}
+#screen .app.game-nav-page img{display:block;max-width:100%;height:auto}
+
+/* The clock floats over the scene. It never creates a phone status-bar row. */
+#screen .app.game-nav-page>.game-clock-overlay{
+  position:absolute!important;
+  z-index:20!important;
+  top:9px!important;
+  left:50%!important;
+  width:auto!important;
+  min-width:64px;
+  margin:0!important;
+  padding:4px 10px!important;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:rgba(3,12,27,.62);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  line-height:1;
+  text-align:center;
+  transform:translateX(-50%);
+  backdrop-filter:blur(14px);
+  box-shadow:0 5px 18px rgba(0,0,0,.25);
+}
+
+/* Compact game header, matching the lobby controls. */
+#screen .app.game-nav-page .head.os-head{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:40px minmax(0,1fr) 40px!important;
+  align-items:center!important;
+  width:100%!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:0 0 11px!important;
+  padding:5px 0 4px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--af-text)!important;
+}
+#screen .app.game-nav-page .head.os-head::after{
+  content:"";
+  position:absolute;
+  right:49px;
+  bottom:0;
+  left:49px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--af-line),transparent);
+}
+#screen .app.game-nav-page .head.os-head>b{
+  min-width:0;
+  color:#fff!important;
+  font-size:17px!important;
+  font-weight:900!important;
+  line-height:1.1!important;
+  letter-spacing:-.02em!important;
+  text-align:center!important;
+  text-shadow:0 2px 12px #000!important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#screen .app.game-nav-page .head.os-head>button{
+  display:grid!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  margin:0!important;
+  padding:8px!important;
+  place-items:center!important;
+  border:1px solid rgba(103,204,232,.44)!important;
+  border-radius:13px!important;
+  background:linear-gradient(155deg,rgba(35,83,121,.95),rgba(11,34,61,.98))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.27),0 4px 0 #041225,0 10px 20px rgba(0,0,0,.28)!important;
+  color:var(--af-mint)!important;
+}
+#screen .app.game-nav-page .head.os-head>button:last-child{justify-self:end!important}
+#screen .app.game-nav-page .head.os-head svg{width:20px!important;height:20px!important}
+
+/* Shared panels and typography. */
+#screen .app.game-nav-page :is(h1,h2,h3,h4,b,strong){color:var(--af-text)}
+#screen .app.game-nav-page :is(p,small,em,.muted){color:var(--af-muted)}
+#screen .app.game-nav-page :is(.shop-v2-head,.shop-daily,.game-panel-title,.game-menu-sheet,.game-task-block,.game-inbox-card,.pass-hero,.pass-road article,.garage-scene,.garage-plate-strip,.garage-kpis>div,.garage-warning,.garage-upgrade-head,.garage-rep,.garage-task,.garage-complete,.garage-facility-build,.service-dashboard>div,.service-choice-intro,.service-order,.community-hero,.community-region,.community-create,.community-own-clan,.community-roster-head,.community-rank,.community-clan,.community-member,.community-player-hero,.community-player-id,.community-player-stats>div,.community-player-clan,.community-profile-section,.plates-hero,.case-card,.plate-item,.plates-empty){
+  border:1px solid var(--af-line)!important;
+  background:linear-gradient(145deg,var(--af-panel-soft),var(--af-panel))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.18),0 5px 0 rgba(3,16,34,.9),0 14px 28px rgba(0,0,0,.25)!important;
+  color:var(--af-text)!important;
+}
+
+/* Shop */
+#screen .game-shop-v2 .shop-v2-head{
+  min-height:86px!important;
+  margin:0 0 12px!important;
+  padding:16px!important;
+  border-radius:20px!important;
+}
+#screen .game-shop-v2 .shop-v2-head>div{min-width:0}
+#screen .game-shop-v2 .shop-v2-head h2{
+  margin:5px 0 0!important;
+  color:#fff!important;
+  font-size:23px!important;
+  line-height:1.02!important;
+  letter-spacing:-.04em!important;
+}
+#screen .game-shop-v2 .shop-v2-head small,
+#screen .game-shop-v2 .shop-ribbon small,
+#screen .game-shop-v2 .shop-v2-title small{color:var(--af-mint)!important;letter-spacing:.14em!important}
+#screen .game-shop-v2 .shop-v2-head>button{flex:0 0 auto;padding:9px 12px!important}
+#screen .game-shop-v2 .shop-daily{padding:14px 12px!important;border-radius:20px!important}
+#screen .game-shop-v2 .shop-ribbon b{margin-top:5px!important;color:var(--af-muted)!important;font-size:9px!important}
+#screen .game-shop-v2 .shop-daily-grid,
+#screen .game-shop-v2 .shop-currency-grid{gap:7px!important}
+#screen .game-shop-v2 .shop-daily-grid article{
+  min-width:0!important;
+  min-height:168px!important;
+  padding:10px 6px!important;
+  overflow:hidden!important;
+  border:1px solid var(--af-line)!important;
+  border-radius:15px!important;
+  background:linear-gradient(165deg,rgba(30,83,122,.96),rgba(9,35,62,.96))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.19),0 4px 0 #041326!important;
+  color:#fff!important;
+}
+#screen .game-shop-v2 .shop-daily-grid article.featured{border-color:rgba(101,226,181,.7)!important;background:linear-gradient(165deg,rgba(30,107,105,.97),rgba(8,49,61,.98))!important}
+#screen .game-shop-v2 .shop-daily-grid article>span,
+#screen .game-shop-v2 .shop-currency-grid button>span{
+  display:grid!important;
+  width:48px!important;
+  height:48px!important;
+  flex:0 0 48px!important;
+  place-items:center!important;
+  border:1px solid rgba(190,255,232,.5)!important;
+  border-radius:14px!important;
+  background:linear-gradient(145deg,#55ddb0,#13725c)!important;
+  box-shadow:inset 0 2px rgba(255,255,255,.35),0 4px 0 #084636,0 8px 18px rgba(0,0,0,.25)!important;
+  color:#fff!important;
+}
+#screen .game-shop-v2 .shop-daily-grid small{min-height:28px!important;margin-top:10px!important;color:#fff!important;font-size:8px!important;line-height:1.15!important}
+#screen .game-shop-v2 .shop-daily-grid p{min-height:34px!important;margin:4px 0 7px!important;color:var(--af-muted)!important;font-size:7px!important;line-height:1.35!important}
+#screen .game-shop-v2 .shop-daily-grid button{margin-top:auto!important;color:#d9e7f2!important;background:rgba(7,28,49,.72)!important}
+#screen .game-shop-v2 .shop-v2-section{margin-top:22px!important}
+#screen .game-shop-v2 .shop-v2-title h3{margin:4px 0 11px!important;color:#fff!important;font-size:17px!important}
+#screen .game-shop-v2 .shop-currency-grid>button{
+  min-width:0!important;
+  min-height:124px!important;
+  padding:10px 5px!important;
+  overflow:hidden!important;
+  border-radius:16px!important;
+}
+#screen .game-shop-v2 .shop-currency-grid b{margin-top:9px!important;color:#fff!important;font-size:9px!important;white-space:nowrap}
+#screen .game-shop-v2 .shop-currency-grid small{margin-top:5px!important;padding:5px 8px!important;background:#199a6b!important;color:#fff!important}
+#screen .game-shop-v2 .shop-wide-offer{overflow:hidden!important}
+#screen .game-shop-v2 .shop-wide-offer div{min-width:0!important}
+#screen .game-shop-v2 .shop-wide-offer :is(b,small){overflow-wrap:anywhere}
+#screen .game-shop-v2 .shop-beta-note{color:var(--af-muted)!important}
+
+/* Garage */
+#screen .garage-app .garage-scene{
+  height:190px!important;
+  margin:0 0 11px!important;
+  overflow:hidden!important;
+  border-radius:22px!important;
+  filter:none!important;
+  background:linear-gradient(180deg,rgba(15,41,62,.72) 0 58%,rgba(6,22,37,.92) 59%)!important;
+}
+#screen .garage-app .garage-scene::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:0;
+  background:linear-gradient(90deg,rgba(49,210,220,.11),transparent 42%,rgba(244,55,167,.10)),radial-gradient(circle at 50% 100%,rgba(71,229,186,.16),transparent 48%);
+}
+#screen .garage-app .garage-scene-copy{z-index:4!important;max-width:72%}
+#screen .garage-app .garage-scene-copy b{color:#fff!important;text-shadow:0 3px 14px #000!important}
+#screen .garage-app .garage-scene-copy span{color:#c5d6e3!important}
+#screen .garage-app .garage-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px!important;
+  margin:0 0 12px!important;
+  padding:5px!important;
+  border:1px solid var(--af-line)!important;
+  border-radius:16px!important;
+  background:rgba(7,26,47,.88)!important;
+}
+#screen .garage-app .garage-tabs button{
+  min-width:0!important;
+  min-height:40px!important;
+  padding:7px 2px!important;
+  border:1px solid transparent!important;
+  border-radius:11px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--af-muted)!important;
+  font-size:8px!important;
+}
+#screen .garage-app .garage-tabs button.active{
+  border-color:rgba(174,255,225,.68)!important;
+  background:linear-gradient(145deg,#4bddab,#14755a)!important;
+  box-shadow:inset 0 1px #caffed,0 3px 0 #084535!important;
+  color:#062a20!important;
+}
+#screen .garage-app .garage-kpis{gap:7px!important;margin-bottom:14px!important}
+#screen .garage-app .garage-kpis>div{min-width:0!important;padding:11px 9px!important;border-radius:14px!important}
+#screen .garage-app .garage-kpis small{color:#8eabc0!important}
+#screen .garage-app .garage-kpis b{display:block;margin-top:4px;color:#fff!important;overflow-wrap:anywhere}
+#screen .garage-app .garage-section-title b{color:#fff!important}
+#screen .garage-app .garage-section-title span{color:var(--af-muted)!important}
+#screen .garage-app .garage-cars{gap:10px!important}
+#screen .garage-app .garage-car-card,
+#screen .garage-app .garage-empty-slot,
+#screen .garage-app .garage-progress-cta{
+  width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  border:1px solid var(--af-line)!important;
+  border-radius:17px!important;
+  background:linear-gradient(145deg,var(--af-panel-soft),var(--af-panel))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.18),0 4px 0 #041326!important;
+  color:#fff!important;
+}
+#screen .garage-app .garage-car-card{display:grid!important;grid-template-columns:88px minmax(0,1fr) 16px!important;gap:9px!important;padding:9px!important}
+#screen .garage-app .garage-car-photo{
+  width:88px!important;
+  height:68px!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.15)!important;
+  border-radius:12px!important;
+  background-color:#0a1d31!important;
+  background-position:center!important;
+  background-size:cover!important;
+}
+#screen .garage-app .garage-car-main{min-width:0!important;padding:0!important}
+#screen .garage-app .garage-car-main b{max-width:100%;color:#fff!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#screen .garage-app .garage-car-main em{color:var(--af-muted)!important}
+#screen .garage-app .garage-car-main .good{color:var(--af-mint)!important}
+#screen .garage-app .garage-car-main .bad{color:var(--af-danger)!important}
+#screen .garage-app .garage-car-card>i{color:#8fb3ca!important}
+#screen .garage-app :is(.garage-rep,.garage-task,.garage-complete,.garage-facility-build,.service-dashboard>div,.service-choice-intro,.service-order){border-radius:16px!important;color:#fff!important}
+#screen .garage-app :is(.garage-rep,.garage-task) b,
+#screen .garage-app .service-order b{color:#fff!important}
+#screen .garage-app :is(.garage-rep,.garage-task) small,
+#screen .garage-app .service-choice-intro p,
+#screen .garage-app .service-message>small{color:var(--af-muted)!important}
+#screen .garage-app .service-message>p{background:rgba(5,23,42,.72)!important;color:#e8f2f8!important}
+#screen .garage-app .service-order-tags i{background:rgba(101,226,181,.13)!important;color:#9be9cc!important}
+#screen .garage-app .garage-road-level{border-left-color:rgba(112,177,207,.36)!important}
+#screen .garage-app .garage-road-level>b{background:#183c5e!important;color:#fff!important}
+#screen .garage-app .garage-road-level>small{color:var(--af-muted)!important}
+#screen .garage-app .garage-plate-strip{margin:0 0 12px!important;border-color:rgba(255,200,77,.52)!important;background:linear-gradient(145deg,rgba(107,67,17,.92),rgba(44,29,9,.94))!important}
+
+/* Community */
+#screen .community-app .community-hero{align-items:center!important;padding:16px!important;border-radius:20px!important}
+#screen .community-app .community-hero h2{margin:5px 0 3px!important;color:#fff!important;font-size:18px!important}
+#screen .community-app .community-hero p{color:#c4d7e6!important}
+#screen .community-app .community-hero>span{color:var(--af-mint)!important}
+#screen .community-app .community-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(54px,1fr))!important;
+  gap:5px!important;
+  margin:0 0 10px!important;
+  padding:5px!important;
+  overflow:hidden!important;
+  border:1px solid var(--af-line)!important;
+  border-radius:16px!important;
+  background:rgba(7,26,47,.9)!important;
+}
+#screen .community-app .community-tabs button{
+  min-width:0!important;
+  min-height:40px!important;
+  padding:7px 3px!important;
+  overflow:hidden!important;
+  border:1px solid transparent!important;
+  border-radius:11px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--af-muted)!important;
+  font-size:8px!important;
+  text-overflow:ellipsis;
+}
+#screen .community-app .community-tabs button.active{
+  border-color:rgba(174,255,225,.65)!important;
+  background:linear-gradient(145deg,#4bddab,#14755a)!important;
+  box-shadow:inset 0 1px #caffed,0 3px 0 #084535!important;
+  color:#062a20!important;
+}
+#screen .community-app .community-live-note{color:#8ca8bc!important}
+#screen .community-app .community-chat{gap:8px!important;min-height:260px!important;max-height:none!important;padding:9px 1px 14px!important}
+#screen .community-app .community-message{
+  max-width:86%!important;
+  padding:9px 11px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(104,184,220,.36)!important;
+  border-radius:6px 15px 15px 15px!important;
+  background:linear-gradient(145deg,rgba(24,61,94,.97),rgba(10,35,62,.97))!important;
+  box-shadow:0 5px 0 rgba(3,16,34,.78),0 9px 18px rgba(0,0,0,.2)!important;
+  color:#fff!important;
+}
+#screen .community-app .community-message.mine{
+  align-self:flex-end!important;
+  border-color:rgba(101,226,181,.5)!important;
+  border-radius:15px 6px 15px 15px!important;
+  background:linear-gradient(145deg,rgba(25,104,94,.97),rgba(8,57,61,.98))!important;
+}
+#screen .community-app .community-message-head{align-items:center!important;gap:8px!important}
+#screen .community-app .community-author{
+  min-width:0!important;
+  padding:3px 7px!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:8px!important;
+  background:rgba(4,22,39,.7)!important;
+  box-shadow:none!important;
+  color:#dff8ff!important;
+  font-size:8px!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#screen .community-app .community-message p{margin:6px 0 1px!important;color:#f5faff!important;font-size:10px!important;line-height:1.42!important;overflow-wrap:anywhere!important}
+#screen .community-app .community-message time{color:#8eabc0!important}
+#screen .community-app .community-compose{
+  position:sticky!important;
+  z-index:4!important;
+  bottom:0!important;
+  grid-template-columns:minmax(0,1fr) 44px!important;
+  padding-top:8px!important;
+  background:linear-gradient(180deg,transparent,rgba(5,18,37,.96) 28%)!important;
+}
+#screen .community-app .community-compose textarea{width:100%!important;min-width:0!important;min-height:46px!important;padding:11px!important;color:#fff!important;resize:none!important}
+#screen .community-app .community-compose textarea::placeholder{color:#849eb2!important}
+#screen .community-app :is(.community-rank,.community-clan,.community-member){min-width:0!important;overflow:hidden!important}
+#screen .community-app :is(.community-rank,.community-clan) b{color:#fff!important}
+#screen .community-app :is(.community-rank,.community-clan) small{color:var(--af-muted)!important}
+#screen .community-app .community-profile-car-photo{overflow:hidden!important;border-radius:13px!important;background:#081a2c!important}
+#screen .community-app .community-profile-car-photo img{width:100%!important;height:100%!important;object-fit:cover!important}
+
+/* Plates */
+#screen .plates-app .plates-hero{padding:17px!important;border-radius:22px!important}
+#screen .plates-app .plates-hero h2{margin:6px 0 4px!important;color:#fff!important;font-size:23px!important}
+#screen .plates-app .plates-hero p{color:var(--af-muted)!important}
+#screen .plates-app .plates-stats span{min-width:0!important;border:1px solid rgba(255,255,255,.12)!important;background:rgba(4,20,37,.42)!important}
+#screen .plates-app .plates-stats small{color:#8da6ba!important}
+#screen .plates-app .plates-stats b{color:#fff!important;overflow-wrap:anywhere}
+#screen .plates-app .plate-tabs{
+  gap:5px!important;
+  margin:13px 0 17px!important;
+  padding:5px!important;
+  border:1px solid var(--af-line)!important;
+  border-radius:16px!important;
+  background:rgba(7,26,47,.9)!important;
+}
+#screen .plates-app .plate-tabs button{
+  min-height:42px!important;
+  border:1px solid transparent!important;
+  border-radius:11px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--af-muted)!important;
+}
+#screen .plates-app .plate-tabs button.active{
+  border-color:rgba(174,255,225,.65)!important;
+  background:linear-gradient(145deg,#4bddab,#14755a)!important;
+  box-shadow:inset 0 1px #caffed,0 3px 0 #084535!important;
+  color:#062a20!important;
+}
+#screen .plates-app .plate-intro h3{color:#fff!important}
+#screen .plates-app .plate-intro>span{border:1px solid var(--af-line)!important;background:rgba(7,28,49,.86)!important;color:var(--af-muted)!important}
+#screen .plates-app .case-card{overflow:hidden!important;padding:15px!important;border-radius:20px!important}
+#screen .plates-app .case-top{min-width:0!important}
+#screen .plates-app .case-top>div{min-width:0!important}
+#screen .plates-app .case-top h3{color:#fff!important;overflow-wrap:anywhere}
+#screen .plates-app .case-top small,
+#screen .plates-app .case-bottom small,
+#screen .plates-app .case-hint,
+#screen .plates-app .case-odds summary{color:var(--af-muted)!important}
+#screen .plates-app .case-odds{border-top-color:rgba(255,255,255,.13)!important}
+#screen .plates-app .case-bottom b{color:#fff!important}
+#screen .plates-app .plate-item{overflow:hidden!important;border-radius:20px!important}
+#screen .plates-app .plate-face{max-width:100%!important;box-sizing:border-box!important}
+#screen .plates-app .plate-item .plate-face.large{width:min(268px,100%)!important}
+#screen .plates-app .plate-info b,
+#screen .plates-app .plate-value>b{color:#fff!important}
+#screen .plates-app .plate-info span{color:var(--af-muted)!important}
+#screen .plates-app .collection-tools label{color:var(--af-muted)!important}
+#screen .plates-app .plate-filters{max-width:100%!important}
+#screen .plates-app .plate-filters button{background:rgba(8,30,52,.9)!important;color:var(--af-muted)!important}
+#screen .plates-app .plate-filters button.active{border-color:var(--af-mint)!important;color:#fff!important}
+
+/* Unified control treatment. */
+#screen .app.game-nav-page button:not(.game-tab):not(.os-head>button):not(.community-author):not(.plate-star){
+  color:var(--af-text);
+}
+#screen .app.game-nav-page :is(input,textarea,select){box-sizing:border-box!important;max-width:100%!important}
+#screen .app.game-nav-page :is(input,textarea,select):focus{outline:2px solid rgba(101,226,181,.55)!important;outline-offset:1px!important}
+
+/* Bottom navigation remains readable over every section. */
+#screen .game-bottom-nav{
+  background:linear-gradient(180deg,rgba(27,60,91,.98),rgba(8,27,49,.99))!important;
+  border-color:rgba(105,193,232,.38)!important;
+  box-shadow:inset 0 2px rgba(255,255,255,.16),0 -10px 28px rgba(0,0,0,.52)!important;
+}
+#screen .game-bottom-nav .game-tab{overflow:visible!important;color:#9fb5c6!important}
+#screen .game-bottom-nav .game-tab.active{color:#fff!important;background:transparent!important;box-shadow:none!important}
+#screen .game-bottom-nav .game-tab.active>span{
+  border-color:#a8f4d7!important;
+  background:linear-gradient(145deg,#50dfad,#14755a)!important;
+  box-shadow:inset 0 1px #caffed,0 4px 0 #084535,0 0 18px rgba(66,225,170,.28)!important;
+  color:#05291f!important;
+}
+
+@media(max-width:380px){
+  #screen .game-shop-v2 .shop-daily-grid,
+  #screen .game-shop-v2 .shop-currency-grid{gap:5px!important}
+  #screen .game-shop-v2 .shop-daily{padding:11px 8px!important}
+  #screen .game-shop-v2 .shop-daily-grid article{padding:9px 4px!important}
+  #screen .game-shop-v2 .shop-daily-grid small{font-size:7px!important}
+  #screen .garage-app .garage-kpis{grid-template-columns:1fr 1fr!important}
+  #screen .garage-app .garage-kpis>div:last-child{grid-column:1/3!important}
+  #screen .community-app .community-tabs{grid-template-columns:repeat(2,1fr)!important}
+}
