@@ -9,6 +9,7 @@ export const STORE_PRODUCTS = Object.freeze({
   buyers_1d: { code: "buyers_1d", title: "Быстрые покупатели · сутки", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 99, grant: { type: "fast_buyers", durationMs: 86_400_000 } },
   buyers_7d: { code: "buyers_7d", title: "Быстрые покупатели · 7 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 399, grant: { type: "fast_buyers", durationMs: 604_800_000 }, badge: "Популярное" },
   buyers_30d: { code: "buyers_30d", title: "Быстрые покупатели · 30 дней", description: "Покупатели пишут в 2 раза быстрее", category: "boosts", price: 1199, grant: { type: "fast_buyers", durationMs: 2_592_000_000 }, badge: "Лучший выбор" },
+  autopass_ultimate: { code: "autopass_ultimate", title: "AutoPass Ultimate", description: "60 премиальных наград сезона «Ночной перекуп»", category: "autopass", price: 499, grant: { type: "autopass", season: "night-dealer-1" }, badge: "60 наград" },
   garage_5: { code: "garage_5", title: "Гараж 5 уровня", description: "Мгновенно открыть уровень и автосервис", category: "garage", price: 499, grant: { type: "garage", level: 5 } },
   garage_10: { code: "garage_10", title: "Гараж 10 уровня", description: "Максимальный уровень гаража", category: "garage", price: 1499, grant: { type: "garage", level: 10 }, badge: "Максимум" }
 });
@@ -166,6 +167,12 @@ export function applyStoreOrder(state, order) {
     if (!state.garageProgress || typeof state.garageProgress !== "object") state.garageProgress = {};
     state.garageProgress.level = Math.max(Number(state.garageProgress.level || state.garageLevel || 1), grant.level);
     state.garageLevel = state.garageProgress.level;
+  }
+  if (grant.type === "autopass") {
+    if (!state.autopass || typeof state.autopass !== "object" || state.autopass.season !== grant.season) {
+      state.autopass = { season: grant.season, points: 0, freeClaimed: [], ultimateClaimed: [], cosmetics: [], history: [] };
+    }
+    state.autopass.ultimate = true;
   }
   if (grant.type === "bundle") {
     state.money = Number(state.money || 0) + Number(grant.money || 0);

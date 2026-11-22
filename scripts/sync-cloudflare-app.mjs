@@ -9,6 +9,7 @@ const files = [
   'style.css',
   'ui.css',
   'unified-game.css',
+  'autopass.css',
   'plates.css',
   'garage-system.css',
   'world-system.css',
@@ -40,6 +41,7 @@ const files = [
   'economy-system.js',
   'community.js',
   'store.js',
+  'autopass-system.js',
   'photo-credits.html',
   'restoration-photo-credits.html'
 ];

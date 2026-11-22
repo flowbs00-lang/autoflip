@@ -40,7 +40,7 @@ export async function onRequestPost(context) {
     const recent = await context.env.DB.prepare(`SELECT COUNT(*) AS total FROM store_orders
       WHERE user_id = ? AND status IN ('creating','pending') AND created_at > ?`).bind(session.id, now - 600_000).first();
     if (Number(recent?.total || 0) >= 5) throw new RequestError("too_many_pending_orders", 429);
-    if (product.grant.type === "garage") {
+    if (product.grant.type === "garage" || product.grant.type === "autopass") {
       const owned = await context.env.DB.prepare("SELECT id FROM store_orders WHERE user_id = ? AND product_code = ? AND status = 'paid' LIMIT 1")
         .bind(session.id, product.code).first();
       if (owned) throw new RequestError("already_owned", 409);

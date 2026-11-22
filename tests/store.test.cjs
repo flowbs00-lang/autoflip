@@ -11,12 +11,12 @@ async function store(){return storeModule||=(await import(pathToFileURL(path.joi
 
 test('store catalog excludes game currency and random paid rewards',async()=>{
   const {STORE_PRODUCTS,publicCatalog}=await store();
-  assert.deepEqual(Object.keys(STORE_PRODUCTS),['cash_200k','cash_1m','cash_2m','plate_cool','plate_custom','buyers_1d','buyers_7d','buyers_30d','garage_5','garage_10']);
+  assert.deepEqual(Object.keys(STORE_PRODUCTS),['cash_200k','cash_1m','cash_2m','plate_cool','plate_custom','buyers_1d','buyers_7d','buyers_30d','autopass_ultimate','garage_5','garage_10']);
   const catalog=publicCatalog();
-  assert.equal(catalog.length,6);
+  assert.equal(catalog.length,7);
   assert.ok(catalog.every(product=>product.price>0&&!('grant' in product)));
   assert.deepEqual(Object.fromEntries(catalog.map(product=>[product.code,product.price])),{
-    plate_custom:999,buyers_1d:99,buyers_7d:399,buyers_30d:1199,garage_5:499,garage_10:1499
+    autopass_ultimate:499,plate_custom:999,buyers_1d:99,buyers_7d:399,buyers_30d:1199,garage_5:499,garage_10:1499
   });
 });
 
@@ -31,6 +31,17 @@ test('paid grants are idempotent for money, boosts and garage levels',async()=>{
   assert.ok(state.store.fastBuyersUntil>Date.now());
   applyStoreOrder(state,{id:'o3',product_code:'garage_5',custom_payload:'{}',paid_at:3});
   assert.equal(state.garageLevel,5);assert.equal(state.garageProgress.level,5);
+});
+
+test('AutoPass Ultimate is account-bound and granted only once',async()=>{
+  const {applyStoreOrder}=await store();
+  const state={money:100000,autopass:{season:'night-dealer-1',points:2300,freeClaimed:[1]}};
+  const order={id:'pass-1',product_code:'autopass_ultimate',custom_payload:'{}',paid_at:4};
+  assert.equal(applyStoreOrder(state,order),true);
+  assert.equal(applyStoreOrder(state,order),false);
+  assert.equal(state.autopass.ultimate,true);
+  assert.equal(state.autopass.points,2300);
+  assert.deepEqual(state.autopass.freeClaimed,[1]);
 });
 
 test('personal owner grant is hidden, account-bound and idempotent',async()=>{
@@ -87,5 +98,5 @@ test('shop stays hidden during the free beta and fast buyers logic remains avail
   const ui=read('ui.js'),html=read('index.html');
   assert.doesNotMatch(ui,/openStore','Магазин','shop'/);
   assert.match(html,/store\.fastBuyersUntil/);assert.match(html,/Math\.ceil\(delay\/2\)/);
-  assert.match(html,/store\.js\?v=20261011-3/);assert.match(html,/store\.css\?v=20261010-1/);
+  assert.match(html,/store\.js\?v=20261122-4/);assert.match(html,/store\.css\?v=20261010-1/);
 });
