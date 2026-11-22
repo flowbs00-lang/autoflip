@@ -62,8 +62,8 @@ test('community is a permanent visible home-screen application', () => {
   assert.match(home, /id="communityApp" onclick="openCommunity\('global'\)"/);
   assert.match(home, /<small>Сообщество<\/small>/);
   assert.match(modernHome, /\['openCommunity','Сообщество','users','violet'\]/);
-  assert.match(modernHome, /apps\.map\(appButton\)/);
-  assert.match(modernHome, /\['community','Клуб','users'\]/);
+  assert.match(modernHome, /\['openCommunity','Сообщество','users','violet'\]/);
+  assert.match(modernHome, /\['community','Сообщество','users'\]/);
   assert.match(modernHome, /openGameTab\('global'\)|openCommunity\('global'\)/);
 });
 
