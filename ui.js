@@ -147,9 +147,9 @@
   };
   window.home=function(){
     apply();window.AUTOFLIP_ACTIVE_TAB='home';
-    const cars=(state.cars||[]).filter(Boolean),count=cars.length,account=window.AUTOFLIP_ACCOUNT||{},nickname=account.nickname||'Перекуп',initial=esc(String(nickname).slice(0,1).toUpperCase());
+    const cars=Array.isArray(state.cars)?state.cars.filter(Boolean):(state.car?[state.car]:[]),count=cars.length,account=window.AUTOFLIP_ACCOUNT||{},nickname=account.nickname||'Перекуп',initial=esc(String(nickname).slice(0,1).toUpperCase());
     const garageLevel=Math.max(1,Number((state.garageProgress&&state.garageProgress.level)||state.garageLevel||1)),rep=Math.max(0,Number(state.rep||0)),passLevel=Math.floor(rep/25)+1,passProgress=rep%25;
-    const clan=(state.community&&state.community.clan&&state.community.clan.name)||account.clanName||'Без клана',unreadCount=unread(),tasks=state.economy&&state.economy.goals&&state.economy.goals.daily&&state.economy.goals.daily.targets||[],done=tasks.filter(t=>t.value>=t.need).length;
+    const clan=(state.community&&state.community.clan&&state.community.clan.name)||account.clanName||'Без клана',unreadCount=unread(),rawTasks=state.economy&&state.economy.goals&&state.economy.goals.daily&&state.economy.goals.daily.targets,tasks=Array.isArray(rawTasks)?rawTasks:[],done=tasks.filter(t=>t&&Number(t.value||0)>=Number(t.need||1)).length;
     render('<div class="game-home-v2">'+status()+'<div class="game-resource-bar"><button onclick="garageProgress()"><span>'+icon('garage')+'</span><small>ГАРАЖ</small><b>'+garageLevel+' ур.</b></button><button onclick="autoBankHome()"><span>₽</span><small>КАПИТАЛ</small><b>'+balance()+'</b></button><button onclick="openAccountProfile()"><span>★</span><small>РЕПУТАЦИЯ</small><b>'+rep+'</b></button></div><section class="lobby-top"><button class="lobby-profile" onclick="openAccountProfile()"><span>'+initial+'</span><div><b>'+esc(nickname)+'</b><small>'+esc(clan)+'</small></div></button><button class="lobby-pass" onclick="gamePass()"><small>AUTOPASS</small><div><b>'+passLevel+'</b><i><em style="width:'+(passProgress*4)+'%"></em></i><span>'+passProgress+'/25</span></div></button><nav class="lobby-tools"><button onclick="economyHub()" aria-label="Бизнес">'+icon('briefcase')+'<small>Бизнес</small></button><button onclick="settings()" aria-label="Настройки">'+icon('settings')+'<small>Настройки</small></button><button onclick="gameMenu()" aria-label="Меню">'+icon('menu')+'<small>Меню</small></button></nav></section><div class="lobby-city"><span>'+icon('map')+'</span><b>'+esc(state.city)+'</b><small>'+esc(date())+'</small></div><div class="lobby-side left"><button onclick="gameTasks()"><span>'+icon('note')+'</span><b>Задания</b><small>'+done+'/'+(tasks.length||3)+'</small></button><button onclick="gamesApp()"><span>'+icon('game')+'</span><b>Мини-игры</b></button></div><div class="lobby-side right"><button onclick="gameInbox()"><span>'+icon('bell')+(unreadCount?'<em>'+unreadCount+'</em>':'')+'</span><b>События</b><small>Чаты</small></button><button onclick="realty()"><span>'+icon('home')+'</span><b>Дом</b><small>Сон</small></button></div><div class="lobby-clock"><span>'+icon('clock')+'</span><b data-os-time>'+time()+'</b><small>игровое время</small></div><section class="lobby-action"><div><small>АВТОМАРКЕТ · '+count+' авто в гараже</small><h1>Найди свою следующую сделку</h1></div><button onclick="market(\'all\',0)"><span>'+icon('search')+'</span><b>Искать авто</b><small>Открыть рынок</small></button></section></div>');
   };
   function toggle(key,label,detail){const on=prefs()[key];return '<button class="os-setting-row" role="switch" aria-checked="'+on+'" onclick="setAppearance(\''+key+'\','+!on+')"><span><b>'+label+'</b><small>'+detail+'</small></span><i class="os-switch '+(on?'on':'')+'"></i></button>';}
@@ -164,13 +164,31 @@
   if(typeof oldBottomNav==='function')window.mountAutoBottomNav=function(){window.mountGameNav('market');};
   // Update only the clock nodes; never replace a form while the player is typing.
   (typeof startVisibleInterval==='function'?startVisibleInterval:function(fn,delay){return setInterval(fn,delay);})(function(){if(window.AUTOFLIP_UPDATE_NEXT_ACTION)window.AUTOFLIP_UPDATE_NEXT_ACTION();document.querySelectorAll('[data-os-time]').forEach(el=>el.textContent=time());document.querySelectorAll('[data-os-date]').forEach(el=>el.textContent=date());},1000);
-  screenHistory.length=0;apply();home();
   const revealModernInterface=function(){
     const root=document.documentElement,screen=document.getElementById('screen');
     if(root&&root.classList)root.classList.remove('autoflip-booting');
     if(screen&&screen.removeAttribute)screen.removeAttribute('aria-busy');
   };
-  if(typeof setTimeout==='function')setTimeout(revealModernInterface,120);else revealModernInterface();
+  // Never leave the game hidden when an old or partially migrated save contains
+  // an unexpected value. Reveal first, then recover to a usable screen.
+  revealModernInterface();
+  screenHistory.length=0;
+  try{
+    apply();
+    home();
+  }catch(error){
+    console.error('AutoFlip interface startup failed',error);
+    const screen=document.getElementById('screen');
+    if(screen){
+      screen.innerHTML='<div class="app game-nav-page game-start-recovery"><section class="game-panel-title"><small>AUTOFLIP</small><h2>Интерфейс восстановлен</h2><p>Старые настройки экрана не повредят твой игровой прогресс.</p></section><button class="action green" id="recoverInterface">Открыть главный экран</button></div>';
+      const recover=document.getElementById('recoverInterface');
+      if(recover)recover.addEventListener('click',function(){
+        state.appearance={};
+        try{persistUI();}catch(_){}
+        location.reload();
+      });
+    }
+  }
 })();
 
 // Inform players about the strictly necessary session cookie and local game data.
