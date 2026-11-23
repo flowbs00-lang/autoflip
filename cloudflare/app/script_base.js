@@ -134,6 +134,24 @@ function home(){
 function lockScreen(){render(`<div class="lock" onclick="unlock()">${status()}<div class="time">${now()}</div><div class="date">${dateText()}</div><div class="lock-card"><b>🔔 AutoFlip</b><small>Нажми, чтобы разблокировать телефон</small></div><div class="swipe">▲ НАЖМИТЕ ДЛЯ РАЗБЛОКИРОВКИ</div></div>`)}
 function unlock(){home()}
 
+function marketUiIcon(name){
+ const paths={
+  search:'M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
+  pin:'M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0m-8-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
+  heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8',
+  calendar:'M6 2v4m12-4v4M3 9h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2',
+  road:'M9 3 7 21m8-18 2 18M12 6v3m0 3v3m0 3v3',
+  car:'M3 16v-5l2-5h14l2 5v5M3 11h18M6 16v3m12-3v3M6 14h2m8 0h2',
+  shield:'M12 3l8 3v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3',
+  sortUp:'M12 19V5m-5 5 5-5 5 5',
+  sortDown:'M12 5v14m-5-5 5 5 5-5',
+  spark:'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2L12 3',
+  wallet:'M3 6h16a2 2 0 0 1 2 2v10H3V6m0 0V5a2 2 0 0 1 2-2h12v3m0 5h4',
+  garage:'M3 10l9-7 9 7v11H3V10m4 11V11h10v10M7 15h10',
+  star:'M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3'
+ };
+ return '<svg class="market-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(paths[name]||paths.spark)+'"/></svg>';
+}
 function ensureMarketFavorites(){
  if(!Array.isArray(state.marketFavorites))state.marketFavorites=[];
  return state.marketFavorites;
@@ -153,7 +171,7 @@ function toggleMarketFavorite(id,event,source){
  if(event&&event.currentTarget){
    var saved=list.indexOf(key)>=0;
    event.currentTarget.classList.toggle('saved',saved);
-   event.currentTarget.textContent=saved?'♥':'♡';
+   event.currentTarget.innerHTML=marketUiIcon('heart');
    event.currentTarget.setAttribute('aria-label',saved?'Убрать из избранного':'Добавить в избранное');
  }
  setTimeout(function(){if(typeof mountAutoBottomNav==='function')mountAutoBottomNav('listings');},40);
@@ -250,18 +268,19 @@ function marketThumb(c){
 }
 function marketCardHtml(c,index){
  const potential=Number(c.market||0)-Number(c.price||0),pct=Math.round(potential/Math.max(1,Number(c.price||1))*100),saved=isMarketFavorite(c),src=marketThumb(c);
- return `<div class="market auto-market-card" onclick="carView(${c.id})">
-   <div class="pic auto-market-photo" style="--car-position:${c.photoPosition||'50% 50%'}"><img src="${src}" alt="${String(c.name||'Автомобиль').replace(/"/g,'&quot;')}" loading="${index<2?'eager':'lazy'}" decoding="async" ${index<2?'fetchpriority="high"':'fetchpriority="low"'}><span class="auto-market-shade"></span><span class="auto-card-city">📍 ${c.city}</span><button class="auto-favorite-btn ${saved?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${saved?'Убрать из избранного':'Добавить в избранное'}">${saved?'♥':'♡'}</button></div>
+ return `<article class="market auto-market-card" onclick="carView(${c.id})">
+   <div class="pic auto-market-photo" style="--car-position:${c.photoPosition||'50% 50%'}"><img src="${src}" alt="${String(c.name||'Автомобиль').replace(/"/g,'&quot;')}" loading="${index<2?'eager':'lazy'}" decoding="async" ${index<2?'fetchpriority="high"':'fetchpriority="low"'}><span class="auto-market-shade"></span><span class="auto-card-city">${marketUiIcon('pin')}<b>${c.city}</b></span><button class="auto-favorite-btn ${saved?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${saved?'Убрать из избранного':'Добавить в избранное'}">${marketUiIcon('heart')}</button></div>
    <div class="auto-market-info">
      <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
-     <div class="auto-market-specs"><span>📅 ${c.year}</span><span>🛣️ ${c.km.toLocaleString('ru-RU')} км</span><span>🚘 ${c.body||'—'}</span>${c.restorationProject?'<span>🛠️ Под восстановление</span>':'<span>Состояние — на встрече</span>'}</div>
+     <div class="auto-market-specs"><span>${marketUiIcon('calendar')}<b>${c.year}</b></span><span>${marketUiIcon('road')}<b>${c.km.toLocaleString('ru-RU')} км</b></span><span>${marketUiIcon('car')}<b>${c.body||'—'}</b></span></div>
+     <div class="auto-market-condition ${c.restorationProject?'warning':''}">${marketUiIcon(c.restorationProject?'shield':'spark')}<span>${c.restorationProject?'Проект под восстановление':'Состояние проверяется на встрече'}</span></div>
      ${c.damageSummary?`<div class="auto-restoration-warning">⚠️ ${c.damageSummary}</div>`:''}
      <div class="auto-market-bottom">
-       <span>Рынок <b>${money(c.market)}</b></span>
-       <span class="${potential>=0?'auto-profit':'auto-loss'}">До расходов ${potential>=0?'+':''}${money(potential)} · ${pct>=0?'+':''}${pct}%</span>
+       <span class="auto-market-reference"><small>СРЕДНЯЯ ЦЕНА</small><b>${money(c.market)}</b></span>
+       <span class="auto-market-potential ${potential>=0?'auto-profit':'auto-loss'}"><small>ПОТЕНЦИАЛ ДО РАСХОДОВ</small><b>${potential>=0?'+':''}${money(potential)}</b><em>${pct>=0?'+':''}${pct}%</em></span>
      </div>
    </div>
- </div>`;
+ </article>`;
 }
 function mountMarketFeed(){
  const sentinel=document.getElementById('marketFeedSentinel');if(!sentinel)return;
@@ -299,28 +318,29 @@ function market(filter='all',page=0){
  arr=diversifyMarketModels(arr);
  marketFeed={items:arr,shown:Math.min(marketInitialCount,arr.length),filter:filter};
  const visible=arr.slice(0,marketFeed.shown),garageCount=Array.isArray(state.cars)?state.cars.length:(state.car?1:0);
- render(`<div class="app">${head('Объявления')}
+ render(`<div class="app market-profile-app automarket-v2">${head('Объявления')}
    <section class="auto-market-hero">
-     <div class="auto-market-hero-copy"><small>AUTOMARKET · LIVE</small><h3>Рынок автомобилей</h3><div class="auto-market-refresh-line"><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p><span id="autoMarketCountdown">До обновления —</span></div></div>
-     <div class="auto-market-wallet"><span>Свободные деньги</span><b>${money(state.money)}</b></div>
+     <div class="auto-market-hero-copy"><span class="market-live-chip"><i></i>AUTOMARKET LIVE</span><h3>Рынок автомобилей</h3><p>Новые объявления появляются автоматически каждые 6 игровых часов.</p><span class="auto-market-countdown" id="autoMarketCountdown">До обновления —</span></div>
+     <div class="auto-market-wallet">${marketUiIcon('wallet')}<span>ДОСТУПНО</span><b>${money(state.money)}</b></div>
    </section>
    <div class="auto-market-stats">
-     <div><b>${arr.length}</b><span>объявлений</span></div>
-     <div><b>${garageCount}/${typeof window.garageCapacity==='function'?window.garageCapacity():2}</b><span>в гараже</span></div>
-     <div><b>${Number(state.rep||0)}</b><span>репутация</span></div>
+     <div>${marketUiIcon('car')}<span><b>${arr.length}</b><small>объявлений</small></span></div>
+     <div>${marketUiIcon('garage')}<span><b>${garageCount}/${typeof window.garageCapacity==='function'?window.garageCapacity():2}</b><small>в гараже</small></span></div>
+     <div>${marketUiIcon('star')}<span><b>${Number(state.rep||0)}</b><small>репутация</small></span></div>
    </div>
    <div class="market-search-box">
-     <span>🔎</span>
+     <span>${marketUiIcon('search')}</span>
      <input id="marketSearch" type="text" value="${String(marketSearchTerm||'').replace(/"/g,'&quot;')}" placeholder="Марка, модель или город" onkeydown="if(event.key==='Enter')marketSearch()">
      ${marketSearchTerm?'<button onclick="clearMarketSearch()">Сбросить</button>':'<button onclick="marketSearch()">Поиск</button>'}
    </div>
    <div class="filters auto-market-filters">
-     <button class="${filter==='all'?'active':''}" onclick="market('all',0)">Все</button>
-     <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">↑ Дешевле</button>
-     <button class="${filter==='expensive'?'active':''}" onclick="market('expensive',0)">↓ Дороже</button>
-     <button class="${selectedMarketCity?'active':''}" onclick="marketCityPicker()">📍 ${selectedMarketCity||'Выбрать город'}</button>
-     <button class="${filter==='new'?'active':''}" onclick="market('new',0)">🆕 Новые</button>
+     <button class="${filter==='all'?'active':''}" onclick="market('all',0)">${marketUiIcon('car')}<span>Все</span></button>
+     <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">${marketUiIcon('sortUp')}<span>Дешевле</span></button>
+     <button class="${filter==='expensive'?'active':''}" onclick="market('expensive',0)">${marketUiIcon('sortDown')}<span>Дороже</span></button>
+     <button class="${selectedMarketCity?'active':''}" onclick="marketCityPicker()">${marketUiIcon('pin')}<span>${selectedMarketCity||'Город'}</span></button>
+     <button class="${filter==='new'?'active':''}" onclick="market('new',0)">${marketUiIcon('spark')}<span>Новые</span></button>
    </div>
+   <div class="auto-market-section-head"><div><small>АКТУАЛЬНЫЕ ПРЕДЛОЖЕНИЯ</small><b>${selectedMarketCity||'Все города'}</b></div><span>${arr.length} авто</span></div>
    ${visible.length?'':'<div class="note"><b>Ничего не найдено</b><p class="muted">Попробуй другое название машины или сбрось поиск.</p></div>'}
    <div id="marketFeedList" class="auto-market-list">
    ${visible.map((c,i)=>marketCardHtml(c,i)).join('')}
