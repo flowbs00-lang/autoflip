@@ -83,7 +83,7 @@
     const nav=document.createElement('nav');nav.id='gameBottomNav';nav.className='game-bottom-nav';nav.setAttribute('aria-label','Основные разделы');
     nav.innerHTML=gameTabs.map(tab=>gameNavButton(tab,current)).join('');
     screen.appendChild(nav);
-    if(!screen.__autoflipSwipe){let startX=0,startY=0;screen.addEventListener('touchstart',function(e){const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY;},{passive:true});screen.addEventListener('touchend',function(e){const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.25)return;const i=gameTabs.findIndex(x=>x[0]===window.AUTOFLIP_ACTIVE_TAB),next=gameTabs[(i+(dx<0?1:-1)+gameTabs.length)%gameTabs.length];if(next)openGameTab(next[0]);},{passive:true});screen.__autoflipSwipe=true;}
+    if(!screen.__autoflipSwipe){let startX=0,startY=0,ignoreSwipe=false;screen.addEventListener('touchstart',function(e){const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY;ignoreSwipe=!!(e.target&&e.target.closest&&e.target.closest('[data-no-tab-swipe],.auto-market-filters,.filters,input,textarea,select'));},{passive:true});screen.addEventListener('touchend',function(e){if(ignoreSwipe){ignoreSwipe=false;return;}const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.25)return;const i=gameTabs.findIndex(x=>x[0]===window.AUTOFLIP_ACTIVE_TAB),next=gameTabs[(i+(dx<0?1:-1)+gameTabs.length)%gameTabs.length];if(next)openGameTab(next[0]);},{passive:true});screen.__autoflipSwipe=true;}
   };
   window.openGameTab=function(tab){
     screenHistory.length=0;skipHistory=true;

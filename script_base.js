@@ -198,16 +198,8 @@ function autoFavorites(){
  var ids=ensureMarketFavorites().slice(),live=ids.map(function(key){return makes.find(function(c){return c.listingId===key;});}).filter(Boolean),removed=Math.max(0,ids.length-live.length);
  state.marketFavorites=live.map(function(c){return c.listingId;});
  localStorage.setItem(KEY,JSON.stringify(state));
- var cards=live.map(function(c){
-   var potential=Number(c.market||0)-Number(c.price||0)-Number(c.repair||0),pct=Math.round(potential/Math.max(1,Number(c.price||0)+Number(c.repair||0))*100);
-   return '<div class="market auto-market-card" onclick="carView('+c.id+')">'+
-     '<div class="pic auto-market-photo" style="background-image:linear-gradient(180deg,#0001,#0007),url(\''+photo(c)+'\');background-position:'+(c.photoPosition||'50% 50%')+'">'+
-       '<span class="auto-card-city">📍 '+c.city+'</span><button class="auto-favorite-btn saved" onclick="toggleMarketFavorite('+c.id+',event,\'favorites\')" aria-label="Убрать из избранного">♥</button>'+
-     '</div><div class="auto-market-info"><div class="auto-market-title"><b>'+c.name+'</b><strong>'+money(c.price)+'</strong></div>'+
-     '<div class="auto-market-specs"><span>🆔 '+(c.listingId?c.listingId.slice(-5):('M'+c.id))+'</span><span>📅 '+c.year+'</span><span>🛣️ '+c.km.toLocaleString('ru-RU')+' км</span><span>🚘 '+(c.body||'—')+'</span></div>'+
-     '<div class="auto-market-bottom"><span>Рынок <b>'+money(c.market)+'</b></span><span class="'+(potential>=0?'auto-profit':'auto-loss')+'">Потенциал '+(potential>=0?'+':'')+money(potential)+' · '+(pct>=0?'+':'')+pct+'%</span></div></div></div>';
- }).join('');
- render('<div class="app">'+head('Избранное')+
+ var cards=live.map(function(c,i){return marketCardHtml(c,i,'favorites');}).join('');
+ render('<div class="app market-profile-app automarket-v2">'+head('Избранное')+
    '<div class="auto-tab-intro"><div><small>AUTOMARKET</small><h3>Избранные объявления</h3><p>Сохраняй интересные машины и возвращайся к ним до того, как объявление уйдёт с рынка.</p></div><b>'+live.length+'</b></div>'+
    (removed?'<div class="note"><b>📴 '+removed+' объявл. уже снято</b><p class="muted">Они автоматически удалены из избранного.</p></div>':'')+
    (cards?'<div class="auto-market-list">'+cards+'</div>':'<div class="note auto-empty-tab"><b>♡ Пока пусто</b><p class="muted">Нажми на сердечко в объявлении, чтобы сохранить машину сюда.</p><button class="action green" onclick="market(\'all\',0)">Смотреть объявления</button></div>')+
@@ -266,19 +258,17 @@ function marketThumb(c){
  const src=photo(c);
  return /^assets\/cars\/[^/]+\.webp(?:\?.*)?$/.test(src)?src.replace('assets/cars/','assets/cars/thumbs/'):src;
 }
-function marketCardHtml(c,index){
- const potential=Number(c.market||0)-Number(c.price||0),pct=Math.round(potential/Math.max(1,Number(c.price||1))*100),saved=isMarketFavorite(c),src=marketThumb(c);
+function marketCardHtml(c,index,source){
+ const saved=isMarketFavorite(c),src=marketThumb(c),favoriteSource=source?`,event,'${source}'`:',event';
  return `<article class="market auto-market-card" onclick="carView(${c.id})">
-   <div class="pic auto-market-photo" style="--car-position:${c.photoPosition||'50% 50%'}"><img src="${src}" alt="${String(c.name||'Автомобиль').replace(/"/g,'&quot;')}" loading="${index<2?'eager':'lazy'}" decoding="async" ${index<2?'fetchpriority="high"':'fetchpriority="low"'}><span class="auto-market-shade"></span><span class="auto-card-city">${marketUiIcon('pin')}<b>${c.city}</b></span><button class="auto-favorite-btn ${saved?'saved':''}" onclick="toggleMarketFavorite(${c.id},event)" aria-label="${saved?'Убрать из избранного':'Добавить в избранное'}">${marketUiIcon('heart')}</button></div>
+   <div class="pic auto-market-photo" style="--car-position:${c.photoPosition||'50% 50%'}"><img src="${src}" alt="${String(c.name||'Автомобиль').replace(/"/g,'&quot;')}" loading="${index<2?'eager':'lazy'}" decoding="async" ${index<2?'fetchpriority="high"':'fetchpriority="low"'}><span class="auto-market-shade"></span><button class="auto-favorite-btn ${saved?'saved':''}" onclick="toggleMarketFavorite(${c.id}${favoriteSource})" aria-label="${saved?'Убрать из избранного':'Добавить в избранное'}">${marketUiIcon('heart')}</button></div>
    <div class="auto-market-info">
+     <div class="auto-market-location">${marketUiIcon('pin')}<span>${c.city}</span></div>
      <div class="auto-market-title"><b>${c.name}</b><strong>${money(c.price)}</strong></div>
      <div class="auto-market-specs"><span>${marketUiIcon('calendar')}<b>${c.year}</b></span><span>${marketUiIcon('road')}<b>${c.km.toLocaleString('ru-RU')} км</b></span><span>${marketUiIcon('car')}<b>${c.body||'—'}</b></span></div>
      <div class="auto-market-condition ${c.restorationProject?'warning':''}">${marketUiIcon(c.restorationProject?'shield':'spark')}<span>${c.restorationProject?'Проект под восстановление':'Состояние проверяется на встрече'}</span></div>
      ${c.damageSummary?`<div class="auto-restoration-warning">⚠️ ${c.damageSummary}</div>`:''}
-     <div class="auto-market-bottom">
-       <span class="auto-market-reference"><small>СРЕДНЯЯ ЦЕНА</small><b>${money(c.market)}</b></span>
-       <span class="auto-market-potential ${potential>=0?'auto-profit':'auto-loss'}"><small>ПОТЕНЦИАЛ ДО РАСХОДОВ</small><b>${potential>=0?'+':''}${money(potential)}</b><em>${pct>=0?'+':''}${pct}%</em></span>
-     </div>
+     <div class="auto-market-card-open"><span>Посмотреть объявление</span><b>→</b></div>
    </div>
  </article>`;
 }
@@ -333,7 +323,7 @@ function market(filter='all',page=0){
      <input id="marketSearch" type="text" value="${String(marketSearchTerm||'').replace(/"/g,'&quot;')}" placeholder="Марка, модель или город" onkeydown="if(event.key==='Enter')marketSearch()">
      ${marketSearchTerm?'<button onclick="clearMarketSearch()">Сбросить</button>':'<button onclick="marketSearch()">Поиск</button>'}
    </div>
-   <div class="filters auto-market-filters">
+   <div class="filters auto-market-filters" data-no-tab-swipe="true">
      <button class="${filter==='all'?'active':''}" onclick="market('all',0)">${marketUiIcon('car')}<span>Все</span></button>
      <button class="${filter==='cheap'?'active':''}" onclick="market('cheap',0)">${marketUiIcon('sortUp')}<span>Дешевле</span></button>
      <button class="${filter==='expensive'?'active':''}" onclick="market('expensive',0)">${marketUiIcon('sortDown')}<span>Дороже</span></button>

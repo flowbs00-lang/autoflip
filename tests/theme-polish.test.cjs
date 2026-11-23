@@ -7,6 +7,8 @@ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../theme-polish.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(__dirname,'../mobile-redesign.css'),'utf8');
 const unifiedCss=fs.readFileSync(path.join(__dirname,'../unified-game.css'),'utf8');
+const scriptBase=fs.readFileSync(path.join(__dirname,'../script_base.js'),'utf8');
+const ui=fs.readFileSync(path.join(__dirname,'../ui.js'),'utf8');
 
 test('theme and mobile redesign layers load after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
@@ -77,4 +79,13 @@ test('long screens clear the fixed navigation and remaining legacy panels use th
   assert.match(unifiedCss,/\.world-route-fields>div/);
   assert.match(unifiedCss,/Purchase checkout and purchase history/);
   assert.match(unifiedCss,/Deals, buyers and live conversations/);
+});
+
+test('automarket cards stay clean and horizontal filters do not switch game tabs',()=>{
+  const cardTemplate=scriptBase.slice(scriptBase.indexOf('function marketCardHtml'),scriptBase.indexOf('function showMarketDetail'));
+  assert.doesNotMatch(cardTemplate,/Средняя цена|Потенциал до расходов/);
+  assert.match(cardTemplate,/auto-market-location/);
+  assert.match(scriptBase,/data-no-tab-swipe="true"/);
+  assert.match(ui,/ignoreSwipe/);
+  assert.match(unifiedCss,/touch-action:pan-x!important/);
 });

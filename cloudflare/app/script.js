@@ -581,16 +581,14 @@ function decorateMarket(){
     if(state.liveMarket.hiddenIds.indexOf(id)>=0){card.remove();return;}if(card.querySelector('.v79-seller'))return;var needRep=(id>=0&&typeof makes!=='undefined'&&makes[id])?requiredRepForCar(makes[id]):0;if(needRep>Number(state.rep||0)){var lock=document.createElement('div');lock.className='muted';lock.style.marginTop='6px';lock.style.fontSize='12px';lock.textContent='🔒 Нужно '+needRep+' репутации · сейчас '+Number(state.rep||0);card.appendChild(lock);card.style.opacity='.68';}
     var car=(id>=0&&typeof makes!=='undefined')?makes[id]:null,t=types[(id>=0?id:0)%types.length],factor=Number(state.liveMarket.priceFactors[id]||1),status='',badge='';
     if(car){t=[car.sellerUrgency==='high'?'🔥':(car.sellerKind==='Перекупщик'?'⚠️':'👤'),(car.sellerName||'Продавец')+' · '+(car.sellerKind||'Частник')];}
-    if(state.liveMarket.newIds.indexOf(id)>=0){status=' · 🆕 Новое объявление';badge='🆕 Новое';}
-    else if(factor<.985){status=' · 🔻 Цена реально снижена';badge='🔻 Цена снижена';}
-    else if(state.liveMarket.hotIds.indexOf(id)>=0||factor>1.025){status=' · ⏳ Высокий спрос';badge='⏳ Могут купить';}
-    var delta=Math.round((factor-1)*100),priceText=delta===0?'цена без изменений':(delta>0?'цена +'+delta+'%':'цена '+delta+'%');
+    if(state.liveMarket.newIds.indexOf(id)>=0){status='Новое объявление';badge='new';}
+    else if(factor<.985){status='Цена снижена';badge='down';}
+    else if(state.liveMarket.hotIds.indexOf(id)>=0||factor>1.025){status='Высокий спрос';badge='hot';}
     var el=document.createElement('div');
-    el.className='muted v79-seller';
-    el.style.marginTop='6px';el.style.fontSize='12px';
-    el.textContent=t[0]+' '+t[1]+(car?' · '+marketAgeText(car):'')+' · '+priceText+status;
-    card.appendChild(el);
-    if(badge){var pic=card.querySelector('.pic');if(pic){var tag=document.createElement('span');tag.textContent=badge;tag.style.cssText='display:inline-block;background:#111c;color:#fff;padding:4px 7px;border-radius:8px;font-size:10px;margin:6px';pic.appendChild(tag);}}
+    el.className='v79-seller';
+    el.innerHTML='<span>'+String(car?((car.sellerName||'Продавец')+' · '+(car.sellerKind||'Частник')):t[1])+'</span>'+(car?'<span>'+marketAgeText(car)+'</span>':'')+(status?'<b class="market-trend '+badge+'">'+status+'</b>':'');
+    var info=card.querySelector('.auto-market-info');
+    if(info)info.appendChild(el);else card.appendChild(el);
   });
   updateMarketCountdownUI();
 }
