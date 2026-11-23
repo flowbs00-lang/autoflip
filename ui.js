@@ -94,21 +94,10 @@
     if(tab==='community')return openCommunity('global');
     if(tab==='plates')return openPlatesApp();
   };
-  function plateItems(){
-    if(state.plates&&Array.isArray(state.plates.items))return state.plates.items;
-    if(Array.isArray(state.plates))return state.plates;
-    if(Array.isArray(state.plateCollection))return state.plateCollection;
-    return [];
-  }
-  function garagePlateStrip(){
-    const items=plateItems().slice(0,4);
-    return '<section class="garage-plate-strip"><div><small>МОИ НОМЕРА</small><b>'+(items.length?items.length+' в коллекции':'Коллекция пуста')+'</b></div><div class="garage-plate-list">'+(items.length?items.map(item=>'<span>'+esc((item.number||'А000АА')+' '+((item.region&&item.region.code)||item.region||'77'))+'</span>').join(''):'<span class="empty">Открой первый кейс</span>')+'</div><button onclick="openGameTab(\'plates\')">Открыть →</button></section>';
-  }
-  function decorateGarage(){
-    const app=document.querySelector('#screen .garage-app'),scene=app&&app.querySelector('.garage-scene');
-    if(!app||app.querySelector('.garage-plate-strip'))return;
-    (scene||app.querySelector('.os-head')||app).insertAdjacentHTML('afterend',garagePlateStrip());
-  }
+  // The plate collection has its own main tab. Keeping a second copy in the
+  // garage made the garage hierarchy noisy and caused two competing entry
+  // points to the same inventory.
+  function decorateGarage(){}
   const coreRender=window.render;
   function comparableMarkup(markup){return String(markup||'')
     .replace(/\s*game-nav-page\b/g,'')

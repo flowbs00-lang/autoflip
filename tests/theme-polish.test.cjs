@@ -10,11 +10,12 @@ const unifiedCss=fs.readFileSync(path.join(__dirname,'../unified-game.css'),'utf
 
 test('theme and mobile redesign layers load after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(links.at(-1),'autopass.css?v=20261122-2');
-  assert.ok(links.indexOf('unified-game.css?v=20261123-1')>links.indexOf('gameplay-flow.css?v=20261102-1'));
-  assert.ok(links.indexOf('autopass.css?v=20261122-2')>links.indexOf('unified-game.css?v=20261123-1'));
-  assert.ok(links.indexOf('theme-polish.css?v=20261011-1')>links.indexOf('community.css?v=20261011-1'));
-  assert.ok(links.indexOf('mobile-redesign.css?v=20261018-1')>links.indexOf('theme-polish.css?v=20261011-1'));
+  const find=name=>links.findIndex(value=>value.startsWith(name+'?'));
+  assert.match(links.at(-1),/^autopass\.css\?/);
+  assert.ok(find('unified-game.css')>find('gameplay-flow.css'));
+  assert.ok(find('autopass.css')>find('unified-game.css'));
+  assert.ok(find('theme-polish.css')>find('community.css'));
+  assert.ok(find('mobile-redesign.css')>find('theme-polish.css'));
 });
 
 test('phone redesign has safe areas, readable controls and stable bottom navigation',()=>{
@@ -66,8 +67,11 @@ test('timed service card keeps light text in the light theme',()=>{
 });
 
 test('long screens clear the fixed navigation and remaining legacy panels use the game theme',()=>{
-  assert.match(unifiedCss,/padding-bottom:calc\(142px \+ env\(safe-area-inset-bottom\)\)/);
-  assert.match(unifiedCss,/\.plates-app \.case-list\{padding-bottom:28px/);
+  assert.match(unifiedCss,/padding-bottom:calc\(230px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(unifiedCss,/touch-action:pan-y/);
+  assert.match(unifiedCss,/\.plates-app :is\(\.case-list,\.plate-list\)/);
+  assert.match(unifiedCss,/\.game-pass-v3 \.pass-road-v3/);
+  assert.match(unifiedCss,/\.garage-plate-strip\{display:none/);
   assert.match(unifiedCss,/\.bank-home-credit-levels/);
   assert.match(unifiedCss,/\.bank-preview-table/);
   assert.match(unifiedCss,/\.world-route-fields>div/);

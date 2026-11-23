@@ -665,6 +665,124 @@
 #screen .world-app .world-route-fields>div,#screen .world-app .world-route-fields>label{min-width:0!important;border:1px solid rgba(102,188,224,.35)!important;border-radius:15px!important;background:rgba(5,25,46,.86)!important;color:#fff!important}
 #screen .world-app .world-route-fields select{width:100%!important;min-width:0!important;background:rgba(12,43,72,.96)!important;color:#fff!important}
 
+/* --------------------------------------------------------------------------
+   2026-11-23 visual and scrolling pass.
+   The screen itself is the only vertical scroller. A generous safe zone keeps
+   the final action clear of the floating five-tab dock on every iPhone size.
+   -------------------------------------------------------------------------- */
+#screen .app.game-nav-page{
+  --section-accent:#65e2b5;
+  --section-accent-2:#55b9ff;
+  min-height:0!important;
+  height:100%!important;
+  overflow-x:hidden!important;
+  overflow-y:scroll!important;
+  padding-bottom:calc(230px + env(safe-area-inset-bottom))!important;
+  scroll-padding-top:70px!important;
+  scroll-padding-bottom:calc(230px + env(safe-area-inset-bottom))!important;
+  overscroll-behavior-y:contain!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+#screen .app.game-nav-page>.plate-content,
+#screen .app.game-nav-page>.pass-road-v3,
+#screen .app.game-nav-page>.garage-overview,
+#screen .app.game-nav-page>.auto-market-list{overflow:visible!important;max-height:none!important}
+#screen .plates-app :is(.case-list,.plate-list),
+#screen .game-pass-v3 .pass-road-v3{padding-bottom:96px!important;margin-bottom:20px!important}
+#screen .garage-plate-strip{display:none!important}
+
+/* Section identities: one visual system, different game moods. */
+#screen .game-shop-v2{--section-accent:#ffd05a;--section-accent-2:#55e0ac}
+#screen .garage-app{--section-accent:#56e3ba;--section-accent-2:#54b8ff}
+#screen .community-app,#screen .community-profile-app{--section-accent:#78edc0;--section-accent-2:#a783ff}
+#screen .plates-app{--section-accent:#d5a7ff;--section-accent-2:#ffd05a}
+#screen .market-profile-app{--section-accent:#ffb544;--section-accent-2:#41c9ff}
+#screen .world-app{--section-accent:#65e2b5;--section-accent-2:#5ca9ff}
+#screen .bank-v22-app{--section-accent:#ffd15c;--section-accent-2:#47a9ff}
+#screen .game-tasks-v2{--section-accent:#ffc451;--section-accent-2:#68e3b8}
+#screen .games-app{--section-accent:#83a9ff;--section-accent-2:#d58cff}
+#screen .account-profile-app,#screen .os-settings{--section-accent:#72e6c0;--section-accent-2:#729eff}
+#screen .meeting-app,#screen .game-inbox-v2{--section-accent:#ff9d73;--section-accent-2:#55c5ff}
+
+#screen .app.game-nav-page:not(.game-home-v2)::after{
+  background:
+    radial-gradient(circle at 88% 16%,color-mix(in srgb,var(--section-accent-2) 24%,transparent),transparent 27%),
+    radial-gradient(circle at 8% 72%,color-mix(in srgb,var(--section-accent) 18%,transparent),transparent 31%),
+    linear-gradient(180deg,rgba(6,16,41,.94) 0,rgba(6,16,41,.68) 22%,rgba(5,20,40,.55) 48%,rgba(6,17,36,.92) 100%),
+    radial-gradient(circle at 50% 50%,transparent 0,rgba(3,9,22,.16) 38%,rgba(3,9,22,.7) 100%)!important;
+}
+#screen .app.game-nav-page .head.os-head::after{
+  height:2px!important;
+  background:linear-gradient(90deg,transparent,var(--section-accent),var(--section-accent-2),transparent)!important;
+  box-shadow:0 0 12px color-mix(in srgb,var(--section-accent) 60%,transparent)!important;
+}
+
+/* Hero panels borrow the lobby's layered glass, light and strong hierarchy. */
+#screen .app.game-nav-page :is(.shop-v2-head,.game-panel-title,.garage-scene,.community-hero,.plates-hero,.autopass-hero,.auto-market-hero,.world-current-panel,.bank-card-v22,.games-hero,.account-profile-hero,.meeting-hero){
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:hidden!important;
+  border-color:color-mix(in srgb,var(--section-accent) 58%,rgba(105,193,232,.3))!important;
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--section-accent) 17%,transparent),transparent 42%),
+    linear-gradient(145deg,rgba(27,73,109,.97),rgba(6,25,48,.98))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.24),0 5px 0 #031327,0 18px 38px rgba(0,0,0,.34),0 0 26px color-mix(in srgb,var(--section-accent) 12%,transparent)!important;
+}
+#screen .app.game-nav-page :is(.shop-v2-head,.game-panel-title,.garage-scene,.community-hero,.plates-hero,.autopass-hero,.auto-market-hero,.world-current-panel,.bank-card-v22,.games-hero,.account-profile-hero,.meeting-hero)::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:150px;
+  height:150px;
+  right:-55px;
+  top:-70px;
+  border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--section-accent-2) 38%,transparent),transparent 68%);
+  filter:blur(2px);
+  pointer-events:none;
+}
+
+/* Richer reusable cards and rows instead of one flat blue block everywhere. */
+#screen .app.game-nav-page :is(.note,.row,.contact,.notification,.statsbox,.event,.profile-card,.buyer,.setting,.game-task-block,.game-inbox-card,.case-card,.plate-item,.garage-car-card,.garage-kpis>div,.community-rank,.community-clan,.community-member,.world-route-panel,.world-static-map,.bank-home-rating-hero,.bank-home-credit,.bank-home-limit-v23){
+  border-color:color-mix(in srgb,var(--section-accent) 34%,var(--af-line))!important;
+  background:
+    linear-gradient(125deg,color-mix(in srgb,var(--section-accent) 8%,transparent),transparent 48%),
+    linear-gradient(150deg,rgba(27,72,107,.96),rgba(7,27,50,.98))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.18),0 4px 0 #031326,0 14px 28px rgba(0,0,0,.25)!important;
+}
+#screen .app.game-nav-page :is(.game-panel-title,.plates-hero,.autopass-hero,.auto-market-hero,.world-current-panel)>small,
+#screen .app.game-nav-page :is(.shop-v2-title,.garage-section-title,.market-profile-title)>small{color:var(--section-accent)!important}
+
+/* AutoMarket gets the same premium contrast as the lobby CTA. */
+#screen .market-profile-app .auto-market-card{position:relative!important;border-color:rgba(73,185,231,.48)!important;box-shadow:inset 0 1px rgba(255,255,255,.18),0 5px 0 #041326,0 16px 32px rgba(0,0,0,.28)!important}
+#screen .market-profile-app .auto-market-card::before{content:"";position:absolute;z-index:2;left:0;top:15px;bottom:15px;width:3px;border-radius:0 6px 6px 0;background:linear-gradient(var(--section-accent),var(--section-accent-2));box-shadow:0 0 14px var(--section-accent)}
+#screen .market-profile-app .auto-market-photo{border:1px solid rgba(255,255,255,.2)!important;box-shadow:inset 0 -36px 42px rgba(0,0,0,.25),0 8px 18px rgba(0,0,0,.24)!important}
+#screen .market-profile-app .auto-market-filters button.active,
+#screen .market-profile-app .market-search-box button{border-color:#ffe39b!important;background:linear-gradient(180deg,#ffd85f,#ed9210)!important;box-shadow:inset 0 1px #fff5bd,0 4px 0 #8d4c04!important;color:#402300!important}
+#screen .market-profile-app .auto-market-title strong{color:#ffd36a!important;text-shadow:0 0 12px rgba(255,184,58,.2)}
+
+/* Compact game-like highlights for tabs and actions. */
+#screen .app.game-nav-page :is(.garage-tabs,.community-tabs,.plate-tabs,.meeting-tabs){border-color:color-mix(in srgb,var(--section-accent) 48%,var(--af-line))!important;box-shadow:inset 0 1px rgba(255,255,255,.16),0 5px 0 #031326!important}
+#screen .app.game-nav-page :is(.garage-tabs,.community-tabs,.plate-tabs,.meeting-tabs) button.active{
+  border-color:color-mix(in srgb,var(--section-accent) 70%,#fff)!important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--section-accent) 88%,#fff),color-mix(in srgb,var(--section-accent) 64%,#065a45))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.55),0 4px 0 color-mix(in srgb,var(--section-accent) 40%,#04271e),0 0 18px color-mix(in srgb,var(--section-accent) 25%,transparent)!important;
+  color:#06291f!important;
+}
+#screen .app.game-nav-page .action.green{
+  border:1px solid #a9f6d8!important;
+  background:linear-gradient(180deg,#6ce8bd,#25ae7e)!important;
+  box-shadow:inset 0 2px rgba(255,255,255,.45),0 5px 0 #076246,0 14px 26px rgba(26,183,129,.22)!important;
+  color:#05291f!important;
+  font-weight:950!important;
+}
+
+@media(max-width:390px){
+  #screen .app.game-nav-page{padding-bottom:calc(250px + env(safe-area-inset-bottom))!important;scroll-padding-bottom:calc(250px + env(safe-area-inset-bottom))!important}
+  #screen .plates-app :is(.case-list,.plate-list),#screen .game-pass-v3 .pass-road-v3{padding-bottom:112px!important}
+}
+
 /* Deals, buyers and live conversations. */
 #screen .meeting-app :is(.meeting-hero,.meeting-route-card,.meeting-place,.meeting-time,.meeting-custom,.meeting-ticket,.meeting-list-card,.meeting-price,.meeting-car,.meeting-diagnostic-grid>button,.meeting-empty,.meeting-success,.trade-context-title,.trade-car-card,.af-finances),#screen .game-nav-page :is(.bubble,.deal-score){box-sizing:border-box!important;max-width:100%!important;overflow:hidden!important;border:1px solid var(--af-line)!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(25,68,103,.96),rgba(7,28,51,.98))!important;box-shadow:inset 0 1px rgba(255,255,255,.15),0 4px 0 #041326!important;color:#fff!important}
 #screen .meeting-app :is(.meeting-hero,.meeting-route-card,.meeting-place,.meeting-time,.meeting-custom,.meeting-ticket,.meeting-list-card,.meeting-price,.meeting-car,.meeting-diagnostic-grid>button,.meeting-empty,.meeting-success,.trade-context-title,.trade-car-card,.af-finances) :is(h2,h3,b,strong){color:#fff!important}
