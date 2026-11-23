@@ -6,12 +6,13 @@ const path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../theme-polish.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(__dirname,'../mobile-redesign.css'),'utf8');
+const unifiedCss=fs.readFileSync(path.join(__dirname,'../unified-game.css'),'utf8');
 
 test('theme and mobile redesign layers load after feature styles',()=>{
   const links=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(x=>x[1]);
   assert.equal(links.at(-1),'autopass.css?v=20261122-2');
-  assert.ok(links.indexOf('unified-game.css?v=20261122-2')>links.indexOf('gameplay-flow.css?v=20261102-1'));
-  assert.ok(links.indexOf('autopass.css?v=20261122-2')>links.indexOf('unified-game.css?v=20261122-2'));
+  assert.ok(links.indexOf('unified-game.css?v=20261123-1')>links.indexOf('gameplay-flow.css?v=20261102-1'));
+  assert.ok(links.indexOf('autopass.css?v=20261122-2')>links.indexOf('unified-game.css?v=20261123-1'));
   assert.ok(links.indexOf('theme-polish.css?v=20261011-1')>links.indexOf('community.css?v=20261011-1'));
   assert.ok(links.indexOf('mobile-redesign.css?v=20261018-1')>links.indexOf('theme-polish.css?v=20261011-1'));
 });
@@ -62,4 +63,14 @@ test('timed service card keeps light text in the light theme',()=>{
   assert.match(css,/\.garage-app \.service-active :is\(h3,b\)\{color:#f3f7fb!important\}/);
   assert.match(css,/\.garage-app \.service-active p\{color:#bcc8d4\}/);
   assert.match(css,/\.service-message button:disabled\{background:var\(--os-elevated\);color:var\(--os-faint\);opacity:1\}/);
+});
+
+test('long screens clear the fixed navigation and remaining legacy panels use the game theme',()=>{
+  assert.match(unifiedCss,/padding-bottom:calc\(142px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(unifiedCss,/\.plates-app \.case-list\{padding-bottom:28px/);
+  assert.match(unifiedCss,/\.bank-home-credit-levels/);
+  assert.match(unifiedCss,/\.bank-preview-table/);
+  assert.match(unifiedCss,/\.world-route-fields>div/);
+  assert.match(unifiedCss,/Purchase checkout and purchase history/);
+  assert.match(unifiedCss,/Deals, buyers and live conversations/);
 });

@@ -4,7 +4,7 @@
   const wallpapers={aurora:['Северное сияние','radial-gradient(ellipse at 90% 15%,#6479cb 0,transparent 52%),radial-gradient(ellipse at 0 80%,#256e70 0,transparent 65%),#14253b'],dusk:['Закат','radial-gradient(ellipse at 85% 20%,#e9ab8c 0,transparent 60%),radial-gradient(ellipse at 10% 90%,#643a81 0,transparent 65%),#9b667c'],ocean:['Океан','radial-gradient(ellipse at 10% 5%,#5299bc 0,transparent 65%),radial-gradient(ellipse at 90% 95%,#133849 0,transparent 60%),#256e85'],forest:['Хвойный лес','radial-gradient(ellipse at 90% 10%,#7e9c76 0,transparent 60%),radial-gradient(ellipse at 0 85%,#163d37 0,transparent 65%),#365e4b'],ink:['Графит','radial-gradient(ellipse at 95% 10%,#6a6d7e 0,transparent 60%),radial-gradient(ellipse at 0 95%,#171922 0,transparent 65%),#333643'],plum:['Ультрафиолет','radial-gradient(ellipse at 85% 15%,#bd82be 0,transparent 60%),radial-gradient(ellipse at 10% 95%,#373e96 0,transparent 65%),#664f92']};
   const accents={mint:'#79e2bc',blue:'#8ebcff',violet:'#c7adff',peach:'#ffbd9e'};
   const paths={car:'M3 15v-5l2-5h14l2 5v5M3 10h18M5 15v3m14-3v3M6 13h2m8 0h2',chat:'M4 4h16v12H9l-5 4V4',garage:'M3 10l9-7 9 7v11H3V10m4 11V11h10v10M7 15h10',bank:'M3 8l9-5 9 5H3m2 3v7m7-7v7m7-7v7M3 21h18',map:'M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5m6-2v16m6-14v16',home:'M3 11l9-8 9 8M5 9v12h14V9m-10 12v-8h6v8',phone:'M7 3l3 5-3 3a14 14 0 0 0 6 6l3-3 5 3-1 4C10 22 2 14 3 4l4-1',note:'M5 3h14v18H5V3m4 5h6m-6 4h6m-6 4h4',user:'M8 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0M4 21v-2a8 8 0 0 1 16 0v2',news:'M4 3h16v18H4V3m4 4h8m-8 4h8m-8 4h3m3 0h2',game:'M8 7h8c5 0 6 13 3 13l-4-4H9l-4 4C2 20 3 7 8 7m0 3v5m-2-2h4m5-2h.1m2 3h.1',shop:'M4 8h16l-1 13H5L4 8m4 0a4 4 0 0 1 8 0',settings:'M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-5 0v6',bell:'M5 17h14l-2-4V9A5 5 0 0 0 7 9v4l-2 4m5 3h4',search:'M10 3a7 7 0 1 0 0 14 7 7 0 1 0 0-14m5 12 6 6',arrow:'M14 5l-7 7 7 7',lock:'M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5V10m7 4v3',sun:'M8 12a4 4 0 1 0 8 0 4 4 0 1 0-8 0M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1',eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7m7 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0',volume:'M3 9h4l5-4v14l-5-4H3V9m13-2a7 7 0 0 1 0 10m3-13a11 11 0 0 1 0 16',spark:'M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7'};
-  Object.assign(paths,{users:'M7 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10 1a3 3 0 1 0 0-6m-15 15v-2a5 5 0 0 1 10 0v2m2-6a4 4 0 0 1 6 3.5V21',briefcase:'M4 7h16v13H4V7m5 0V4h6v3m-11 5h16m-9 0v2h2v-2',plate:'M4 7h16v10H4V7m3 3h2m6 0h2m-10 4h10',shield:'M12 3l8 3v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3',menu:'M4 6h16M4 12h16M4 18h16',clock:'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18m0 4v5l3 2',gift:'M4 10h16v11H4V10m-1-4h18v4H3V6m9 0v15M12 6c-2-4-6-3-5-1s2 3 5 1m0 0c2-4 6-3 5-1s-2 3-5 1'});
+  Object.assign(paths,{users:'M7 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10 1a3 3 0 1 0 0-6m-15 15v-2a5 5 0 0 1 10 0v2m2-6a4 4 0 0 1 6 3.5V21',briefcase:'M4 7h16v13H4V7m5 0V4h6v3m-11 5h16m-9 0v2h2v-2',plate:'M4 7h16v10H4V7m3 3h2m6 0h2m-10 4h10',shield:'M12 3l8 3v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3',menu:'M4 6h16M4 12h16M4 18h16',close:'M6 6l12 12M18 6L6 18',clock:'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18m0 4v5l3 2',gift:'M4 10h16v11H4V10m-1-4h18v4H3V6m9 0v15M12 6c-2-4-6-3-5-1s2 3 5 1m0 0c2-4 6-3 5-1s-2 3-5 1'});
   const apps=[['market','Автомаркет','car','mint'],['messages','Сообщения','chat','blue'],['economyHub','Бизнес','briefcase','peach'],['openCommunity','Сообщество','users','violet'],['garage','Гараж','garage','peach'],['openPlatesApp','Номера','plate','violet'],['autoBankHome','Банк','bank','violet'],['mapApp','Карта','map','mint'],['realty','Дом','home','peach'],['contacts','Контакты','phone','blue'],['notes','Заметки','note','yellow'],['newsApp','Новости','news','peach'],['gamesApp','Игры','game','blue'],['settings','Настройки','settings','silver']];
   const gameTabs=[['shop','Магазин','shop'],['garage','Гараж','garage'],['home','Главная','home'],['community','Сообщество','users'],['plates','Номера','plate']];
   const screenHistory=[];
@@ -51,8 +51,10 @@
   window.clearCustomWallpaper=function(){const p=prefs();p.customWallpaper='';if(p.wallpaper==='custom')p.wallpaper='aurora';apply();persistUI();settings();};
   window.toggleQuickSetting=function(key){if(key==='sound')toggleSound();else if(key==='theme')prefs().theme=prefs().theme==='dark'?'light':'dark';else if(key==='privateBalance')prefs().privateBalance=!prefs().privateBalance;apply();persistUI();quickSettings();};
   window.status=function(){return '<div class="game-clock-overlay"><span data-os-time>'+time()+'</span></div>';};
-  window.gameBack=function(){const previous=screenHistory.pop();if(!previous)return home();window.AUTOFLIP_ACTIVE_TAB=previous.active||'home';coreRender(previous.markup);setTimeout(function(){if(previous.active==='garage')decorateGarage();window.mountGameNav(previous.active);},120);};
-  window.head=function(title){return status()+'<div class="head os-head"><button onclick="gameBack()" aria-label="Назад">'+icon('arrow')+'</button><b>'+esc(title)+'</b><button onclick="gameMenu()" aria-label="Игровое меню">'+icon('menu')+'</button></div>';};
+  let skipHistory=false;
+  window.gameBack=function(){const previous=screenHistory.pop();if(!previous)return closeGameFlow();window.AUTOFLIP_ACTIVE_TAB=previous.active||'home';coreRender(previous.markup);setTimeout(function(){if(previous.active==='garage')decorateGarage();window.mountGameNav(previous.active);},120);};
+  window.closeGameFlow=function(){const active=window.AUTOFLIP_ACTIVE_TAB||'home';screenHistory.length=0;skipHistory=true;return openGameTab(active);};
+  window.head=function(title){return status()+'<div class="head os-head"><button onclick="gameBack()" aria-label="Назад">'+icon('arrow')+'</button><b>'+esc(title)+'</b><button class="game-close-flow" onclick="closeGameFlow()" aria-label="Закрыть раздел">'+icon('close')+'</button></div>';};
   function appButton(a){const badge=a[0]==='messages'?unread():0;return '<button class="os-app" data-app-name="'+a[1].toLowerCase()+'" onclick="'+a[0]+'()"><span class="os-icon '+a[3]+'">'+icon(a[2])+(badge?'<em>'+badge+'</em>':'')+'</span><small>'+a[1]+'</small></button>';}
   window.filterHomeApps=function(value){let n=0;document.querySelectorAll('.os-app-grid .os-app').forEach(el=>{el.hidden=!el.dataset.appName.includes(value.toLowerCase().trim());if(!el.hidden)n++;});const empty=document.getElementById('os-search-empty');if(empty)empty.hidden=n>0;};
   function detectGameTab(markup){
@@ -84,6 +86,7 @@
     if(!screen.__autoflipSwipe){let startX=0,startY=0;screen.addEventListener('touchstart',function(e){const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY;},{passive:true});screen.addEventListener('touchend',function(e){const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.25)return;const i=gameTabs.findIndex(x=>x[0]===window.AUTOFLIP_ACTIVE_TAB),next=gameTabs[(i+(dx<0?1:-1)+gameTabs.length)%gameTabs.length];if(next)openGameTab(next[0]);},{passive:true});screen.__autoflipSwipe=true;}
   };
   window.openGameTab=function(tab){
+    screenHistory.length=0;skipHistory=true;
     window.AUTOFLIP_ACTIVE_TAB=tab;
     if(tab==='home')return home();
     if(tab==='shop')return gameShop();
@@ -107,9 +110,20 @@
     (scene||app.querySelector('.os-head')||app).insertAdjacentHTML('afterend',garagePlateStrip());
   }
   const coreRender=window.render;
+  function comparableMarkup(markup){return String(markup||'')
+    .replace(/\s*game-nav-page\b/g,'')
+    .replace(/<div class="game-clock-overlay">[\s\S]*?<\/div>/g,'')
+    .replace(/<nav[^>]*id="gameBottomNav"[\s\S]*?<\/nav>/g,'')
+    .replace(/data-os-time>[^<]*/g,'data-os-time>')
+    .replace(/\s+/g,' ').trim();}
   if(typeof coreRender==='function')window.render=render=function(markup){
     const current=document.getElementById('screen'),currentMarkup=current&&current.innerHTML;
-    if(currentMarkup&&currentMarkup!==markup&&!currentMarkup.includes('autoflip-booting')&&!currentMarkup.includes('os-lockscreen'))screenHistory.push({markup:currentMarkup,active:window.AUTOFLIP_ACTIVE_TAB||'home'});
+    const sameScreen=comparableMarkup(currentMarkup)===comparableMarkup(markup);
+    if(!skipHistory&&!sameScreen&&currentMarkup&&!currentMarkup.includes('autoflip-booting')&&!currentMarkup.includes('os-lockscreen')){
+      const previous=screenHistory[screenHistory.length-1];
+      if(!previous||comparableMarkup(previous.markup)!==comparableMarkup(currentMarkup))screenHistory.push({markup:currentMarkup,active:window.AUTOFLIP_ACTIVE_TAB||'home'});
+    }
+    skipHistory=false;
     if(screenHistory.length>20)screenHistory.shift();
     const result=coreRender(markup),active=detectGameTab(markup);
     window.AUTOFLIP_ACTIVE_TAB=active;

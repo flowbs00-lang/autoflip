@@ -63,7 +63,7 @@ test('legacy launcher stays hidden until the modern interface is ready',()=>{
   assert.match(html,/<html lang="ru" class="autoflip-booting">/);
   assert.match(html,/autoflip-booting #screen\{visibility:hidden!important\}/);
   assert.match(html,/id="screen" aria-busy="true"/);
-  assert.match(html,/ui\.js\?v=20261122-11/);
+  assert.match(html,/ui\.js\?v=20261123-1/);
   assert.match(ui,/classList\.remove\('autoflip-booting'\)/);
 });
 test('bottom navigation identifies plates before garage copy and keeps utility screens on home',()=>{
@@ -72,4 +72,11 @@ test('bottom navigation identifies plates before garage copy and keeps utility s
   assert.ok(plateRule>=0&&garageRule>plateRule);
   assert.doesNotMatch(ui,/garage-app\|garage-home\|Гараж/);
   assert.match(ui,/Bank, map, settings, messages, mini-games and sleep are lobby actions/);
+});
+test('internal navigation deduplicates repeated screens and exposes a close action',()=>{
+  assert.match(ui,/function comparableMarkup\(markup\)/);
+  assert.match(ui,/const sameScreen=comparableMarkup\(currentMarkup\)===comparableMarkup\(markup\)/);
+  assert.match(ui,/window\.closeGameFlow=function\(\)/);
+  assert.match(ui,/aria-label="Закрыть раздел"/);
+  assert.match(ui,/screenHistory\.length=0;skipHistory=true/);
 });
