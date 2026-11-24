@@ -626,7 +626,7 @@ function updateNotificationBadge(){
 }
 window.notificationCenter=function(){
   var list=state.phoneNotifications||[];
-  var html='<div class="app">'+head('Уведомления')+'<div class="note"><b>🔔 Центр уведомлений</b><p class="muted">'+(phoneUnread()?'Непрочитанных: '+phoneUnread():'Новых уведомлений нет')+'</p></div>';
+  var html='<div class="app notice-center">'+head('Уведомления')+'<div class="note"><b>🔔 Центр уведомлений</b><p class="muted">'+(phoneUnread()?'Непрочитанных: '+phoneUnread():'Новых уведомлений нет')+'</p></div>';
   if(!list.length)html+='<div class="note"><p class="muted">Здесь будут сообщения от AutoMarket, банка, покупателей и других приложений.</p></div>';
   else html+=list.map(function(n){return '<div class="notification" style="cursor:pointer;opacity:'+(n.read?'.72':'1')+'" onclick="openPhoneNotification(\''+n.id+'\')"><b>'+n.icon+' '+n.app+'</b><span>'+n.text+'</span><small class="muted">'+n.day+' · '+n.time+(n.read?'':' · новое')+'</small></div>';}).join('');
   html+='<button class="action" onclick="markPhoneNotificationsRead()">✓ Отметить всё прочитанным</button></div>';render(html);
@@ -736,7 +736,7 @@ window.realty=function(){
   var sleepBlock=canSleep
     ?meetingHint+'<div class="sleep-wake-card"><b>Во сколько проснуться?</b><p>Выбери любое время до 08:00, чтобы успеть на встречу.</p><div class="sleep-wake-presets"><button onclick="sleepUntilGame(\'06:00\')">06:00</button><button onclick="sleepUntilGame(\'07:00\')">07:00</button><button onclick="sleepUntilGame(\'08:00\')">08:00</button></div><label>Другое время<input id="sleepWakeTime" type="time" min="00:00" max="08:00" value="'+wakeValue+'"></label><button class="action green" onclick="sleepUntilGame(document.getElementById(\'sleepWakeTime\').value)">🛏️ Лечь спать</button></div>'
     :'<div class="note" style="margin-top:10px"><b>🔒 Спать пока рано</b><p class="muted">Лечь спать можно только с 21:00 до 08:00. Днём занимайся рынком, ремонтом, поездками и сделками.</p></div><button class="action" disabled>😴 Сон откроется в 21:00</button>';
-  render('<div class="app">'+head('Дом')+'<div class="note"><small>СЕЙЧАС</small><h3>🏠 '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">'+(canSleep?'Можно закончить день и выбрать время пробуждения.':'Сейчас дневное время — спать нельзя.')+'</p></div>'+sleepBlock+'<div class="note" style="margin-top:10px"><b>⏱ Игровое время</b><p class="muted">1 реальная минута = 1 игровой час.</p></div></div>');
+  render('<div class="app home-sleep">'+head('Дом')+'<div class="note"><small>СЕЙЧАС</small><h3>🏠 '+gameDateText()+' · '+gameTimeText()+'</h3><p class="muted">'+(canSleep?'Можно закончить день и выбрать время пробуждения.':'Сейчас дневное время — спать нельзя.')+'</p></div>'+sleepBlock+'<div class="note" style="margin-top:10px"><b>⏱ Игровое время</b><p class="muted">1 реальная минута = 1 игровой час.</p></div></div>');
 };
 
 // Keep the currently selected garage car linked to its own sale listing.
