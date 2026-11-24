@@ -78,3 +78,14 @@ test('plate theme forces all Russian registration characters to dark ink',()=>{
   assert.match(css,/\.plate-main>strong[^}]*color:#090b0d!important/);
   assert.match(css,/\.plate-region>small>em[^}]*color:#090b0d!important/);
 });
+test('region album counts distinct codes and recalculates completed cities after sale',()=>{
+  const items=['А111АА','В222ВВ'].map((number,i)=>({id:String(i),number,region:{code:'43',city:'Киров',country:'Россия'},rarity:'ordinary',value:1000}));
+  const g=game({money:0,plates:{items}});
+  g.c.setPlateTab('album');
+  assert.match(g.html(),/Коды в коллекции · 1 \//);
+  assert.match(g.html(),/Города в сборе · 1 \/ 20/);
+  assert.match(g.html(),/А111АА · В222ВВ/);
+  g.c.sellPlate('0');g.c.sellPlate('1');g.c.setPlateTab('album');
+  assert.match(g.html(),/Коды в коллекции · 0 \//);
+  assert.match(g.html(),/Города в сборе · 0 \/ 20/);
+});

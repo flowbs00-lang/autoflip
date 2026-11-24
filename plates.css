@@ -23,3 +23,18 @@
 #screen .plates-app .plate-face.plate-secret{border-color:#744cc5!important;box-shadow:inset 0 0 0 1px #a98ae1,0 9px 26px #9d79df66!important}
 #screen .plates-app .plate-face.plate-priceless{border-color:#8c5a05!important;box-shadow:inset 0 0 0 1px #d4ad4c,0 9px 30px #d49b3470!important}
 .case-card.reward-case{border-color:#70e0b4;background:linear-gradient(135deg,#1d5d5066,var(--os-raised));box-shadow:inset 0 1px #a8f4d8,0 10px 30px #37d49b26}.case-card.reward-case .plate-open{background:linear-gradient(180deg,#7ce9c0,#33b985);color:#092d24}
+
+.plates-app .plate-tabs {grid-template-columns:repeat(3,minmax(0,1fr))}
+.region-album {display:grid;gap:8px;color:#f4f6ff}
+.region-album header {padding:20px;border:1px solid #675a89;border-radius:19px;background:linear-gradient(125deg,#35294c,#152741)}
+.region-album h3 {font-size:1.4rem;margin:0}
+.region-album header p {line-height:1.45;color:#dad8eb}
+.region-album header span {font-size:.85rem;color:#ded9ef}
+.region-album progress {display:block;width:100%;height:10px;margin:9px 0;accent-color:#70dfbb}
+.album-city {background:#14283e;border:1px solid #39526a;border-radius:14px;overflow:hidden}
+.album-city[data-complete="true"] {border-color:#5ba991;background:#123631}
+.album-city summary {cursor:pointer;min-height:46px;padding:12px 16px;box-sizing:border-box}
+.album-city summary span {float:right;color:#addaca;font-variant-numeric:tabular-nums}
+.album-city ul {list-style:none;margin:0;padding:0 16px 10px}
+.album-city li {display:grid;grid-template-columns:3em 1fr;gap:8px;padding:8px 0;border-top:1px solid #ffffff20;color:#d5e2ed;overflow-wrap:anywhere}
+.album-city li b {color:#ffc976}

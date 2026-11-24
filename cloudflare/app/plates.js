@@ -106,7 +106,33 @@
     return '<article class="case-card '+tier+(free?' reward-case':'')+'"><div class="case-top"><span class="case-orb" aria-hidden="true">▱<i>✦</i></span><div><small>'+(free?'🎁 НАГРАДА AUTOPASS · '+rewards.length:locked?'🔒 ГАРАЖ · УРОВЕНЬ '+c.level:'ДОСТУПЕН СЕЙЧАС')+'</small><h3>'+c.name+'</h3><span class="rarity '+tier+'">До «'+RARITIES[tier].title+'»</span></div></div><details class="case-odds"><summary>Шансы выпадения <span>⌄</span></summary>'+c.weights.map(w=>'<div><span class="rarity '+w[0]+'">'+RARITIES[w[0]].title+'</span><b>'+String(w[1]).replace('.',',')+'%</b><meter min="0" max="100" value="'+w[1]+'">'+w[1]+'%</meter></div>').join('')+'</details><div class="case-bottom"><div><small>'+(free?'Награда AutoPass':'Стоимость кейса')+'</small><b>'+(free?'Бесплатно':formatMoney(c.price))+'</b></div><button class="plate-open" '+(!free&&(locked||!canPay)?'disabled':'')+' onclick="openPlateCase(\''+c.id+'\')">'+(free?'Открыть бесплатно':locked?'Уровень '+c.level:canPay?'Открыть':'Не хватает денег')+'</button></div>'+(locked?'<small class="case-hint">Повысь уровень в разделе «Гараж → Развитие».</small>':!free&&!canPay?'<small class="case-hint">Нужно ещё '+formatMoney(c.price-Number(state.money||0))+'</small>':'')+'</article>';
   }
   function inventoryCard(p){const locked=p.tradable===false;return '<article class="plate-item"><div class="plate-item-top"><span class="rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</span><button class="plate-star" aria-label="'+(p.favorite?'Убрать из избранного':'В избранное')+'" aria-pressed="'+!!p.favorite+'" onclick="favoritePlate(\''+p.id+'\')">'+(p.favorite?'★':'☆')+'</button></div>'+plateFace(p,true)+'<div class="plate-info"><b>'+escape(p.region.city)+'</b><span>'+escape(p.region.country)+'</span></div><div class="plate-value"><b>'+(locked?'Премиальный':formatMoney(p.value))+'</b>'+(locked?'<button disabled>Не продаётся</button>':'<button onclick="confirmPlateSale(\''+p.id+'\')">Продать</button>')+'</div></article>';}
-  function tabs(items){return '<nav class="plate-tabs" aria-label="Разделы"><button class="'+(activeTab==='cases'?'active':'')+'" onclick="setPlateTab(\'cases\')">Кейсы</button><button class="'+(activeTab==='collection'?'active':'')+'" onclick="setPlateTab(\'collection\')">Коллекция <i>'+items.length+'</i></button></nav>';}
+  function tabs(items){
+    const labels={cases:'Кейсы',collection:'Коллекция',album:'Альбом'};
+    return '<nav class="plate-tabs" aria-label="Разделы номеров">'+Object.entries(labels).map(([key,label])=>
+      `<button type="button" class="${activeTab===key?'active':''}" aria-pressed="${activeTab===key}" onclick="setPlateTab('${key}')">${label}</button>`
+    ).join('')+'</nav>';
+  }
+  function albumView(items){
+    const byCode=new Map();
+    for(const p of items){
+      const code=String(p.region.code);
+      if(!byCode.has(code))byCode.set(code,[]);
+      byCode.get(code).push(p);
+    }
+    const cities=window.AUTOFLIP_WORLD.cities;
+    let complete=0;
+    const rows=cities.map(city=>{
+      const owned=city.regions.filter(code=>byCode.has(code));
+      if(owned.length===city.regions.length)complete++;
+      const codes=city.regions.map(code=>{
+        const plates=byCode.get(code)||[];
+        const numbers=plates.map(p=>escape(p.number)).join(' · ');
+        return `<li><b>${escape(code)}</b><span>${numbers||'Ещё предстоит найти'}</span></li>`;
+      }).join('');
+      return `<details class="album-city" data-complete="${owned.length===city.regions.length}"><summary><strong>${escape(city.name)}</strong><span>${owned.length} / ${city.regions.length}</span></summary><ul>${codes}</ul></details>`;
+    }).join('');
+    return `<section class="region-album"><header><h3>Альбом регионов</h3><p>Собери все коды одного города. Нажми на город, чтобы увидеть свои номера и недостающие коды.</p><strong>Коды в коллекции · ${byCode.size} / ${REGIONS.length}</strong><progress aria-label="Коды в коллекции" value="${byCode.size}" max="${REGIONS.length}"></progress><span>Города в сборе · ${complete} / ${cities.length}</span></header>${rows}</section>`;
+  }
   function dashboard(items,total){return '<section class="plates-hero"><div><small>НОМЕРНОЙ ФОНД</small><h2>Твоя коллекция</h2><p>Открывай кейсы и собирай редкие сочетания.</p></div><div class="plates-stats"><span><small>НОМЕРОВ</small><b>'+items.length+'</b></span><span><small>ЦЕННОСТЬ</small><b>'+formatMoney(total)+'</b></span></div></section>';}
   function collectionView(items){
     let shown=items.filter(p=>filter==='favorites'?p.favorite:filter==='all'||p.rarity===filter);
@@ -119,19 +145,24 @@
   function renderPlates(){
     const collection=ensure(),items=collection.items,total=items.reduce(function(sum,p){return sum+Number(p.value||0);},0),title=typeof head==='function'?head('Номера'):'';
     const toast=notice?'<div class="plate-toast">✓ '+escape(notice)+'</div>':'';notice='';
-    render('<div class="app plates-app">'+title+dashboard(items,total)+tabs(items)+'<main class="plate-content">'+(activeTab==='cases'?casesView():collectionView(items))+'</main>'+toast+saleSheet(items)+'</div>');
+    render('<div class="app plates-app">'+title+dashboard(items,total)+tabs(items)+'<main class="plate-content">'+(activeTab==='album'?albumView(items):activeTab==='collection'?collectionView(items):casesView())+'</main>'+toast+saleSheet(items)+'</div>');
   }
   function openingScreen(c,p,phase){
     const reveal=phase==='reveal',rolling=phase==='rolling';
     const freeCount=caseRewards(c.id).length,canRepeat=freeCount>0||Number(state.money||0)>=c.price;
+    let discovery='';
+    if(reveal){
+      const count=ensure().items.filter(item=>String(item.region.code)===String(p.region.code)).length;
+      discovery=count===1?'Первый номер с этим кодом':'Номеров с этим кодом: '+count;
+    }
     const samples=['Т462ВР 77','Р684УО 78','Е213ТТ 43','А338КК 16','Н303ВВ 52','А070ВА 66','Е114КХ 97','Т333ТТ 23','В444ВВ 61','О554РО 02'];
     const reel='<div class="number-reel"><i></i><div class="reel-track">'+samples.map(x=>'<span>'+x+'</span>').join('')+'<span class="winning-number">'+escape(fullPlateText(p))+'</span></div></div>';
     const process='<small>'+(rolling?'КЕЙС ОТКРЫТ':'ОТКРЫВАЕМ КЕЙС')+'</small><div class="case-machine '+(rolling?'is-open':'')+' '+p.rarity+'"><div class="case-lid">AUTOFLIP</div><div class="case-core">✦</div><div class="case-base"></div></div>'+(rolling?reel:'<div class="opening-progress"><i></i></div>')+'<h2>'+(rolling?'Ищем твой номер':c.name)+'</h2><p>'+(rolling?'Лента замедляется…':'Снимаем защиту и открываем замки…')+'</p><button class="skip-opening" onclick="revealPlateOpening()">Пропустить анимацию</button>';
-    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(freeCount?'Открыть ещё бесплатно':canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
+    render('<div class="app plates-app opening-screen '+(reveal?'is-revealed':rolling?'is-rolling':'is-opening')+'"><button class="opening-close" onclick="finishPlateOpening()" aria-label="Закрыть">×</button><section class="opening-stage"><div class="opening-glow"></div>'+(reveal?'<small>НОВЫЙ НОМЕР</small><div class="reveal-rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</div>'+plateFace(p,true)+'<h2>'+formatMoney(p.value)+'</h2><p>'+escape(p.region.city)+' · '+escape(p.region.country)+'</p><p class="album-discovery">'+discovery+'</p><div class="opening-actions"><button class="action green" onclick="finishPlateOpening()">В коллекцию</button><button class="action" '+(canRepeat?'':'disabled')+' onclick="openPlateCase(\''+c.id+'\')">'+(freeCount?'Открыть ещё бесплатно':canRepeat?'Открыть ещё · '+formatMoney(c.price):'Недостаточно денег')+'</button></div>':process)+'</section></div>');
   }
   function clearOpeningTimers(){if(!opening)return;if(opening.timer&&typeof clearTimeout==='function')clearTimeout(opening.timer);if(opening.revealTimer&&typeof clearTimeout==='function')clearTimeout(opening.revealTimer);}
   window.plates=function(){opening=null;renderPlates();};
-  window.setPlateTab=function(tab){activeTab=tab==='collection'?'collection':'cases';opening=null;renderPlates();};
+  window.setPlateTab=function(tab){activeTab=['album','collection'].includes(tab)?tab:'cases';opening=null;renderPlates();};
   window.setPlateFilter=function(value){filter=value;renderPlates();};
   window.setPlateSort=function(value){sort=value==='value'?'value':'new';renderPlates();};
   window.favoritePlate=function(id){const p=ensure().items.find(x=>x.id===id);if(!p)return;p.favorite=!p.favorite;persistPlates();renderPlates();};
