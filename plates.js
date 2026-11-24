@@ -77,6 +77,7 @@
     return weights[weights.length-1][0];
   }
   function escape(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  let albumFilter='all';
   let activeTab='cases',filter='all',sort='new',opening=null,lastCase='standard',notice='';
   let openingBusy=false,reconcilingOpenings=false;
   async function openingRequest(body){
@@ -103,7 +104,7 @@
   function caseCard(c){
     const rewards=caseRewards(c.id),free=rewards.length>0,locked=!free&&currentGarageLevel()<c.level,canPay=Number(state.money||0)>=c.price;
     const tier=c.weights[c.weights.length-1][0];
-    return '<article class="case-card '+tier+(free?' reward-case':'')+'"><div class="case-top"><span class="case-orb" aria-hidden="true">▱<i>✦</i></span><div><small>'+(free?'🎁 НАГРАДА AUTOPASS · '+rewards.length:locked?'🔒 ГАРАЖ · УРОВЕНЬ '+c.level:'ДОСТУПЕН СЕЙЧАС')+'</small><h3>'+c.name+'</h3><span class="rarity '+tier+'">До «'+RARITIES[tier].title+'»</span></div></div><details class="case-odds"><summary>Шансы выпадения <span>⌄</span></summary>'+c.weights.map(w=>'<div><span class="rarity '+w[0]+'">'+RARITIES[w[0]].title+'</span><b>'+String(w[1]).replace('.',',')+'%</b><meter min="0" max="100" value="'+w[1]+'">'+w[1]+'%</meter></div>').join('')+'</details><div class="case-bottom"><div><small>'+(free?'Награда AutoPass':'Стоимость кейса')+'</small><b>'+(free?'Бесплатно':formatMoney(c.price))+'</b></div><button class="plate-open" '+(!free&&(locked||!canPay)?'disabled':'')+' onclick="openPlateCase(\''+c.id+'\')">'+(free?'Открыть бесплатно':locked?'Уровень '+c.level:canPay?'Открыть':'Не хватает денег')+'</button></div>'+(locked?'<small class="case-hint">Повысь уровень в разделе «Гараж → Развитие».</small>':!free&&!canPay?'<small class="case-hint">Нужно ещё '+formatMoney(c.price-Number(state.money||0))+'</small>':'')+'</article>';
+    return '<article class="case-card crate-'+c.id+' '+tier+(free?' reward-case':'')+'"><div class="case-top"><span class="crate-art" aria-hidden="true"><i></i></span><div><small>'+(free?'🎁 НАГРАДА AUTOPASS · '+rewards.length:locked?'🔒 ГАРАЖ · УРОВЕНЬ '+c.level:'ДОСТУПЕН СЕЙЧАС')+'</small><h3>'+c.name+'</h3><span class="rarity '+tier+'">До «'+RARITIES[tier].title+'»</span></div></div><details class="case-odds"><summary>Шансы выпадения <span>⌄</span></summary>'+c.weights.map(w=>'<div><span class="rarity '+w[0]+'">'+RARITIES[w[0]].title+'</span><b>'+String(w[1]).replace('.',',')+'%</b><meter min="0" max="100" value="'+w[1]+'">'+w[1]+'%</meter></div>').join('')+'</details><div class="case-bottom"><div><small>'+(free?'Награда AutoPass':'Стоимость кейса')+'</small><b>'+(free?'Бесплатно':formatMoney(c.price))+'</b></div><button class="plate-open" '+(!free&&(locked||!canPay)?'disabled':'')+' onclick="openPlateCase(\''+c.id+'\')">'+(free?'Открыть бесплатно':locked?'Уровень '+c.level:canPay?'Открыть':'Не хватает денег')+'</button></div>'+(locked?'<small class="case-hint">Повысь уровень в разделе «Гараж → Развитие».</small>':!free&&!canPay?'<small class="case-hint">Нужно ещё '+formatMoney(c.price-Number(state.money||0))+'</small>':'')+'</article>';
   }
   function inventoryCard(p){const locked=p.tradable===false;return '<article class="plate-item"><div class="plate-item-top"><span class="rarity '+p.rarity+'">'+RARITIES[p.rarity].title+'</span><button class="plate-star" aria-label="'+(p.favorite?'Убрать из избранного':'В избранное')+'" aria-pressed="'+!!p.favorite+'" onclick="favoritePlate(\''+p.id+'\')">'+(p.favorite?'★':'☆')+'</button></div>'+plateFace(p,true)+'<div class="plate-info"><b>'+escape(p.region.city)+'</b><span>'+escape(p.region.country)+'</span></div><div class="plate-value"><b>'+(locked?'Премиальный':formatMoney(p.value))+'</b>'+(locked?'<button disabled>Не продаётся</button>':'<button onclick="confirmPlateSale(\''+p.id+'\')">Продать</button>')+'</div></article>';}
   function tabs(items){
@@ -123,24 +124,41 @@
     let complete=0;
     const rows=cities.map(city=>{
       const owned=city.regions.filter(code=>byCode.has(code));
-      if(owned.length===city.regions.length)complete++;
+      const finished=owned.length===city.regions.length;
+      if(finished)complete++;
+      if(albumFilter==='complete'&&!finished)return '';
+      if(albumFilter==='started'&&(!owned.length||finished))return '';
+      const stamps=city.regions.map(code=>`<i class="${byCode.has(code)?'owned':''}">${escape(code)}</i>`).join('');
       const codes=city.regions.map(code=>{
         const plates=byCode.get(code)||[];
         const numbers=plates.map(p=>escape(p.number)).join(' · ');
         return `<li><b>${escape(code)}</b><span>${numbers||'Ещё предстоит найти'}</span></li>`;
       }).join('');
-      return `<details class="album-city" data-complete="${owned.length===city.regions.length}"><summary><strong>${escape(city.name)}</strong><span>${owned.length} / ${city.regions.length}</span></summary><ul>${codes}</ul></details>`;
+      return `<details class="album-city" data-complete="${owned.length===city.regions.length}"><summary><strong>${escape(city.name)}</strong><span>${owned.length} / ${city.regions.length}</span><div class="city-stamps" aria-hidden="true">${stamps}</div></summary><ul>${codes}</ul></details>`;
     }).join('');
-    return `<section class="region-album"><header><h3>Альбом регионов</h3><p>Собери все коды одного города. Нажми на город, чтобы увидеть свои номера и недостающие коды.</p><strong>Коды в коллекции · ${byCode.size} / ${REGIONS.length}</strong><progress aria-label="Коды в коллекции" value="${byCode.size}" max="${REGIONS.length}"></progress><span>Города в сборе · ${complete} / ${cities.length}</span></header>${rows}</section>`;
+    const modes=[['all','Все города'],['started','В процессе'],['complete','Собраны']];
+    const controls=modes.map(([key,label])=>`<button aria-pressed="${albumFilter===key}" onclick="setAlbumFilter('${key}')">${label}</button>`).join('');
+    return `<section class="region-album"><div class="album-overview"><h3>Альбом регионов</h3><p>Открой город, чтобы посмотреть номера и найти недостающий код.</p><strong>Коды в коллекции · ${byCode.size} / ${REGIONS.length}</strong><progress aria-label="Коды в коллекции" value="${byCode.size}" max="${REGIONS.length}"></progress><span>Города в сборе · ${complete} / ${cities.length}</span></div><div class="album-modes">${controls}</div>${rows||'<p class="album-empty">Здесь пока нет городов. Все доступные коды есть в разделе «Все города».</p>'}</section>`;
   }
-  function dashboard(items,total){return '<section class="plates-hero"><div><small>НОМЕРНОЙ ФОНД</small><h2>Твоя коллекция</h2><p>Открывай кейсы и собирай редкие сочетания.</p></div><div class="plates-stats"><span><small>НОМЕРОВ</small><b>'+items.length+'</b></span><span><small>ЦЕННОСТЬ</small><b>'+formatMoney(total)+'</b></span></div></section>';}
+  window.setAlbumFilter=function(key){
+    albumFilter=['started','complete'].includes(key)?key:'all';
+    renderPlates();
+  };
+  function dashboard(items,total){
+    const favorite=items.find(p=>p.favorite);
+    const exhibit=favorite||items.reduce((best,p)=>!best||p.value>best.value?p:best,null);
+    const showcase=exhibit?
+      `<div class="plate-exhibit"><small>${favorite?'Из избранного':'Самый ценный номер'}</small>${plateFace(exhibit,true)}<span>${escape(exhibit.region.city)} · ${RARITIES[exhibit.rarity].title}</span></div>`:
+      '<p>Открой первый кейс, чтобы выставить номер на витрину.</p>';
+    return `<section class="plate-gallery"><h2>Витрина номеров</h2>${showcase}<div class="gallery-totals"><span>В коллекции <b>${items.length}</b></span><span>Стоимость <b>${formatMoney(total)}</b></span></div></section>`;
+  }
   function collectionView(items){
     let shown=items.filter(p=>filter==='favorites'?p.favorite:filter==='all'||p.rarity===filter);
     shown=shown.slice().sort((a,b)=>sort==='value'?Number(b.value)-Number(a.value):Number(b.createdAt)-Number(a.createdAt));
-    const filters=[['all','Все'],['favorites','★'],['rare','Редкие'],['ultra','Сверхредкие'],['secret','Тайные'],['priceless','Бесценные']];
-    return '<div class="collection-tools"><div class="plate-filters">'+filters.map(x=>'<button class="'+(filter===x[0]?'active':'')+'" onclick="setPlateFilter(\''+x[0]+'\')">'+x[1]+'</button>').join('')+'</div><label>Сортировка <select onchange="setPlateSort(this.value)"><option value="new" '+(sort==='new'?'selected':'')+'>Сначала новые</option><option value="value" '+(sort==='value'?'selected':'')+'>Сначала дорогие</option></select></label></div>'+(shown.length?'<div class="plate-list">'+shown.map(inventoryCard).join('')+'</div>':'<div class="plates-empty"><span>▱</span><b>'+(items.length?'Здесь пока пусто':'Начни коллекцию')+'</b><p>'+(items.length?'Измени фильтр, чтобы увидеть другие номера.':'Открой доступный кейс — новый номер сохранится здесь.')+'</p><button onclick="setPlateTab(\'cases\')">Перейти к кейсам</button></div>');
+    const filters=[['all','Все'],['favorites','Избранные'],['ordinary','Обычные'],['unusual','Необычные'],['rare','Редкие'],['ultra','Сверхредкие'],['secret','Тайные'],['priceless','Бесценные']];
+    return  '<div class="collection-tools plate-selectors"><label>Показать<select onchange="setPlateFilter(this.value)">'+filters.map(([key,label])=>'<option value="'+key+'" '+(key===filter?'selected':'')+'>'+label+'</option>').join('')+'</select></label><label>Сортировка <select onchange="setPlateSort(this.value)"><option value="new" '+(sort==='new'?'selected':'')+'>Сначала новые</option><option value="value" '+(sort==='value'?'selected':'')+'>Сначала дорогие</option></select></label></div>'+(shown.length?'<div class="plate-list">'+shown.map(inventoryCard).join('')+'</div>':'<div class="plates-empty"><span>▱</span><b>'+(items.length?'Здесь пока пусто':'Начни коллекцию')+'</b><p>'+(items.length?'Измени фильтр, чтобы увидеть другие номера.':'Открой доступный кейс — новый номер сохранится здесь.')+'</p><button onclick="setPlateTab(\'cases\')">Перейти к кейсам</button></div>');
   }
-  function casesView(){return '<div class="plate-intro"><div><small>5 КЕЙСОВ</small><h3>Выбери свой шанс</h3></div><span>Гараж · ур. '+currentGarageLevel()+'</span></div><div class="case-list">'+CASES.map(caseCard).join('')+'</div>';}
+  function casesView(){return '<div class="plate-intro"><div><small>5 КЕЙСОВ</small><h3>Каталог кейсов</h3></div><span>Гараж · ур. '+currentGarageLevel()+'</span></div><div class="case-list">'+CASES.map(caseCard).join('')+'</div>';}
   function saleSheet(items){if(!opening||opening.type!=='sale')return '';const p=items.find(x=>x.id===opening.id);if(!p)return '';return '<div class="plate-sheet-backdrop"><section class="plate-sheet"><i></i><small>ПРОДАЖА НОМЕРА</small>'+plateFace(p,true)+'<p>'+RARITIES[p.rarity].title+' · '+escape(p.region.city)+'</p><h3>'+formatMoney(p.value)+'</h3><button class="action green" onclick="sellPlate(\''+p.id+'\')">Продать номер</button><button class="action" onclick="cancelPlateSale()">Отмена</button></section></div>';}
   function renderPlates(){
     const collection=ensure(),items=collection.items,total=items.reduce(function(sum,p){return sum+Number(p.value||0);},0),title=typeof head==='function'?head('Номера'):'';

@@ -26,10 +26,10 @@
 
 .plates-app .plate-tabs {grid-template-columns:repeat(3,minmax(0,1fr))}
 .region-album {display:grid;gap:8px;color:#f4f6ff}
-.region-album header {padding:20px;border:1px solid #675a89;border-radius:19px;background:linear-gradient(125deg,#35294c,#152741)}
+.region-album .album-overview {padding:20px;border:1px solid #675a89;border-radius:19px;background:linear-gradient(125deg,#35294c,#152741)}
 .region-album h3 {font-size:1.4rem;margin:0}
-.region-album header p {line-height:1.45;color:#dad8eb}
-.region-album header span {font-size:.85rem;color:#ded9ef}
+.region-album .album-overview p {line-height:1.45;color:#dad8eb}
+.region-album .album-overview span {font-size:.85rem;color:#ded9ef}
 .region-album progress {display:block;width:100%;height:10px;margin:9px 0;accent-color:#70dfbb}
 .album-city {background:#14283e;border:1px solid #39526a;border-radius:14px;overflow:hidden}
 .album-city[data-complete="true"] {border-color:#5ba991;background:#123631}
@@ -38,3 +38,40 @@
 .album-city ul {list-style:none;margin:0;padding:0 16px 10px}
 .album-city li {display:grid;grid-template-columns:3em 1fr;gap:8px;padding:8px 0;border-top:1px solid #ffffff20;color:#d5e2ed;overflow-wrap:anywhere}
 .album-city li b {color:#ffc976}
+
+/* The album is ordinary scrollable content. The app reserves header for its fixed toolbar. */
+.plates-app .album-overview {display:grid;grid-template-columns:minmax(0,1fr);gap:7px;min-width:0;height:auto;overflow-wrap:anywhere}
+.plates-app .album-overview h3,.plates-app .album-overview p,.plates-app .album-overview progress {margin:0}
+.plates-app .album-overview p {margin-bottom:6px}
+.plates-app .region-album {grid-template-columns:minmax(0,1fr)}
+.plates-app .album-modes {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#screen .plates-app .album-modes button {font-size:12px!important;min-height:44px!important;padding:5px!important}
+#screen .plates-app .album-modes [aria-pressed=true] {background:#ccbcf7!important;color:#20182f!important}
+.plates-app .album-city summary {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;list-style:none}
+.plates-app .album-city summary::-webkit-details-marker {display:none}
+.plates-app .album-city summary strong::before {content:'›';display:inline-block;margin-right:8px;color:#c4b3ee}
+.plates-app .album-city[open] summary strong::before {transform:rotate(90deg)}
+.city-stamps {display:flex;gap:5px;grid-column:1/-1}
+.city-stamps i {font:600 12px/1.2 system-ui;color:#bdd0e5;border:1px dashed #637288;border-radius:5px;padding:2px 7px}
+.city-stamps .owned {background:#8de5c9;border:1px solid #8de5c9;color:#133428}
+.plates-app .album-empty {background:#152638;color:#e1eaf5;padding:14px;border-radius:12px}
+.plates-app .plate-gallery {display:grid;gap:12px;padding:18px;border:1px solid #766890;border-radius:21px;background:radial-gradient(ellipse at 80% 0%,#554268 0%,transparent 66%),linear-gradient(132deg,#182232,#222339 75%,#394456);color:#fff}
+#screen .plates-app .plate-gallery h2 {margin:0;color:white;font-size:clamp(21px,5vw,29px)}
+.plates-app .plate-exhibit {display:grid;justify-items:center;gap:7px;border-radius:12px;padding:12px;background:linear-gradient(110deg,#101923,#262b3d,#131e31);box-shadow:inset 0 1px #ffffff26}
+.plates-app .plate-exhibit small,.plates-app .plate-exhibit>span {font-size:12px;color:#d3ccdf}
+#screen .plates-app .plate-exhibit .plate-face {margin:0;width:min(252px,100%)}
+.gallery-totals {display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;color:#d3ccdf;font-size:13px}
+.gallery-totals b {color:white;margin-left:4px}
+.plates-app .case-card {--crate:#9ab6e7}
+.plates-app .crate-rare {--crate:#e6ba78}
+.plates-app .crate-secret {--crate:#bd93ec}
+.plates-app .crate-collector {--crate:#81d6cc}
+.plates-app .crate-legend {--crate:#ffd471}
+#screen .app.plates-app.game-nav-page .case-card {background:linear-gradient(116deg,color-mix(in srgb,var(--crate) 17%,#152030),#141e30 75%)!important;border-inline-start:3px solid var(--crate)!important}
+.crate-art {width:65px;height:54px;flex:none;display:grid;place-items:center;color:var(--crate);background:radial-gradient(ellipse,color-mix(in srgb,currentColor 24%,transparent),transparent 74%)}
+.crate-art i {position:relative;width:44px;height:29px;box-sizing:border-box;border:2px solid currentColor;border-radius:5px;background:linear-gradient(0deg,transparent 57%,currentColor 58% 63%,transparent 64%),repeating-linear-gradient(90deg,#172332 0 5px,#293748 6px 8px);transform:rotate(-6deg);box-shadow:2px 4px 0 #0a111c}
+.crate-art i::before {content:'';position:absolute;left:11px;right:11px;top:-8px;height:6px;border:2px solid currentColor;border-bottom:0;border-radius:4px 4px 0 0}
+.crate-art i::after {content:'';position:absolute;left:16px;top:9px;width:8px;height:7px;background:currentColor;border-radius:2px}
+#screen .plates-app .plate-selectors {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#screen .plates-app .plate-selectors label {display:grid;gap:5px;min-width:0}
+#screen .plates-app .plate-selectors select {box-sizing:border-box;width:100%;min-width:0;max-width:100%;font-size:14px;padding:8px;min-height:44px}
