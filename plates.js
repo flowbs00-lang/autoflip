@@ -87,7 +87,12 @@
   async function reconcilePlateOpenings(){
     if(reconcilingOpenings)return false;const collection=ensure(),ids=collection.pendingOpeningIds.slice();if(!ids.length)return true;reconcilingOpenings=true;
     try{
-      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){const saved=await window.AUTOFLIP_CLOUD_FLUSH();if(saved===false)return false;}
+      // Committing the server-side opening is independent from the cloud save.
+      // A delayed save used to leave the opening in `prepared` state, which
+      // then blocked every following case with case_opening_in_progress.
+      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){
+        Promise.resolve(window.AUTOFLIP_CLOUD_FLUSH()).catch(function(){return false;});
+      }
       for(const id of ids){await openingRequest({openingId:id,phase:'commit',clientId:window.AUTOFLIP_CLOUD_CLIENT_ID||'device-legacy-client'});collection.pendingOpeningIds=collection.pendingOpeningIds.filter(function(value){return value!==id;});}
       persistPlates();return true;
     }catch(_){return false;}finally{reconcilingOpenings=false;}
@@ -189,6 +194,13 @@
   window.openPlateCase=async function(id){
     const c=CASES.filter(function(x){return x.id===id;})[0];if(!c)return;
     if(openingBusy)return;
+    // Finish a previous local opening before asking the server for another
+    // one. This recovers the one-time prepared row after a reload or a
+    // temporary cloud-save outage.
+    if(ensure().pendingOpeningIds.length){
+      await reconcilePlateOpenings();
+      if(ensure().pendingOpeningIds.length){alert('Предыдущее открытие ещё завершается. Попробуй снова через несколько секунд.');return;}
+    }
     const reward=caseRewards(c.id)[0]||null;
     if(!reward&&currentGarageLevel()<c.level){alert('Этот кейс откроется на '+c.level+' уровне. Выполняй задания в разделе «Гараж → Развитие».');return;}
     if(!reward&&Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}

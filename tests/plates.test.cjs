@@ -39,6 +39,14 @@ test('locked cases cannot take money and the starter case stores a plate',async(
   const g=game();g.c.plates();assert.match(g.html(),/Гараж → Развитие/);assert.doesNotMatch(g.html(),/следующем обновлении/);const before=g.c.state.money;g.c.openPlateCase('rare');assert.equal(g.c.state.money,before);assert.equal(g.c.state.plates.items.length,0);
   await g.c.openPlateCase('standard');assert.equal(g.c.state.money,before-3000);assert.equal(g.c.state.plates.items.length,1);assert.match(g.html(),/НОВЫЙ НОМЕР/);
 });
+test('a delayed cloud save does not leave a prepared case blocking the next opening',async()=>{
+  const g=game();
+  g.c.AUTOFLIP_CLOUD_FLUSH=async()=>false;
+  await g.c.openPlateCase('standard');
+  assert.equal(g.c.state.plates.pendingOpeningIds.length,0);
+  await g.c.openPlateCase('standard');
+  assert.equal(g.c.state.plates.items.length,2);
+});
 test('AutoPass reward case bypasses garage and money once then is consumed',async()=>{
   const key='autopass:night-dealer-1:free:30',g=game({money:0,garageLevel:1,plates:{items:[],nextId:1,caseRewards:[{key,caseId:'secret',source:'AutoPass'}]}});
   g.c.plates();assert.match(g.html(),/НАГРАДА AUTOPASS/);assert.match(g.html(),/Открыть бесплатно/);
