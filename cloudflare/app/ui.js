@@ -129,6 +129,7 @@
     window.mountGameNav(active);
   }).observe(gameScreen,{childList:true});
   window.gameInbox=function(){
+    if(typeof window.markAllPlayerNotificationsRead==='function')window.markAllPlayerNotificationsRead();
     const count=unread(),notifications=Array.isArray(state.phoneNotifications)?state.phoneNotifications.filter(x=>!x.read).length:Number(state.notifications||0);
     render('<div class="app game-inbox-v2">'+head('Центр событий')+'<section class="game-panel-title"><small>ВСЁ В ОДНОМ МЕСТЕ</small><h2>Сообщения и события</h2><p>Переговоры, встречи и важные новости бизнеса.</p></section><button class="game-inbox-card messages" onclick="messages()"><span>'+icon('chat')+(count?'<em>'+count+'</em>':'')+'</span><div><small>ПЕРЕГОВОРЫ</small><b>Сообщения</b><p>'+(count?count+' новых диалогов':'Новых сообщений нет')+'</p></div><i>›</i></button><button class="game-inbox-card alerts" onclick="notificationCenter()"><span>'+icon('bell')+(notifications?'<em>'+notifications+'</em>':'')+'</span><div><small>СОБЫТИЯ</small><b>Уведомления</b><p>'+(notifications?notifications+' непрочитанных':'Всё просмотрено')+'</p></div><i>›</i></button></div>');
   };

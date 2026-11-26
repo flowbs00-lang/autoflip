@@ -611,6 +611,15 @@ window.getGameTotal=gameTotal;
 if(!Array.isArray(state.phoneNotifications))state.phoneNotifications=[];
 if(!state.phoneEventMeta||typeof state.phoneEventMeta!=='object')state.phoneEventMeta={};
 function phoneUnread(){return state.phoneNotifications.filter(function(n){return !n.read;}).length;}
+function markAllPlayerNotificationsRead(){
+  var changed=false;
+  (state.phoneNotifications||[]).forEach(function(n){if(n&&!n.read){n.read=true;changed=true;}});
+  (state.buyerInbox||[]).forEach(function(x){if(x&&!x.read){x.read=true;changed=true;}});
+  if(Number(state.notifications||0)>0){state.notifications=0;changed=true;}
+  if(changed){persist();updateNotificationBadge();}
+  return changed;
+}
+window.markAllPlayerNotificationsRead=markAllPlayerNotificationsRead;
 function pushPhoneNotification(app,icon,text,route,key){
   if(key&&state.phoneNotifications.some(function(n){return n.key===key;}))return;
   var n={id:'pn-'+Date.now()+'-'+Math.floor(Math.random()*9999),app:app,icon:icon,text:text,route:route||'',key:key||'',read:false,total:gameTotal(),time:gameTimeText(),day:gameDateText()};
@@ -625,6 +634,7 @@ function updateNotificationBadge(){
   var b=document.createElement('span');b.className='phone-notification-badge';b.textContent=n>9?'9+':String(n);b.style.cssText='position:absolute;right:6px;top:2px;background:#e33;color:#fff;border-radius:10px;min-width:18px;height:18px;line-height:18px;font-size:10px;font-weight:800;text-align:center;padding:0 3px';btn.style.position='relative';btn.appendChild(b);
 }
 window.notificationCenter=function(){
+  markAllPlayerNotificationsRead();
   var list=state.phoneNotifications||[];
   var html='<div class="app notice-center">'+head('Уведомления')+'<div class="note"><b>🔔 Центр уведомлений</b><p class="muted">'+(phoneUnread()?'Непрочитанных: '+phoneUnread():'Новых уведомлений нет')+'</p></div>';
   if(!list.length)html+='<div class="note"><p class="muted">Здесь будут сообщения от AutoMarket, банка, покупателей и других приложений.</p></div>';

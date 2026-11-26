@@ -196,6 +196,7 @@
 
   async function load(nextTab) {
     if (loading) return;
+    if (typeof window.markAllPlayerNotificationsRead === 'function') window.markAllPlayerNotificationsRead();
     tab = nextTab || tab;
     loading = true;
     render('<div class="app community-app">' + head('Сообщество') + '<div class="community-loading"><span></span><b>Подключаемся к AutoFlip Online…</b></div></div>');

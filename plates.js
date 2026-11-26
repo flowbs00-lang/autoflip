@@ -194,7 +194,13 @@
     if(!reward&&Number(state.money||0)<c.price){alert('Недостаточно денег для открытия кейса. Нужно '+formatMoney(c.price)+'.');return;}
     openingBusy=true;let applied=false;
     try{
-      persistPlates();if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){const synced=await window.AUTOFLIP_CLOUD_FLUSH();if(synced===false)throw new Error('сохранение ещё не синхронизировано');}
+      // A temporary cloud-sync delay must not block a case opening. The local
+      // save is already committed before the server roll, and pending cloud
+      // work is reconciled by the normal save queue afterwards.
+      persistPlates();
+      if(typeof window.AUTOFLIP_CLOUD_FLUSH==='function'){
+        Promise.resolve(window.AUTOFLIP_CLOUD_FLUSH()).catch(function(){return false;});
+      }
       const openingId='case:'+c.id+':'+Date.now().toString(36)+':'+Math.random().toString(36).slice(2,10),clientId=window.AUTOFLIP_CLOUD_CLIENT_ID||'device-legacy-client';
       const result=await openingRequest({openingId:openingId,caseId:c.id,phase:'prepare',clientId:clientId,rewardKey:reward&&reward.key});
       if(result.committed){location.reload();return;}
