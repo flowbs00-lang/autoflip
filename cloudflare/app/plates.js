@@ -19,8 +19,13 @@
   ];
   const REGIONS=(window.AUTOFLIP_WORLD&&window.AUTOFLIP_WORLD.cities||[]).flatMap(function(city){return city.regions.map(function(code){return [code,city.name,'Россия'];});});
   const PRICELESS=['А777МР','Е777КХ','А777АА','В777ОР','О777ОО'];
+  const COMMON_COMBOS=Array.from({length:LETTERS.length**3},function(_,value){return LETTERS[Math.floor(value/(LETTERS.length**2))%LETTERS.length]+LETTERS[Math.floor(value/LETTERS.length)%LETTERS.length]+LETTERS[value%LETTERS.length];}).filter(function(value){return new Set(value).size>1;});
+  const FEATURED_COMBOS=['ЕТР','АВР','ЕТХ','ТОА','АВЕ','ВЕА','ВЕР','РЕВ','РЕА','РОТ','ТОР','ТРО','ТЕА','ОТА','КЕВ','МЕТ','МОР','НЕТ','СТА','СТР','СЕР','ТЕР','УРА','ХОР','ХЕТ','АРТ','ВЕТ','ВОР','РАК','КАТ','КОТ','КОР','МАТ','МАР','МЕР','МАК','НАР','НОТ','ОРТ','ОРА','РУС','САМ','СЕТ','ТАМ','ТЕМ','ТУА','УХА','ХРА','АЕК','ЕКА','КВА'];
+  const SIGNATURE_COMBOS=['ЕКХ','АМР','МРЕ','КХЕ','ОРЕ','РМТ','АХМ','ЕСР'];
   function rnd(n){return Math.floor(Math.random()*n);}
   function pick(a){return a[rnd(a.length)];}
+  function letterCombo(pool){return pick(pool||COMMON_COMBOS);}
+  function formatCombo(combo,digits){return combo[0]+digits+combo.slice(1);}
   function letter(except){let value=pick(LETTERS);while(except&&except.indexOf(value)>=0)value=pick(LETTERS);return value;}
   function region(){let r=pick(REGIONS);return {code:r[0],city:r[1],country:r[2]};}
   function digitsNoPair(){let s='';while(new Set(s).size<3||s[0]===s[2])s=''+rnd(10)+rnd(10)+rnd(10);return s;}
@@ -45,25 +50,21 @@
   function plateBase(rarity){
     let a,b,c,d;
     if(rarity==='ordinary'){
-      a=letter();b=letter([a]);c=letter([a,b]);return {number:a+digitsNoPair()+b+c};
+      return {number:formatCombo(letterCombo(),digitsNoPair())};
     }
     if(rarity==='unusual'){
-      if(Math.random()<.5){a=letter();b=letter([a]);return {number:a+pick(['001','112','223','334','445','556','667','778','889'])+b+letter([a,b])};}
-      a=letter();b=letter([a]);return {number:a+digitsNoPair()+b+b};
+      return {number:formatCombo(letterCombo(Math.random()<.7?FEATURED_COMBOS:COMMON_COMBOS),pick(['001','112','223','334','445','556','667','778','889']))};
     }
     if(rarity==='rare'){
       const pair=pick(['00','11','22','33','44','55','66','77','88','99']);
-      if(Math.random()<.55){a=letter();b=letter([a]);return {number:a+pair+rnd(10)+b+b};}
-      a=letter();b=letter([a]);return {number:a+pick([pair+rnd(10),rnd(10)+pair])+b+a};
+      return {number:formatCombo(letterCombo(FEATURED_COMBOS),pair+rnd(10))};
     }
     if(rarity==='ultra'){
-      if(Math.random()<.62){a=pick(['А','Е']);return {number:a+pick(['013','070','101','114','202','303'])+(a==='Е'?'КХ':'МР')};}
-      a=letter();b=letter([a]);return {number:a+pick(['010','020','030','040','050','060','070','080','090'])+b+a};
+      return {number:formatCombo(letterCombo(Math.random()<.08?SIGNATURE_COMBOS:FEATURED_COMBOS),pick(['013','070','101','114','202','303']))};
     }
     if(rarity==='secret'){
       const d=pick(['111','222','333','444','555','666','888','999']);
-      if(Math.random()<.55){a=pick(['А','Е']);return {number:a+d+(a==='Е'?'КХ':'МР')};}
-      a=letter();return {number:a+d+a+a};
+      return {number:formatCombo(letterCombo(Math.random()<.12?SIGNATURE_COMBOS:FEATURED_COMBOS),d)};
     }
     return {number:pick(PRICELESS)};
   }

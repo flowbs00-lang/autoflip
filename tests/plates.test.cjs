@@ -32,6 +32,12 @@ test('roll respects case probability boundaries',()=>{
 test('every generated plate has uppercase letters, a CIS city and the correct sale value',()=>{
   const g=game();for(const [rarity,meta] of Object.entries(g.c.plateSystem.rarities)){const plate=g.c.plateSystem.makePlate(rarity);assert.equal(plate.number,plate.number.toUpperCase());assert.ok(plate.region.city);assert.ok(plate.region.country);assert.equal(plate.value,meta.value);}
 });
+test('ordinary plates use a broad letter pool without triple-letter spam',()=>{
+  const g=game(),numbers=new Set();
+  for(let i=0;i<300;i++)numbers.add(g.c.plateSystem.makePlate('ordinary').number);
+  assert.ok(numbers.size>150);
+  assert.ok([...numbers].every((number)=>!/(.)\d{3}\1\1/u.test(number)));
+});
 test('priceless series is strictly one of the five 777 plates',()=>{
   const g=game(),allowed=new Set(g.c.plateSystem.regions.map(x=>x[0]));for(let i=0;i<30;i++){const p=g.c.plateSystem.makePlate('priceless');assert.match(p.number,/^(А777МР|Е777КХ|А777АА|В777ОР|О777ОО)$/);assert.ok(allowed.has(p.region.code));}
 });

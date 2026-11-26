@@ -17,6 +17,22 @@ export const PLATE_CASES = Object.freeze([
 
 const LETTERS = [..."АВЕКМНОРСТУХ"];
 const PRICELESS = ["А777МР", "Е777КХ", "А777АА", "В777ОР", "О777ОО"];
+// Keep the very recognizable ЕКХ/АМР combinations genuinely scarce.  The
+// regular case pool is intentionally broad so players see different letter
+// combinations instead of ООО/ААА/ЕЕЕ on every roll.
+const COMMON_COMBOS = Object.freeze(Array.from({ length: LETTERS.length ** 3 }, (_, value) => {
+  const first = LETTERS[Math.floor(value / (LETTERS.length ** 2)) % LETTERS.length];
+  const second = LETTERS[Math.floor(value / LETTERS.length) % LETTERS.length];
+  const third = LETTERS[value % LETTERS.length];
+  return first + second + third;
+}).filter((value) => new Set(value).size > 1));
+const FEATURED_COMBOS = Object.freeze([
+  "ЕТР", "АВР", "ЕТХ", "ТОА", "АВЕ", "ВЕА", "ВЕР", "РЕВ", "РЕА", "РОТ", "ТОР", "ТРО", "ТЕА", "ОТА",
+  "КЕВ", "МЕТ", "МОР", "НЕТ", "СТА", "СТР", "СЕР", "ТЕР", "УРА", "ХОР", "ХЕТ", "АРТ", "ВЕТ", "ВОР",
+  "РАК", "КАТ", "КОТ", "КОР", "МАТ", "МАР", "МЕР", "МАК", "НАР", "НОТ", "ОРТ", "ОРА", "РУС", "САМ",
+  "СЕТ", "ТАМ", "ТЕМ", "ТУА", "УХА", "ХРА", "АЕК", "ЕКА", "КВА"
+]);
+const SIGNATURE_COMBOS = Object.freeze(["ЕКХ", "АМР", "МРЕ", "КХЕ", "ОРЕ", "РМТ", "АХМ", "ЕСР"]);
 const REGION_CITIES = Object.freeze({
   "77":"Москва","97":"Москва","799":"Москва","78":"Санкт-Петербург","98":"Санкт-Петербург","178":"Санкт-Петербург",
   "52":"Нижний Новгород","152":"Нижний Новгород","66":"Екатеринбург","96":"Екатеринбург","196":"Екатеринбург","43":"Киров",
@@ -38,6 +54,14 @@ function index(random, length) {
 
 function pick(random, items) {
   return items[index(random, items.length)];
+}
+
+function letterCombo(random, pool = COMMON_COMBOS) {
+  return pick(random, pool);
+}
+
+function formatCombo(combo, digits) {
+  return combo[0] + digits + combo.slice(1);
 }
 
 function letter(random, excluded = []) {
@@ -67,36 +91,22 @@ function plateNumber(rarity, random) {
   let a;
   let b;
   if (rarity === "ordinary") {
-    a = letter(random); b = letter(random, [a]);
-    return a + digitsNoPair(random) + b + letter(random, [a, b]);
+    return formatCombo(letterCombo(random), digitsNoPair(random));
   }
   if (rarity === "unusual") {
-    a = letter(random); b = letter(random, [a]);
-    if (random() < 0.5) return a + pick(random, ["001","112","223","334","445","556","667","778","889"]) + b + letter(random, [a, b]);
-    return a + digitsNoPair(random) + b + b;
+    return formatCombo(letterCombo(random, random() < 0.7 ? FEATURED_COMBOS : COMMON_COMBOS), pick(random, ["001","112","223","334","445","556","667","778","889"]));
   }
   if (rarity === "rare") {
     const pair = pick(random, ["00","11","22","33","44","55","66","77","88","99"]);
-    a = letter(random); b = letter(random, [a]);
-    if (random() < 0.55) return a + pair + index(random, 10) + b + b;
-    return a + pick(random, [pair + index(random, 10), index(random, 10) + pair]) + b + a;
+    return formatCombo(letterCombo(random, FEATURED_COMBOS), pair + index(random, 10));
   }
   if (rarity === "ultra") {
-    if (random() < 0.62) {
-      a = pick(random, ["А", "Е"]);
-      return a + pick(random, ["013","070","101","114","202","303"]) + (a === "Е" ? "КХ" : "МР");
-    }
-    a = letter(random); b = letter(random, [a]);
-    return a + pick(random, ["010","020","030","040","050","060","070","080","090"]) + b + a;
+    return formatCombo(letterCombo(random, random() < 0.08 ? SIGNATURE_COMBOS : FEATURED_COMBOS), pick(random, ["013","070","101","114","202","303"]));
   }
   if (rarity === "secret") {
     const digits = pick(random, ["111","222","333","444","555","666","888","999"]);
-    if (random() < 0.55) {
-      a = pick(random, ["А", "Е"]);
-      return a + digits + (a === "Е" ? "КХ" : "МР");
-    }
-    a = letter(random);
-    return a + digits + a + a;
+    const combo = letterCombo(random, random() < 0.12 ? SIGNATURE_COMBOS : FEATURED_COMBOS);
+    return formatCombo(combo, digits);
   }
   return pick(random, PRICELESS);
 }
