@@ -40,11 +40,11 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /DIRTY_KEY = 'autoflip-cloud-dirty'/);
   assert.match(client, /dirtyAtBoot = localStorage\.getItem\(DIRTY_KEY\) === '1'/);
   assert.match(client, /payload\.save && storedRevision !== revision/);
-  assert.match(client, /Облачный прогресс восстановлен/);
+  assert.match(client, /Версии на устройствах различаются/);
   assert.match(client, /AUTOFLIP_CLOUD_READY = hydrate\(\)/);
-  assert.doesNotMatch(client, /sessionStorage\.getItem\(RELOAD_KEY\) !==/);
-  assert.match(client, /updated local stamp makes the next boot idempotent/);
-  assert.match(client, /Загружена облачная версия · локальная сохранена в резерве/);
+  assert.match(client, /Never replace an unsynced device save automatically/);
+  assert.match(client, /AUTOFLIP_EXPORT_LOCAL_SAVE/);
+  assert.match(client, /AUTOFLIP_USE_CLOUD_SAVE/);
   assert.doesNotMatch(client, /localAt >= remoteAt/);
   assert.match(client, /MIN_UPLOAD_GAP = 15000/);
   assert.match(client, /localStorage\.getItem\(SAVE_KEY\) === raw/);

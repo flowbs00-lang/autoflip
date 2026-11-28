@@ -206,14 +206,12 @@
     var remote = await fetchRemote();
     checkpointRaw(localRaw, 'Конфликт устройств · локальная версия', { cloudRevision: remote.revision });
     revision = Number(remote.revision || 0); originalSetItem.call(localStorage, REVISION_KEY, String(revision));
-    if (applyRemoteSave(remote, 'Загружена облачная версия · локальная сохранена в резерве')) {
-      // The game scripts may already hold the pre-hydration default state in
-      // memory. Always reload after replacing it with a cloud snapshot. The
-      // updated local stamp makes the next boot idempotent, so this cannot
-      // create a reload loop.
-      sessionStorage.setItem(RELOAD_KEY, String(remote.updatedAt || Date.now()));
-      location.reload();
-    }
+    // Never replace an unsynced device save automatically. A device can have
+    // legitimate progress made while another device advanced the cloud
+    // revision. Keep the local copy visible and require an explicit choice in
+    // the save centre; the cloud copy remains protected by server backups.
+    lastSaveError = { code: 'revision_conflict', status: 409 };
+    emit('conflict', 'Версии на устройствах различаются · локальная копия сохранена');
     return { retry: false };
   }
 
@@ -306,10 +304,8 @@
       if (localRaw && localDirty) {
         if (payload.save && storedRevision !== revision) {
           checkpointRaw(localRaw, 'Устаревшая локальная ревизия', { localRevision: storedRevision, cloudRevision: revision });
-          if (applyRemoteSave(payload, 'Облачный прогресс восстановлен')) {
-            sessionStorage.setItem(RELOAD_KEY, String(remoteStamp || Date.now()));
-            location.reload();
-          }
+          lastSaveError = { code: 'revision_conflict', status: 409 };
+          emit('conflict', 'Версии на устройствах различаются · локальная копия сохранена');
           return;
         }
         if (storedRevision !== revision) {
@@ -349,11 +345,31 @@
     var icons = { purchase: '🚗', sale: '💰', repair: '🔧', exchange: '🔄', donation: '◆' };
     var rows = operations.map(function (item) { return '<article class="save-operation"><span>' + (icons[item.type] || '•') + '</span><div><b>' + esc(item.label || 'Операция') + '</b><small>' + (item.car ? esc(item.car) + ' · ' : '') + new Date(Number(item.at || 0)).toLocaleString('ru-RU') + '</small></div>' + (item.amount ? '<strong>' + Number(item.amount).toLocaleString('ru-RU') + ' ₽</strong>' : '') + '</article>'; }).join('');
     var serverRows = cloudBackups === null ? '<div class="note">Загружаем серверные копии…</div>' : cloudBackups.length ? cloudBackups.map(function (item) { return '<button class="action" onclick="AUTOFLIP_RESTORE_CLOUD_BACKUP(' + Number(item.revision) + ')">Версия ' + Number(item.revision) + ' · ' + new Date(Number(item.createdAt || 0)).toLocaleString('ru-RU') + '</button>'; }).join('') : '<div class="note">Серверные копии появятся после следующих облачных сохранений.</div>';
-    render('<div class="app save-center">' + head('Сохранения') + '<section class="save-cloud-card ' + esc(cloud.status || 'local') + '"><span>☁</span><div><small>ОСНОВНОЕ СОХРАНЕНИЕ</small><h3>' + (cloud.status === 'saved' ? 'Сохранено в облаке' : cloud.status === 'syncing' || cloud.status === 'pending' ? 'Идёт синхронизация' : 'Сохранено на устройстве') + '</h3><p>' + esc(cloud.detail || 'Прогресс защищён локальной копией') + '</p></div></section><div class="save-safety-grid"><div><small>ВЕРСИЯ</small><b>' + SAVE_VERSION + '</b></div><div><small>РЕВИЗИЯ</small><b>' + revision + '</b></div><div><small>РЕЗЕРВНАЯ КОПИЯ</small><b>' + (backup ? new Date(backup.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '—') + '</b></div></div><button class="action green" onclick="AUTOFLIP_CREATE_BACKUP()">Создать резервную копию</button>' + (backup ? '<button class="action" onclick="AUTOFLIP_RESTORE_BACKUP()">Восстановить последнюю копию на устройстве</button>' : '') + '<h3 class="save-log-title">Серверные резервные копии</h3><div class="save-operation-list">' + serverRows + '</div><h3 class="save-log-title">Последние важные операции</h3><div class="save-operation-list">' + (rows || '<div class="note">Покупки, продажи, ремонты, обмены и донаты появятся здесь.</div>') + '</div><button class="action" onclick="settings()">‹ Назад в настройки</button></div>');
+    var conflictActions = cloud.status === 'conflict' ? '<button class="action green" onclick="AUTOFLIP_EXPORT_LOCAL_SAVE()">Скачать локальную копию</button><button class="action" onclick="AUTOFLIP_USE_CLOUD_SAVE()">Использовать облачную версию</button>' : '';
+    render('<div class="app save-center">' + head('Сохранения') + '<section class="save-cloud-card ' + esc(cloud.status || 'local') + '"><span>☁</span><div><small>ОСНОВНОЕ СОХРАНЕНИЕ</small><h3>' + (cloud.status === 'saved' ? 'Сохранено в облаке' : cloud.status === 'conflict' ? 'Конфликт версий' : cloud.status === 'syncing' || cloud.status === 'pending' ? 'Идёт синхронизация' : 'Сохранено на устройстве') + '</h3><p>' + esc(cloud.detail || 'Прогресс защищён локальной копией') + '</p></div></section><div class="save-safety-grid"><div><small>ВЕРСИЯ</small><b>' + SAVE_VERSION + '</b></div><div><small>РЕВИЗИЯ</small><b>' + revision + '</b></div><div><small>РЕЗЕРВНАЯ КОПИЯ</small><b>' + (backup ? new Date(backup.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '—') + '</b></div></div>' + conflictActions + '<button class="action green" onclick="AUTOFLIP_CREATE_BACKUP()">Создать резервную копию</button>' + (backup ? '<button class="action" onclick="AUTOFLIP_RESTORE_BACKUP()">Восстановить последнюю копию на устройстве</button>' : '') + '<h3 class="save-log-title">Серверные резервные копии</h3><div class="save-operation-list">' + serverRows + '</div><h3 class="save-log-title">Последние важные операции</h3><div class="save-operation-list">' + (rows || '<div class="note">Покупки, продажи, ремонты, обмены и донаты появятся здесь.</div>') + '</div><button class="action" onclick="settings()">‹ Назад в настройки</button></div>');
     if (!backup && !indexedBackup) latestIndexedBackup().then(function (entry) { if (entry) window.openSaveCenter(entry); });
     if (cloudBackups === null && !loadingCloudBackups) { loadingCloudBackups = true; fetchCloudBackups().catch(function () { cloudBackups = []; }).finally(function () { loadingCloudBackups = false; window.openSaveCenter(indexedBackup); }); }
   };
   window.AUTOFLIP_CREATE_BACKUP = function () { checkpointRaw(localStorage.getItem(SAVE_KEY), 'Ручная резервная копия', {}); openSaveCenter(); };
+  window.AUTOFLIP_EXPORT_LOCAL_SAVE = function () {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return alert('Локальная копия не найдена.');
+    checkpointRaw(raw, 'Перед экспортом локальной копии', {});
+    var blob = new Blob([raw], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = 'autoflip-local-save-' + Date.now() + '.json';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  };
+  window.AUTOFLIP_USE_CLOUD_SAVE = async function () {
+    if (!confirm('Заменить прогресс на этом устройстве облачной версией? Локальная версия останется в резервной копии.')) return;
+    var localRaw = localStorage.getItem(SAVE_KEY);
+    if (localRaw) checkpointRaw(localRaw, 'Перед выбором облачной версии', {});
+    try {
+      var remote = await fetchRemote();
+      if (applyRemoteSave(remote, 'Выбрана облачная версия')) location.reload();
+    } catch (_) { alert('Не удалось загрузить облачную версию. Попробуй ещё раз позже.'); }
+  };
   window.AUTOFLIP_RESTORE_BACKUP = function () {
     var entry = safeJson(localStorage.getItem(BACKUP_KEY) || '');
     if (!entry || !entry.raw) return latestIndexedBackup().then(function (stored) { if (stored && stored.raw) restoreBackup(stored); else openSaveCenter(); });
