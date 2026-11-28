@@ -2,9 +2,11 @@ import { ensureCommunitySchema } from "./community.js";
 import { ensureStoreSchema } from "./store.js";
 import { ensureSupportSchema } from "./support.js";
 import { ensureSecuritySchema } from "./security.js";
+import { ensurePasswordAuthSchema } from "./password-auth.js";
 
 const SAFETY_PRIVACY_MIGRATION = "0008_safety_and_privacy";
 const SECURITY_RATE_LIMIT_MIGRATION = "0009_security_rate_limits";
+const PASSWORD_AUTH_MIGRATION = "0013_password_auth";
 
 let runtimeMigrationPromise = null;
 
@@ -36,6 +38,16 @@ async function applyRuntimeMigrations(db) {
     await ensureSecuritySchema(db);
     await db.prepare("INSERT OR IGNORE INTO app_migrations (id, applied_at) VALUES (?, ?)")
       .bind(SECURITY_RATE_LIMIT_MIGRATION, Date.now())
+      .run();
+  }
+
+  const passwordAuthApplied = await db.prepare("SELECT id FROM app_migrations WHERE id = ? LIMIT 1")
+    .bind(PASSWORD_AUTH_MIGRATION)
+    .first();
+  if (!passwordAuthApplied) {
+    await ensurePasswordAuthSchema(db);
+    await db.prepare("INSERT OR IGNORE INTO app_migrations (id, applied_at) VALUES (?, ?)")
+      .bind(PASSWORD_AUTH_MIGRATION, Date.now())
       .run();
   }
 }

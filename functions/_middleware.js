@@ -53,7 +53,8 @@ export async function onRequest(context) {
   }
   const isGameEntry = url.pathname === "/app" || url.pathname === "/app/" || url.pathname === "/app/index.html";
   const isProfileSetup = url.pathname === "/setup-profile" || url.pathname === "/setup-profile/" || url.pathname === "/setup-profile/index.html";
-  const isProtectedEntry = isGameEntry || isProfileSetup;
+  const isAccountSetup = url.pathname === "/setup-account" || url.pathname === "/setup-account/" || url.pathname === "/setup-account/index.html";
+  const isProtectedEntry = isGameEntry || isProfileSetup || isAccountSetup;
   if (isProtectedEntry) {
     if (!context.env.DB) {
       return securedResponse(new Response("Database is not configured", { status: 503 }), url.pathname);
@@ -69,6 +70,12 @@ export async function onRequest(context) {
     }
     if (!session.nickname) {
       return securedResponse(Response.redirect(`${url.origin}/setup-profile/`, 302), url.pathname);
+    }
+    if (isGameEntry && !session.account_type) {
+      return securedResponse(Response.redirect(`${url.origin}/setup-account/`, 302), url.pathname);
+    }
+    if (isAccountSetup && session.account_type === "password") {
+      return securedResponse(Response.redirect(`${url.origin}/app/`, 302), url.pathname);
     }
   }
 

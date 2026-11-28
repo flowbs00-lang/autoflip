@@ -5,6 +5,7 @@ import { ensureLegalSchema } from "../../_lib/legal.js";
 import { ensureStoreSchema } from "../../_lib/store.js";
 import { ensureSupportSchema } from "../../_lib/support.js";
 import { ensureSecuritySchema } from "../../_lib/security.js";
+import { ensurePasswordAuthSchema } from "../../_lib/password-auth.js";
 
 function base64ToBytes(value) {
   const binary = atob(value);
@@ -26,9 +27,10 @@ export async function onRequestGet(context) {
     const session = await getSession(context.env.DB, context.request);
     if (!session?.nickname) throw new RequestError("authentication_required", 401);
     const db = context.env.DB;
-    await Promise.all([ensureCommunitySchema(db), ensureLegalSchema(db), ensureStoreSchema(db), ensureSupportSchema(db), ensureSecuritySchema(db)]);
-    const [user, save, consents, messages, blocks, reports, orders, refunds, tickets, securityEvents] = await Promise.all([
+    await Promise.all([ensureCommunitySchema(db), ensureLegalSchema(db), ensureStoreSchema(db), ensureSupportSchema(db), ensureSecuritySchema(db), ensurePasswordAuthSchema(db)]);
+    const [user, authentication, save, consents, messages, blocks, reports, orders, refunds, tickets, securityEvents] = await Promise.all([
       db.prepare("SELECT id, nickname, created_at AS createdAt, updated_at AS updatedAt FROM users WHERE id = ?").bind(session.id).first(),
+      db.prepare("SELECT username, account_type AS accountType, created_at AS createdAt, updated_at AS updatedAt FROM auth_credentials WHERE user_id = ?").bind(session.id).first(),
       db.prepare("SELECT revision, data_json AS dataJson, updated_at AS updatedAt FROM game_saves WHERE user_id = ?").bind(session.id).first(),
       db.prepare("SELECT consent_type AS type, document_version AS version, granted_at AS grantedAt, revoked_at AS revokedAt FROM user_consents WHERE user_id = ? ORDER BY granted_at").bind(session.id).all(),
       db.prepare("SELECT id, channel, body, created_at AS createdAt, deleted_at AS deletedAt FROM community_messages WHERE user_id = ? ORDER BY created_at DESC").bind(session.id).all(),
@@ -42,6 +44,7 @@ export async function onRequestGet(context) {
     const payload = {
       exportedAt: new Date().toISOString(),
       account: user,
+      authentication: authentication || { accountType: "vk_legacy", username: null },
       save: save ? { revision: Number(save.revision), updatedAt: Number(save.updatedAt), data: await decodeSave(save.dataJson) } : null,
       consents: consents.results || [], messages: messages.results || [], blocks: blocks.results || [],
       reports: reports.results || [], orders: orders.results || [], refundRequests: refunds.results || [], supportTickets: tickets.results || [],

@@ -59,9 +59,12 @@ export async function getSession(db, request) {
       u.nickname,
       u.first_name,
       u.last_name,
-      u.avatar_url
+      u.avatar_url,
+      c.username AS auth_username,
+      c.account_type AS account_type
     FROM sessions s
     JOIN users u ON u.id = s.user_id
+    LEFT JOIN auth_credentials c ON c.user_id = u.id
     WHERE s.token_hash = ? AND s.expires_at > ?
     LIMIT 1
   `).bind(tokenHash, now).first();

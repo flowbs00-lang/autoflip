@@ -7,6 +7,33 @@ function randomPlayerId() {
   return id;
 }
 
+function randomProviderId(prefix) {
+  const random = crypto.getRandomValues(new Uint8Array(18));
+  let value = `${prefix}:`;
+  for (const byte of random) value += byte.toString(16).padStart(2, "0");
+  return value;
+}
+
+export async function createLocalUser(db, nickname = null, provider = "native") {
+  const now = Math.floor(Date.now() / 1000);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const id = randomPlayerId();
+    const resolvedNickname = nickname || `Гость_${id.slice(-6)}`;
+    try {
+      await db.prepare(`
+        INSERT INTO users (
+          id, vk_user_id, nickname, first_name, last_name, avatar_url, created_at, updated_at
+        ) VALUES (?, ?, ?, '', '', '', ?, ?)
+      `).bind(id, randomProviderId(provider), resolvedNickname, now, now).run();
+      return { id, nickname: resolvedNickname };
+    } catch (error) {
+      if (nickname && /unique|constraint/iu.test(String(error?.message || error))) throw error;
+      if (attempt === 4) throw error;
+    }
+  }
+  throw new Error("Could not create player");
+}
+
 export async function upsertVkUser(db, vkUser) {
   const vkUserId = String(vkUser.user_id || "");
   if (!/^\d{1,24}$/u.test(vkUserId)) throw new Error("Invalid VK user id");

@@ -93,6 +93,11 @@ export function policiesForRequest(path, method, action = "", session = null) {
     policy("api:account", "account", method === "GET" ? 300 : 160, MINUTE, 10 * MINUTE)
   ];
   if (path === "/api/auth/vk" && method === "POST") return [policy("auth:vk", "ip", 8, 10 * MINUTE, 20 * MINUTE)];
+  if (path === "/api/auth/login" && method === "POST") return [policy("auth:login", "ip", 10, 10 * MINUTE, 20 * MINUTE)];
+  if (path === "/api/auth/register" && method === "POST") return [policy("auth:register", "ip", 5, HOUR, HOUR)];
+  if (path === "/api/auth/guest" && method === "POST") return [policy("auth:guest", "ip", 5, HOUR, HOUR)];
+  if (path === "/api/auth/recover" && method === "POST") return [policy("auth:recover", "ip", 6, HOUR, HOUR)];
+  if (path === "/api/auth/credentials" && method === "POST") return [policy("auth:credentials", "account", 5, HOUR, HOUR)];
   if (path === "/api/profile/nickname" && method === "POST") {
     if (session?.nickname) {
       policies.push(policy("profile:nickname_change", "account", 3, DAY, HOUR), policy("profile:nickname_change:ip", "ip", 20, DAY, HOUR));
@@ -242,7 +247,7 @@ export async function recordSuspiciousResponse(context, session, audit, status) 
   const url = new URL(context.request.url);
   const subject = audit.account || audit.ip;
   const subjectType = audit.account ? "account" : "ip";
-  const category = url.pathname === "/api/auth/vk" && status === 401 ? "login_failed" : `api_${status}`;
+  const category = url.pathname.startsWith("/api/auth/") && status === 401 ? "login_failed" : `api_${status}`;
   await writeEvent(context.env.DB, {
     subject, subjectType, userId: session?.id, category, path: url.pathname,
     method: context.request.method, details: { action: audit.action || "" }, now: Date.now()

@@ -4,6 +4,11 @@ import { onRequest as saveBackups } from "../functions/api/save/backups.js";
 import { onRequest as community } from "../functions/api/community.js";
 import { onRequest as support } from "../functions/api/support.js";
 import { onRequest as authVk } from "../functions/api/auth/vk.js";
+import { onRequest as authRegister } from "../functions/api/auth/register.js";
+import { onRequest as authLogin } from "../functions/api/auth/login.js";
+import { onRequest as authGuest } from "../functions/api/auth/guest.js";
+import { onRequest as authCredentials } from "../functions/api/auth/credentials.js";
+import { onRequest as authRecover } from "../functions/api/auth/recover.js";
 import { onRequest as authLogout } from "../functions/api/auth/logout.js";
 import { onRequest as profileNickname } from "../functions/api/profile/nickname.js";
 import { onRequest as legalConsents } from "../functions/api/legal/consents.js";
@@ -26,6 +31,11 @@ export const apiRoutes = new Map([
   ["/api/community", community],
   ["/api/support", support],
   ["/api/auth/vk", authVk],
+  ["/api/auth/register", authRegister],
+  ["/api/auth/login", authLogin],
+  ["/api/auth/guest", authGuest],
+  ["/api/auth/credentials", authCredentials],
+  ["/api/auth/recover", authRecover],
   ["/api/auth/logout", authLogout],
   ["/api/profile/nickname", profileNickname],
   ["/api/legal/consents", legalConsents],

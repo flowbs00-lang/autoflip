@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 test('login links every required legal document and keeps profile consent optional', () => {
-  const html = read('cloudflare/login/index.html');
+  const html = read('cloudflare/index.html');
   const client = read('cloudflare/assets/login.js');
   for (const route of ['/legal/terms/', '/legal/personal-data-consent/', '/legal/privacy/', '/legal/community-rules/', '/legal/profile-consent/']) {
     assert.match(html, new RegExp(route.replaceAll('/', '\\/')));
@@ -20,7 +20,7 @@ test('login links every required legal document and keeps profile consent option
 });
 
 test('cookie notice is shown on login and in the game and links to the disclosure', () => {
-  const login = read('cloudflare/login/index.html');
+  const login = read('cloudflare/index.html');
   const notice = read('cloudflare/assets/cookie-notice.js');
   const gameNotice = read('cloudflare/app/ui.js');
   const gameStyles = read('cloudflare/app/mobile-redesign.css');

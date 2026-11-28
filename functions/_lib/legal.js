@@ -1,8 +1,8 @@
 import { RequestError } from "./http.js";
 
 export const LEGAL_VERSIONS = Object.freeze({
-  terms: "2026-10-12",
-  personalData: "2026-10-12.1",
+  terms: "2026-11-28",
+  personalData: "2026-11-28.1",
   communityRules: "2026-10-12",
   publicProfile: "2026-10-12"
 });

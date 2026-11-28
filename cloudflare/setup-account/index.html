@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#070b13">
+  <title>Защита аккаунта — AutoFlip</title>
+  <link rel="stylesheet" href="/assets/auth.css">
+</head>
+<body>
+  <main class="shell">
+    <div class="brand"><img src="/assets/autoflip-vk-icon.png" alt=""><span>AutoFlip</span></div>
+    <section class="card">
+      <p class="eyebrow">Переход с VK ID</p>
+      <h1>Создайте вход AutoFlip</h1>
+      <p class="lead">Прогресс уже привязан к вашему внутреннему ID. Придумайте никнейм для входа и пароль — после этого VK больше не понадобится.</p>
+      <form id="credentials-form" novalidate>
+        <div class="field"><label for="username">Никнейм для входа</label><input id="username" autocomplete="username" maxlength="20" required></div>
+        <div class="field"><label for="password">Пароль</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+        <div class="field"><label for="confirm">Повторите пароль</label><input id="confirm" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></div>
+        <p class="hint">Минимум 10 символов. Существующий прогресс и ID игрока не изменятся.</p>
+        <button class="button" id="save-credentials" type="submit">Сохранить новый вход</button>
+      </form>
+      <section class="recovery-result" id="setup-recovery-result" hidden>
+        <b>Сохраните код восстановления</b>
+        <p>Код показывается один раз. Храните его отдельно от пароля.</p>
+        <code id="setup-recovery-code"></code>
+        <button class="button secondary" id="setup-copy-code" type="button">Скопировать код</button>
+        <button class="button" id="setup-continue" type="button">Продолжить в игру</button>
+      </section>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="/assets/setup-account.js?v=20261128-1" defer></script>
+</body>
+</html>

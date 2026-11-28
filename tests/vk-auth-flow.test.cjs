@@ -27,7 +27,8 @@ test('VK callback verifies the server session before entering the game', () => {
 });
 
 test('login and callback HTML bypass stale cached auth scripts', () => {
-  assert.match(read('cloudflare/login/index.html'), /login\.js\?v=20261023-2/);
+  assert.match(read('cloudflare/index.html'), /login\.js\?v=20261128-1/);
+  assert.match(read('cloudflare/login/index.html'), /location\.replace\('\/#login'\)/);
   assert.match(read('cloudflare/auth/vk/callback/index.html'), /vk-callback\.js\?v=20261023-2/);
 });
 

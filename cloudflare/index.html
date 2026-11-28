@@ -64,15 +64,33 @@
       <div class="brand"><img src="/assets/autoflip-vk-icon.png" alt=""><span>AutoFlip</span></div>
       <section class="card" aria-labelledby="login-title">
         <p class="eyebrow">Бесплатная публичная бета</p>
-        <h2 id="login-title">Весь прогресс останется с вами</h2>
-        <p class="lead">Войдите через VK ID, чтобы создать защищённый профиль AutoFlip и сохранять игру между устройствами.</p>
+        <h2 id="login-title">Войдите в AutoFlip</h2>
+        <p class="lead">Собственный аккаунт AutoFlip работает одинаково на телефоне и компьютере — без переходов во внешние сервисы.</p>
         <ul class="features">
           <li>Единый аккаунт на телефоне и компьютере</li>
           <li>Уникальный никнейм и внутренний ID игрока</li>
-          <li>Пароль от VK не передаётся AutoFlip</li>
+          <li>Облачное сохранение и резервные копии прогресса</li>
         </ul>
-        <div class="beta-note"><b>Регистрация открыта</b><span>Можно создать новый аккаунт через VK ID. Игра находится в бесплатной бета-версии; магазин и реальные платежи пока отключены.</span></div>
-        <fieldset class="consents" aria-describedby="consent-help">
+        <div class="beta-note"><b>Регистрация открыта</b><span>Придумайте никнейм и пароль или начните гостем. Магазин и реальные платежи пока отключены.</span></div>
+        <div class="auth-tabs" role="tablist" aria-label="Способ входа">
+          <button class="auth-tab active" id="mode-login" type="button" role="tab" aria-selected="true">Войти</button>
+          <button class="auth-tab" id="mode-register" type="button" role="tab" aria-selected="false">Регистрация</button>
+          <button class="auth-tab" id="mode-recover" type="button" role="tab" aria-selected="false">Восстановить</button>
+        </div>
+        <form id="password-form" novalidate>
+          <div class="field compact"><label for="auth-username">Никнейм</label><input id="auth-username" name="username" autocomplete="username" maxlength="20" required></div>
+          <div class="field compact"><label for="auth-password">Пароль</label><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="10" maxlength="128" required></div>
+          <div class="field compact" id="confirm-field" hidden><label for="auth-confirm">Повторите пароль</label><input id="auth-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" maxlength="128"></div>
+          <p class="hint" id="password-hint">Введите никнейм и пароль.</p>
+        </form>
+        <form id="recovery-form" hidden novalidate>
+          <div class="field compact"><label for="recovery-player">ID игрока</label><input id="recovery-player" autocomplete="off" placeholder="AF-XXXXXXXXXXXX" maxlength="15"></div>
+          <div class="field compact"><label for="recovery-code">Код восстановления</label><input id="recovery-code" autocomplete="off" placeholder="AFR-XXXXX-XXXXX-XXXXX-XXXXX" maxlength="28"></div>
+          <div class="field compact"><label for="recovery-username">Новый никнейм <small>для гостевого аккаунта</small></label><input id="recovery-username" autocomplete="username" maxlength="20"></div>
+          <div class="field compact"><label for="recovery-password">Новый пароль</label><input id="recovery-password" type="password" autocomplete="new-password" minlength="10" maxlength="128"></div>
+          <p class="hint">После восстановления старые сеансы будут завершены.</p>
+        </form>
+        <fieldset class="consents" id="auth-consents" aria-describedby="consent-help" hidden>
           <legend>Перед входом</legend>
           <label><input id="consent-terms" type="checkbox"><span>Принимаю <a href="/legal/terms/" target="_blank" rel="noopener">пользовательское соглашение</a>.</span></label>
           <label><input id="consent-personal" type="checkbox"><span>Даю отдельное <a href="/legal/personal-data-consent/" target="_blank" rel="noopener">согласие на обработку персональных данных</a> и ознакомлен с <a href="/legal/privacy/" target="_blank" rel="noopener">политикой</a>.</span></label>
@@ -80,10 +98,20 @@
           <label class="optional"><input id="consent-profile" type="checkbox"><span>Разрешаю показывать другим игрокам мой расширенный профиль, гараж и коллекцию номеров. <a href="/legal/profile-consent/" target="_blank" rel="noopener">Это необязательно</a>.</span></label>
           <small id="consent-help">Первые три пункта необходимы для аккаунта. Публичный профиль можно не включать.</small>
         </fieldset>
-        <button class="button" id="vk-login" type="button">
-          <span class="vk-mark" aria-hidden="true">VK</span>
-          <span>Войти через VK ID</span>
-        </button>
+        <button class="button" id="auth-submit" type="button">Войти</button>
+        <button class="button secondary" id="guest-login" type="button">Играть без регистрации</button>
+        <section class="recovery-result" id="recovery-result" hidden>
+          <b>Сохраните код восстановления</b>
+          <p>Он понадобится, если вы забудете пароль или потеряете доступ к устройству.</p>
+          <code id="issued-recovery-code"></code>
+          <button class="button secondary" id="copy-recovery" type="button">Скопировать код</button>
+          <button class="button" id="continue-after-recovery" type="button">Продолжить в игру</button>
+        </section>
+        <details class="legacy-login">
+          <summary>У меня остался старый аккаунт VK ID</summary>
+          <p>Войдите один раз через VK и создайте для старого профиля никнейм и пароль AutoFlip.</p>
+          <button class="button secondary" id="vk-login" type="button"><span class="vk-mark" aria-hidden="true">VK</span><span>Перенести аккаунт через VK ID</span></button>
+        </details>
         <p class="status" id="status" role="status" aria-live="polite"></p>
         <nav class="legal" aria-label="Юридические документы"><a href="/legal/">Все документы</a><span>·</span><a href="/support/">Поддержка</a><span>·</span><a href="/legal/operator/">Владелец и контакты</a><span>·</span><a href="/legal/offer/">Оферта магазина</a></nav>
       </section>
@@ -91,7 +119,7 @@
   </main>
   <footer class="seo-footer"><span>© 2026 AutoFlip</span><a href="/legal/privacy/">Политика конфиденциальности</a><a href="/legal/terms/">Пользовательское соглашение</a><a href="/support/">Поддержка</a></footer>
   <script src="/assets/vkid-sdk-2.6.1.js"></script>
-  <script src="/assets/login.js?v=20261023-2" defer></script>
+  <script src="/assets/login.js?v=20261128-1" defer></script>
   <script src="/assets/cookie-notice.js?v=20261022-1" defer></script>
 </body>
 </html>

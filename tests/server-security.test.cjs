@@ -13,7 +13,7 @@ test('central API protection covers high-risk actions and temporary blocks', () 
   const security = read('functions/_lib/security.js');
   const middleware = read('functions/_middleware.js');
   for (const marker of [
-    'auth:vk', 'profile:nickname_change', 'profile:nickname_setup', 'support:create', 'community:message',
+    'auth:vk', 'auth:login', 'auth:register', 'auth:guest', 'auth:recover', 'auth:credentials', 'profile:nickname_change', 'profile:nickname_setup', 'support:create', 'community:message',
     'community:report', 'community:create_clan', 'store:create_payment',
     'save:write', 'admin:denied', 'temporarily_blocked', 'Retry-After'
   ]) assert.match(security, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -54,6 +54,8 @@ test('security log is admin-only and account privacy controls include it', () =>
 test('runtime migration installs server protection idempotently', () => {
   const migrations = read('functions/_lib/migrations.js');
   assert.match(migrations, /0009_security_rate_limits/);
+  assert.match(migrations, /0013_password_auth/);
+  assert.match(migrations, /ensurePasswordAuthSchema/);
   assert.match(migrations, /ensureSecuritySchema/);
   assert.match(migrations, /INSERT OR IGNORE INTO app_migrations/);
 });

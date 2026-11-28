@@ -14,6 +14,9 @@ export async function onRequestGet(context) {
       ok: true,
       authenticated: true,
       needsNickname: !session.nickname,
+      needsCredentials: !session.account_type,
+      accountType: session.account_type || "vk_legacy",
+      username: session.auth_username || null,
       needsLegalConsent: !legal.requiredAccepted,
       legal,
       user: publicUser(session)
