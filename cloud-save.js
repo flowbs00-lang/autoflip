@@ -206,8 +206,14 @@
     var remote = await fetchRemote();
     checkpointRaw(localRaw, 'Конфликт устройств · локальная версия', { cloudRevision: remote.revision });
     revision = Number(remote.revision || 0); originalSetItem.call(localStorage, REVISION_KEY, String(revision));
-    applyRemoteSave(remote, 'Загружена облачная версия · локальная сохранена в резерве');
-    if (sessionStorage.getItem(RELOAD_KEY) !== String(remote.updatedAt)) { sessionStorage.setItem(RELOAD_KEY, String(remote.updatedAt)); location.reload(); }
+    if (applyRemoteSave(remote, 'Загружена облачная версия · локальная сохранена в резерве')) {
+      // The game scripts may already hold the pre-hydration default state in
+      // memory. Always reload after replacing it with a cloud snapshot. The
+      // updated local stamp makes the next boot idempotent, so this cannot
+      // create a reload loop.
+      sessionStorage.setItem(RELOAD_KEY, String(remote.updatedAt || Date.now()));
+      location.reload();
+    }
     return { retry: false };
   }
 
@@ -300,8 +306,8 @@
       if (localRaw && localDirty) {
         if (payload.save && storedRevision !== revision) {
           checkpointRaw(localRaw, 'Устаревшая локальная ревизия', { localRevision: storedRevision, cloudRevision: revision });
-          if (applyRemoteSave(payload, 'Облачный прогресс восстановлен') && sessionStorage.getItem(RELOAD_KEY) !== String(remoteStamp)) {
-            sessionStorage.setItem(RELOAD_KEY, String(remoteStamp));
+          if (applyRemoteSave(payload, 'Облачный прогресс восстановлен')) {
+            sessionStorage.setItem(RELOAD_KEY, String(remoteStamp || Date.now()));
             location.reload();
           }
           return;
@@ -315,7 +321,7 @@
       }
       if (payload.save && (!localRaw || remoteStamp > localStamp)) {
         if (localRaw) checkpointRaw(localRaw, 'Перед загрузкой облачного сохранения', {});
-        if (applyRemoteSave(payload, 'Облачный прогресс загружен') && sessionStorage.getItem(RELOAD_KEY) !== String(remoteStamp)) { sessionStorage.setItem(RELOAD_KEY, String(remoteStamp)); location.reload(); }
+        if (applyRemoteSave(payload, 'Облачный прогресс загружен')) { sessionStorage.setItem(RELOAD_KEY, String(remoteStamp || Date.now())); location.reload(); }
         return;
       }
       originalSetItem.call(localStorage, REVISION_KEY, String(revision));
@@ -386,5 +392,5 @@
   addEventListener('offline', function () { emit('offline', 'Сохранено на устройстве · ждём интернет'); });
   window.AUTOFLIP_CLOUD_FLUSH = flushPendingSave;
   window.AUTOFLIP_SAVE_VERSION = SAVE_VERSION;
-  hydrate();
+  window.AUTOFLIP_CLOUD_READY = hydrate();
 })();

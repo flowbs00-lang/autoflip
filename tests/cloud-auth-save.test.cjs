@@ -41,6 +41,9 @@ test('large saves are compressed in the browser before upload', () => {
   assert.match(client, /dirtyAtBoot = localStorage\.getItem\(DIRTY_KEY\) === '1'/);
   assert.match(client, /payload\.save && storedRevision !== revision/);
   assert.match(client, /Облачный прогресс восстановлен/);
+  assert.match(client, /AUTOFLIP_CLOUD_READY = hydrate\(\)/);
+  assert.doesNotMatch(client, /sessionStorage\.getItem\(RELOAD_KEY\) !==/);
+  assert.match(client, /updated local stamp makes the next boot idempotent/);
   assert.match(client, /Загружена облачная версия · локальная сохранена в резерве/);
   assert.doesNotMatch(client, /localAt >= remoteAt/);
   assert.match(client, /MIN_UPLOAD_GAP = 15000/);
